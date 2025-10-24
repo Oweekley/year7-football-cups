@@ -13,9 +13,9 @@ let cardiffData = {};
 
 // Load JSONs
 async function loadData() {
-    teamsData = await fetch('data/teams.json').then(r => r.json()).then(d => d.teams);
-    welshData = await fetch('data/welsh.json').then(r => r.json());
-    cardiffData = await fetch('data/cardiff.json').then(r => r.json());
+    teamsData = await fetch('teams.json').then(r => r.json()).then(d => d.teams);
+    welshData = await fetch('welsh.json').then(r => r.json());
+    cardiffData = await fetch('cardiff.json').then(r => r.json());
 
     populateDropdowns();
 }
