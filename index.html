@@ -1,10 +1,91 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Untitled Document</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Year 7 Cups Dashboard 2025</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
+    <header>
+        <h1>Year 7 Cups Dashboard 2025</h1>
+    </header>
+
+    <main>
+        <!-- Welsh Cup Overview -->
+        <section class="cup-section" id="welsh-cup">
+            <h2>Welsh Cup Overview</h2>
+            <div class="selectors">
+                <label for="welsh-team">Select Team:</label>
+                <select id="welsh-team">
+                    <option value="">--Choose a Team--</option>
+                </select>
+
+                <label for="welsh-data">Select Data:</label>
+                <select id="welsh-data">
+                    <option value="">--Team Stats / Match History--</option>
+                </select>
+            </div>
+            <div class="dynamic-display" id="welsh-display">
+                <!-- Stats & Match tables will go here dynamically -->
+            </div>
+        </section>
+
+        <!-- Cardiff Cup Overview -->
+        <section class="cup-section" id="cardiff-cup">
+            <h2>Cardiff Cup Overview</h2>
+            <div class="selectors">
+                <label for="cardiff-team">Select Team:</label>
+                <select id="cardiff-team">
+                    <option value="">--Choose a Team--</option>
+                </select>
+
+                <label for="cardiff-data">Select Data:</label>
+                <select id="cardiff-data">
+                    <option value="">--Team Stats / Match History--</option>
+                </select>
+            </div>
+            <div class="dynamic-display" id="cardiff-display"></div>
+        </section>
+
+        <!-- Friendlies Overview -->
+        <section class="cup-section" id="friendlies">
+            <h2>Friendlies Overview</h2>
+            <div class="selectors">
+                <label for="friendlies-team">Select Team:</label>
+                <select id="friendlies-team">
+                    <option value="">--Choose a Team--</option>
+                </select>
+
+                <label for="friendlies-data">Select Data:</label>
+                <select id="friendlies-data">
+                    <option value="">--Team Stats / Match History--</option>
+                </select>
+            </div>
+            <div class="dynamic-display" id="friendlies-display"></div>
+        </section>
+
+        <!-- Combined Team Stats -->
+        <section class="cup-section" id="combined-stats">
+            <h2>Combined Team Stats</h2>
+            <div class="dynamic-display" id="combined-display">
+                <!-- Table of combined stats -->
+            </div>
+        </section>
+
+        <!-- Cup Brackets -->
+        <section class="cup-section" id="brackets">
+            <h2>Cup Brackets</h2>
+            <div class="dynamic-display" id="brackets-display">
+                <!-- Bracket visualization goes here -->
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2025 Year 7 Cups Dashboard</p>
+    </footer>
+
+    <script src="script.js"></script>
 </body>
 </html>

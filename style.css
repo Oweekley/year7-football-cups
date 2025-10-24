@@ -1,2 +1,76 @@
-/* CSS Document */
+/* Basic Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #f0f4f7;
+    color: #333;
+    line-height: 1.6;
+}
+
+header {
+    background-color: #00539C;
+    color: #fff;
+    padding: 20px 0;
+    text-align: center;
+}
+
+header h1 {
+    font-size: 2rem;
+}
+
+main {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 0 20px;
+}
+
+.cup-section {
+    background-color: #fff;
+    padding: 20px;
+    margin-bottom: 25px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.cup-section h2 {
+    color: #00539C;
+    margin-bottom: 15px;
+}
+
+.selectors {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.selectors label {
+    font-weight: bold;
+}
+
+.selectors select {
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+.dynamic-display {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 5px;
+    min-height: 80px;
+}
+
+footer {
+    text-align: center;
+    padding: 15px;
+    background-color: #00539C;
+    color: #fff;
+    margin-top: 30px;
+}/* CSS Document */
 
