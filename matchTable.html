@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Year 7 Cups – Match Table</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>⚽ Year 7 Cups – Match Table 2025</h1>
+        <nav>
+            <a href="index.html">Dashboard</a>
+			<a href="teamCard.html">Team Dashboard</a>
+            <a href="brackets.html">Brackets</a>
+			<a href="matchTable.html">Match Table</a>
+        </nav>
+    </header>
+
+    <main>
+        <section id="competition-selector">
+            <label for="competition-select">Select Competition:</label>
+            <select id="competition-select">
+                <option value="">--Choose Competition--</option>
+                <option value="Welsh">Welsh Cup</option>
+                <option value="Cardiff">Cardiff Cup</option>
+                <option value="Friendlies">Friendlies</option>
+            </select>
+        </section>
+
+        <section id="matches-display">
+            <!-- Full match table will be dynamically generated here -->
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2025 Year 7 Cups Dashboard</p>
+    </footer>
+
+    <script src="js/matchTable.js"></script>
+</body>
+</html>
