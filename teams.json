@@ -1,0 +1,144 @@
+{
+  "teams": [
+    {
+      "name": "Glantaf",
+      "competitions": ["Welsh", "Cardiff", "Friendlies"],
+      "played": 0,
+      "wins": 0,
+      "gf": 0,
+      "ga": 0,
+      "gd": 0,
+      "notes": "Key striker: John D."
+    },
+    {
+      "name": "Cardiff High",
+      "competitions": ["Welsh", "Cardiff", "Friendlies"],
+      "played": 0,
+      "wins": 0,
+      "gf": 0,
+      "ga": 0,
+      "gd": 0,
+      "notes": ""
+    },
+    {
+      "name": "Corpus Christi",
+      "competitions": ["Welsh", "Cardiff", "Friendlies"],
+      "played": 0,
+      "wins": 0,
+      "gf": 0,
+      "ga": 0,
+      "gd": 0,
+      "notes": ""
+    },
+    {
+      "name": "Llantwit Major",
+      "competitions": ["Welsh", "Cardiff", "Friendlies"],
+      "played": 0,
+      "wins": 0,
+      "gf": 0,
+      "ga": 0,
+      "gd": 0,
+      "notes": ""
+    },
+    {
+      "name": "Bro Morgannwg",
+      "competitions": ["Welsh", "Cardiff", "Friendlies"],
+      "played": 0,
+      "wins": 0,
+      "gf": 0,
+      "ga": 0,
+      "gd": 0,
+      "notes": ""
+    },
+    {
+      "name": "Plasmawr",
+      "competitions": ["Welsh", "Cardiff", "Friendlies"],
+      "played": 0,
+      "wins": 0,
+      "gf": 0,
+      "ga": 0,
+      "gd": 0,
+      "notes": ""
+    },
+    {
+      "name": "Bishop of Llandaff",
+      "competitions": ["Welsh", "Cardiff", "Friendlies"],
+      "played": 0,
+      "wins": 0,
+      "gf": 0,
+      "ga": 0,
+      "gd": 0,
+      "notes": ""
+    },
+    {
+      "name": "Llanishen",
+      "competitions": ["Welsh", "Cardiff", "Friendlies"],
+      "played": 0,
+      "wins": 0,
+      "gf": 0,
+      "ga": 0,
+      "gd": 0,
+      "notes": ""
+    },
+    {
+      "name": "Fitzalan",
+      "competitions": ["Welsh", "Cardiff", "Friendlies"],
+      "played": 0,
+      "wins": 0,
+      "gf": 0,
+      "ga": 0,
+      "gd": 0,
+      "notes": ""
+    },
+    {
+      "name": "St Cyres",
+      "competitions": ["Welsh", "Cardiff", "Friendlies"],
+      "played": 0,
+      "wins": 0,
+      "gf": 0,
+      "ga": 0,
+      "gd": 0,
+      "notes": ""
+    },
+    {
+      "name": "Whitchurch",
+      "competitions": ["Welsh", "Cardiff", "Friendlies"],
+      "played": 0,
+      "wins": 0,
+      "gf": 0,
+      "ga": 0,
+      "gd": 0,
+      "notes": ""
+    },
+    {
+      "name": "Willows",
+      "competitions": ["Welsh", "Cardiff", "Friendlies"],
+      "played": 0,
+      "wins": 0,
+      "gf": 0,
+      "ga": 0,
+      "gd": 0,
+      "notes": ""
+    },
+    {
+      "name": "Cardiff West",
+      "competitions": ["Welsh", "Cardiff", "Friendlies"],
+      "played": 0,
+      "wins": 0,
+      "gf": 0,
+      "ga": 0,
+      "gd": 0,
+      "notes": ""
+    },
+    {
+      "name": "Mary Immaculate",
+      "competitions": ["Welsh", "Cardiff", "Friendlies"],
+      "played": 0,
+      "wins": 0,
+      "gf": 0,
+      "ga": 0,
+      "gd": 0,
+      "notes": ""
+    }
+  ]
+}
