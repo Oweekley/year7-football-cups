@@ -3,34 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Year 7 Cups Dashboard 2025</title>
+    <title data-i18n="dashboardTitle">Year 7 Cups Dashboard 2025</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header>
-        <h1>🏆 Year 7 Cups Dashboard 2025</h1>
+        <h1 data-i18n="dashboardTitle">🏆 Year 7 Cups Dashboard 2025</h1>
         <nav>
-            <a href="index.html">Dashboard</a>
-			<a href="teamCard.html">Team Dashboard</a>
-            <a href="brackets.html">Brackets</a>
-			<a href="matchTable.html">Match Table</a>
+            <a href="index.html" data-i18n="dashboard">Dashboard</a>
+            <a href="teamCard.html" data-i18n="teamDashboard">Team Dashboard</a>
+            <a href="brackets.html" data-i18n="brackets">Brackets</a>
         </nav>
+        <!-- Language Switch Buttons -->
+        <div class="lang-switch">
+            <button id="lang-en">EN</button>
+            <button id="lang-cy">CY</button>
+        </div>
     </header>
 
     <main>
 
         <!-- ===== WELSH CUP ===== -->
-      <section class="cup-section" id="welsh-cup">
-            <h2>Welsh Cup Overview</h2>
+        <section class="cup-section" id="welsh-cup">
+            <h2 data-i18n="welshCupOverview">Welsh Cup Overview</h2>
             <div class="selectors">
                 <div>
-                    <label for="welsh-team">Select Team:</label>
+                    <label for="welsh-team" data-i18n="selectTeam">Select Team:</label>
                     <select id="welsh-team">
                         <option value="">--Choose a Team--</option>
                     </select>
                 </div>
                 <div>
-                    <label for="welsh-data">Select Data:</label>
+                    <label for="welsh-data" data-i18n="selectData">Select Data:</label>
                     <select id="welsh-data">
                         <option value="">--Team Stats / Match History--</option>
                     </select>
@@ -39,20 +43,20 @@
             <div class="dynamic-display" id="welsh-display">
                 <!-- Welsh Cup stats / matches will be injected here -->
             </div>
-      </section>
+        </section>
 
         <!-- ===== CARDIFF CUP ===== -->
-      <section class="cup-section" id="cardiff-cup">
-            <h2>Cardiff Cup Overview</h2>
+        <section class="cup-section" id="cardiff-cup">
+            <h2 data-i18n="cardiffCupOverview">Cardiff Cup Overview</h2>
             <div class="selectors">
                 <div>
-                    <label for="cardiff-team">Select Team:</label>
+                    <label for="cardiff-team" data-i18n="selectTeam">Select Team:</label>
                     <select id="cardiff-team">
                         <option value="">--Choose a Team--</option>
                     </select>
                 </div>
                 <div>
-                    <label for="cardiff-data">Select Data:</label>
+                    <label for="cardiff-data" data-i18n="selectData">Select Data:</label>
                     <select id="cardiff-data">
                         <option value="">--Team Stats / Match History--</option>
                     </select>
@@ -61,20 +65,20 @@
             <div class="dynamic-display" id="cardiff-display">
                 <!-- Cardiff Cup stats / matches will be injected here -->
             </div>
-      </section>
+        </section>
 
         <!-- ===== FRIENDLIES ===== -->
         <section class="cup-section" id="friendlies">
-            <h2>Friendlies Overview</h2>
+            <h2 data-i18n="friendliesOverview">Friendlies Overview</h2>
             <div class="selectors">
                 <div>
-                    <label for="friendlies-team">Select Team:</label>
+                    <label for="friendlies-team" data-i18n="selectTeam">Select Team:</label>
                     <select id="friendlies-team">
                         <option value="">--Choose a Team--</option>
                     </select>
                 </div>
                 <div>
-                    <label for="friendlies-data">Select Data:</label>
+                    <label for="friendlies-data" data-i18n="selectData">Select Data:</label>
                     <select id="friendlies-data">
                         <option value="">--Team Stats / Match History--</option>
                     </select>
@@ -85,26 +89,10 @@
             </div>
         </section>
 
-        <!-- ===== COMBINED TEAM STATS ===== -->
-        <section class="cup-section" id="combined-stats">
-            <h2>Combined Team Stats</h2>
-            <div class="dynamic-display" id="combined-display">
-                <!-- Combined stats table goes here -->
-            </div>
-        </section>
-
-        <!-- ===== CUP BRACKETS ===== -->
-        <section class="cup-section" id="brackets">
-            <h2>Year 7 Cup Brackets</h2>
-            <div class="dynamic-display" id="brackets-display">
-                <!-- Brackets visualization injected by JS -->
-            </div>
-        </section>
-
-</main>
+    </main>
 
     <footer>
-        <p>© 2025 Year 7 Cups Dashboard</p>
+        <p>© 2025 <span data-i18n="dashboardTitle">Year 7 Cups Dashboard</span></p>
     </footer>
 
     <script src="script.js"></script>

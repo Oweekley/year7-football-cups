@@ -1,4 +1,87 @@
 // =======================
+// TRANSLATIONS & LANGUAGE TOGGLE
+// =======================
+const translations = {
+    en: {
+        dashboardTitle: "Year 7 Cups Dashboard 2025",
+        dashboard: "Dashboard",
+        teamDashboard: "Team Dashboard",
+        brackets: "Brackets",
+        welshCupOverview: "Welsh Cup Overview",
+        selectTeam: "Select Team:",
+        selectData: "Select Data:",
+        cardiffCupOverview: "Cardiff Cup Overview",
+        friendliesOverview: "Friendlies Overview",
+        stats: "Stats",
+        played: "Played",
+        wins: "Wins",
+        gf: "GF",
+        ga: "GA",
+        gd: "GD",
+        notes: "Notes:",
+        welshMatches: "Welsh Matches",
+        round: "Round",
+        deadline: "Deadline",
+        home: "Home",
+        hScore: "H Score",
+        aScore: "A Score",
+        away: "Away",
+        winner: "Winner",
+        date: "Date",
+        matchNotes: "Notes"
+    },
+    cy: {
+        dashboardTitle: "Dangosfwrdd Cwpanau Blwyddyn 7 2025",
+        dashboard: "Dangosfwrdd",
+        teamDashboard: "Dangosfwrdd Tîm",
+        brackets: "Braketiau",
+        welshCupOverview: "Trosolwg Cwpan Cymru",
+        selectTeam: "Dewiswch Dîm:",
+        selectData: "Dewiswch Ddata:",
+        cardiffCupOverview: "Trosolwg Cwpan Caerdydd",
+        friendliesOverview: "Trosolwg Cyfeillgarwch",
+        stats: "Ystadegau",
+        played: "Chwaraeodd",
+        wins: "Enillodd",
+        gf: "Gôl I",
+        ga: "Gôl Yn Erbyn",
+        gd: "Gwahaniaeth Gôl",
+        notes: "Nodiadau:",
+        welshMatches: "Gemau Cymru",
+        round: "Rownd",
+        deadline: "Dyddiad Cau",
+        home: "Cartref",
+        hScore: "SG Cartref",
+        aScore: "SG Allan",
+        away: "Allan",
+        winner: "Enillydd",
+        date: "Dyddiad",
+        matchNotes: "Nodiadau"
+    }
+};
+
+let currentLang = 'en';
+
+function switchLanguage(lang) {
+    currentLang = lang;
+
+    // Update all elements with data-i18n
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.dataset.i18n;
+        if (translations[lang][key]) el.textContent = translations[lang][key];
+    });
+
+    // Update all dynamic content
+    Object.keys(dropdowns).forEach(cup => updateDisplay(cup));
+    updateTeamCardDisplay();
+    renderMatches();
+    if (welshBracketContainer && cardiffBracketContainer) {
+        renderBracket('Welsh', welshData, welshBracketContainer);
+        renderBracket('Cardiff', cardiffData, cardiffBracketContainer);
+    }
+}
+
+// =======================
 // GLOBAL JSON VARIABLES
 // =======================
 let teamsData = [];
@@ -52,7 +135,6 @@ async function loadAllData() {
         console.error('Error loading JSON:', err);
     }
 
-    // Initialize dropdowns if they exist
     Object.keys(dropdowns).forEach(cup => {
         if (dropdowns[cup].team && dropdowns[cup].data) {
             populateDropdowns(cup);
@@ -60,14 +142,8 @@ async function loadAllData() {
         }
     });
 
-    if (teamCardSelect && teamCardDataSelect) {
-        populateTeamCardDropdowns();
-    }
-
-    if (competitionSelect) {
-        competitionSelect.addEventListener('change', renderMatches);
-    }
-
+    if (teamCardSelect && teamCardDataSelect) populateTeamCardDropdowns();
+    if (competitionSelect) competitionSelect.addEventListener('change', renderMatches);
     if (welshBracketContainer && cardiffBracketContainer) {
         renderBracket('Welsh', welshData, welshBracketContainer);
         renderBracket('Cardiff', cardiffData, cardiffBracketContainer);
@@ -153,12 +229,8 @@ function updateDisplay(cup) {
     const team = teamsData.find(t => t.name === teamName);
     if (!team) return;
 
-    if (dataType === 'Team Stats') {
-        display.innerHTML = renderTeamStats(team);
-    } else if (dataType === 'Match History') {
-        let cupData = cup === 'Welsh' ? welshData : cup === 'Cardiff' ? cardiffData : friendliesData;
-        display.innerHTML = renderMatchHistory(teamName, cup, cupData);
-    }
+    if (dataType === 'Team Stats') display.innerHTML = renderTeamStats(team);
+    else display.innerHTML = renderMatchHistory(teamName, cup, cup === 'Welsh' ? welshData : cup === 'Cardiff' ? cardiffData : friendliesData);
 }
 
 // =======================
@@ -179,9 +251,8 @@ function updateTeamCardDisplay() {
 
     teamCardDisplay.innerHTML = '';
 
-    if (dataType === 'Team Stats') {
-        teamCardDisplay.innerHTML = renderTeamStats(team);
-    } else if (dataType === 'Match History') {
+    if (dataType === 'Team Stats') teamCardDisplay.innerHTML = renderTeamStats(team);
+    else {
         ['Welsh', 'Cardiff', 'Friendlies'].forEach(cup => {
             const cupData = cup === 'Welsh' ? welshData : cup === 'Cardiff' ? cardiffData : friendliesData;
             teamCardDisplay.innerHTML += renderMatchHistory(teamName, cup, cupData);
@@ -194,9 +265,15 @@ function updateTeamCardDisplay() {
 // =======================
 function renderTeamStats(team) {
     return `
-        <h3>${team.name} - Stats</h3>
+        <h3>${team.name} - ${translations[currentLang].stats}</h3>
         <table>
-            <tr><th>Played</th><th>Wins</th><th>GF</th><th>GA</th><th>GD</th></tr>
+            <tr>
+                <th>${translations[currentLang].played}</th>
+                <th>${translations[currentLang].wins}</th>
+                <th>${translations[currentLang].gf}</th>
+                <th>${translations[currentLang].ga}</th>
+                <th>${translations[currentLang].gd}</th>
+            </tr>
             <tr>
                 <td>${team.played}</td>
                 <td>${team.wins}</td>
@@ -205,7 +282,7 @@ function renderTeamStats(team) {
                 <td>${team.gd}</td>
             </tr>
         </table>
-        <p>Notes: ${team.notes}</p>
+        <p>${translations[currentLang].notes} ${team.notes}</p>
     `;
 }
 
@@ -213,13 +290,21 @@ function renderTeamStats(team) {
 // HELPER: RENDER MATCH HISTORY
 // =======================
 function renderMatchHistory(teamName, cupName, data) {
-    let html = `<h3>${cupName} Matches</h3>`;
+    let html = `<h3>${translations[currentLang][cupName.toLowerCase() + 'Matches'] || cupName + ' Matches'}</h3>`;
 
     if (cupName !== 'Friendlies') {
         data.rounds?.forEach(round => {
-            html += `<h4>Round ${round.round || ''} - Deadline: ${round.deadline || '-'}</h4>`;
+            html += `<h4>${translations[currentLang].round} ${round.round || ''} - ${translations[currentLang].deadline}: ${round.deadline || '-'}</h4>`;
             html += `<table>
-                <tr><th>Home</th><th>H Score</th><th>A Score</th><th>Away</th><th>Winner</th><th>Date</th><th>Notes</th></tr>`;
+                <tr>
+                    <th>${translations[currentLang].home}</th>
+                    <th>${translations[currentLang].hScore}</th>
+                    <th>${translations[currentLang].aScore}</th>
+                    <th>${translations[currentLang].away}</th>
+                    <th>${translations[currentLang].winner}</th>
+                    <th>${translations[currentLang].date}</th>
+                    <th>${translations[currentLang].matchNotes}</th>
+                </tr>`;
             round.games?.forEach(game => {
                 if (game.home === teamName || game.away === teamName) {
                     html += `<tr>
@@ -265,14 +350,22 @@ function renderMatches() {
     matchesDisplay.innerHTML = '';
     if (!competition) return;
 
-    let data = competition === 'Welsh' ? welshData : competition === 'Cardiff' ? cardiffData : friendliesData;
-    let html = `<h2>${competition} Matches</h2>`;
+    const data = competition === 'Welsh' ? welshData : competition === 'Cardiff' ? cardiffData : friendliesData;
+    let html = `<h2>${competition} ${translations[currentLang].matchTable}</h2>`;
 
     if (competition !== 'Friendlies') {
         data.rounds?.forEach(round => {
-            html += `<h3>Round ${round.round || ''} - Deadline: ${round.deadline || '-'}</h3>`;
+            html += `<h3>${translations[currentLang].round} ${round.round || ''} - ${translations[currentLang].deadline}: ${round.deadline || '-'}</h3>`;
             html += `<table>
-                <tr><th>Home</th><th>H Score</th><th>A Score</th><th>Away</th><th>Winner</th><th>Date</th><th>Notes</th></tr>`;
+                <tr>
+                    <th>${translations[currentLang].home}</th>
+                    <th>${translations[currentLang].hScore}</th>
+                    <th>${translations[currentLang].aScore}</th>
+                    <th>${translations[currentLang].away}</th>
+                    <th>${translations[currentLang].winner}</th>
+                    <th>${translations[currentLang].date}</th>
+                    <th>${translations[currentLang].matchNotes}</th>
+                </tr>`;
             round.games?.forEach(game => {
                 html += `<tr>
                     <td>${game.home}</td>
@@ -288,7 +381,15 @@ function renderMatches() {
         });
     } else {
         html += `<table>
-            <tr><th>Home</th><th>H Score</th><th>A Score</th><th>Away</th><th>Winner</th><th>Date</th><th>Notes</th></tr>`;
+            <tr>
+                <th>${translations[currentLang].home}</th>
+                <th>${translations[currentLang].hScore}</th>
+                <th>${translations[currentLang].aScore}</th>
+                <th>${translations[currentLang].away}</th>
+                <th>${translations[currentLang].winner}</th>
+                <th>${translations[currentLang].date}</th>
+                <th>${translations[currentLang].matchNotes}</th>
+            </tr>`;
         data.games?.forEach(game => {
             html += `<tr>
                 <td>${game.home}</td>
@@ -318,7 +419,7 @@ function renderBracket(cupName, data, container) {
         roundDiv.className = 'round';
 
         const roundTitle = document.createElement('h3');
-        roundTitle.textContent = `Round ${round.round} - Deadline: ${round.deadline || '-'}`;
+        roundTitle.textContent = `${translations[currentLang].round} ${round.round} - ${translations[currentLang].deadline}: ${round.deadline || '-'}`;
         roundDiv.appendChild(roundTitle);
 
         const gamesDiv = document.createElement('div');
@@ -340,6 +441,12 @@ function renderBracket(cupName, data, container) {
         container.appendChild(roundDiv);
     });
 }
+
+// =======================
+// LANGUAGE BUTTONS
+// =======================
+document.getElementById('lang-en')?.addEventListener('click', () => switchLanguage('en'));
+document.getElementById('lang-cy')?.addEventListener('click', () => switchLanguage('cy'));
 
 // =======================
 // INITIALIZE

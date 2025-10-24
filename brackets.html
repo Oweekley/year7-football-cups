@@ -3,30 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Year 7 Cups Brackets</title>
+    <title data-i18n="brackets">Year 7 Cups Brackets</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header>
-        <h1>🏆 Year 7 Cups Brackets 2025</h1>
+        <h1 data-i18n="brackets">🏆 Year 7 Cups Brackets 2025</h1>
         <nav>
-            <a href="index.html">Dashboard</a>
-			<a href="teamCard.html">Team Dashboard</a>
-            <a href="brackets.html">Brackets</a>
-			<a href="matchTable.html">Match Table</a>
+            <a href="index.html" data-i18n="dashboard">Dashboard</a>
+            <a href="teamCard.html" data-i18n="teamDashboard">Team Dashboard</a>
+            <a href="brackets.html" data-i18n="brackets">Brackets</a>
         </nav>
+        <!-- Language Switch Buttons -->
+        <div class="lang-switch">
+            <button id="lang-en">EN</button>
+            <button id="lang-cy">CY</button>
+        </div>
     </header>
 
     <main>
         <section id="welsh-bracket">
-            <h2>Welsh Cup Bracket</h2>
+            <h2 data-i18n="welshCupOverview">Welsh Cup Bracket</h2>
             <div class="bracket-container" id="welsh-bracket-container">
                 <!-- Dynamically generated Welsh Cup bracket -->
             </div>
         </section>
 
         <section id="cardiff-bracket">
-            <h2>Cardiff Cup Bracket</h2>
+            <h2 data-i18n="cardiffCupOverview">Cardiff Cup Bracket</h2>
             <div class="bracket-container" id="cardiff-bracket-container">
                 <!-- Dynamically generated Cardiff Cup bracket -->
             </div>
@@ -34,7 +38,7 @@
     </main>
 
     <footer>
-        <p>© 2025 Year 7 Cups Dashboard</p>
+        <p>© 2025 <span data-i18n="dashboardTitle">Year 7 Cups Dashboard</span></p>
     </footer>
 
     <script src="script.js"></script>
