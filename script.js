@@ -1,68 +1,72 @@
-// Load JSON files using fetch
+// Elements
+const welshTeamSelect = document.getElementById('welsh-team');
+const welshDataSelect = document.getElementById('welsh-data');
+const welshDisplay = document.getElementById('welsh-display');
+
+const cardiffTeamSelect = document.getElementById('cardiff-team');
+const cardiffDataSelect = document.getElementById('cardiff-data');
+const cardiffDisplay = document.getElementById('cardiff-display');
+
 let teamsData = [];
 let welshData = {};
 let cardiffData = {};
 
-// Elements
-const teamSelect = document.getElementById('teamSelect'); // e.g., D6
-const dataSelect = document.getElementById('dataSelect'); // e.g., H6
-const displayArea = document.getElementById('displayArea'); // area to show stats
-
-// Load all JSONs
+// Load JSONs
 async function loadData() {
-    teamsData = await fetch('data/teams.json').then(res => res.json()).then(data => data.teams);
-    welshData = await fetch('data/welsh.json').then(res => res.json());
-    cardiffData = await fetch('data/cardiff.json').then(res => res.json());
+    teamsData = await fetch('data/teams.json').then(r => r.json()).then(d => d.teams);
+    welshData = await fetch('data/welsh.json').then(r => r.json());
+    cardiffData = await fetch('data/cardiff.json').then(r => r.json());
 
-    populateTeamDropdown();
-    populateDataDropdown();
+    populateDropdowns();
 }
 
-// Populate team dropdown
-function populateTeamDropdown() {
-    teamsData.forEach(team => {
-        const option = document.createElement('option');
-        option.value = team.name;
-        option.text = team.name;
-        teamSelect.appendChild(option);
+function populateDropdowns() {
+    [welshTeamSelect, cardiffTeamSelect].forEach(select => {
+        teamsData.forEach(team => {
+            const opt = document.createElement('option');
+            opt.value = team.name;
+            opt.text = team.name;
+            select.appendChild(opt);
+        });
     });
-}
 
-// Populate data dropdown
-function populateDataDropdown() {
-    const options = ["Team Stats", "Match History"];
-    options.forEach(opt => {
-        const option = document.createElement('option');
-        option.value = opt;
-        option.text = opt;
-        dataSelect.appendChild(option);
+    [welshDataSelect, cardiffDataSelect].forEach(select => {
+        ["Team Stats", "Match History"].forEach(type => {
+            const opt = document.createElement('option');
+            opt.value = type;
+            opt.text = type;
+            select.appendChild(opt);
+        });
     });
 }
 
 // Event listeners
-teamSelect.addEventListener('change', updateDisplay);
-dataSelect.addEventListener('change', updateDisplay);
+welshTeamSelect.addEventListener('change', () => updateDisplay('Welsh'));
+welshDataSelect.addEventListener('change', () => updateDisplay('Welsh'));
+cardiffTeamSelect.addEventListener('change', () => updateDisplay('Cardiff'));
+cardiffDataSelect.addEventListener('change', () => updateDisplay('Cardiff'));
 
-// Update display area
-function updateDisplay() {
+// Display logic
+function updateDisplay(cup) {
+    const teamSelect = cup === 'Welsh' ? welshTeamSelect : cardiffTeamSelect;
+    const dataSelect = cup === 'Welsh' ? welshDataSelect : cardiffDataSelect;
+    const displayArea = cup === 'Welsh' ? welshDisplay : cardiffDisplay;
+    const cupData = cup === 'Welsh' ? welshData : cardiffData;
+
     const teamName = teamSelect.value;
     const dataType = dataSelect.value;
-
     if (!teamName || !dataType) return;
 
-    displayArea.innerHTML = ''; // clear previous display
+    displayArea.innerHTML = '';
 
     const team = teamsData.find(t => t.name === teamName);
     if (!team) return;
 
     if (dataType === "Team Stats") {
-        // Display overall stats
-        const statsHTML = `
+        displayArea.innerHTML = `
             <h3>${team.name} - Stats</h3>
             <table>
-                <tr>
-                    <th>Played</th><th>Wins</th><th>GF</th><th>GA</th><th>GD</th>
-                </tr>
+                <tr><th>Played</th><th>Wins</th><th>GF</th><th>GA</th><th>GD</th></tr>
                 <tr>
                     <td>${team.played}</td>
                     <td>${team.wins}</td>
@@ -73,36 +77,28 @@ function updateDisplay() {
             </table>
             <p>Notes: ${team.notes}</p>
         `;
-        displayArea.innerHTML = statsHTML;
-
     } else if (dataType === "Match History") {
-        // Display matches from Welsh and Cardiff
-        const competitions = ["Welsh", "Cardiff"];
-        competitions.forEach(cup => {
-            const cupData = cup === "Welsh" ? welshData : cardiffData;
-            let html = `<h3>${cup} Cup - Match History</h3>`;
-            cupData.rounds.forEach(round => {
-                html += `<h4>Round ${round.round} (Deadline: ${round.deadline})</h4>`;
-                html += `<table>
-                    <tr><th>Home</th><th>H Score</th><th>A Score</th><th>Away</th><th>Winner</th><th>Date</th></tr>`;
-                round.games.forEach(game => {
-                    if (game.home === teamName || game.away === teamName) {
-                        html += `<tr>
-                            <td>${game.home}</td>
-                            <td>${game.h_score !== undefined ? game.h_score : ""}</td>
-                            <td>${game.a_score !== undefined ? game.a_score : ""}</td>
-                            <td>${game.away}</td>
-                            <td>${game.winner !== null ? game.winner : ""}</td>
-                            <td>${game.date !== null ? game.date : ""}</td>
-                        </tr>`;
-                    }
-                });
-                html += `</table>`;
+        let html = `<h3>${cup} Cup - Match History</h3>`;
+        cupData.rounds.forEach(round => {
+            html += `<h4>Round ${round.round} (Deadline: ${round.deadline})</h4>`;
+            html += `<table><tr><th>Home</th><th>H Score</th><th>A Score</th><th>Away</th><th>Winner</th><th>Date</th></tr>`;
+            round.games.forEach(game => {
+                if (game.home === teamName || game.away === teamName) {
+                    html += `<tr>
+                        <td>${game.home}</td>
+                        <td>${game.h_score ?? ''}</td>
+                        <td>${game.a_score ?? ''}</td>
+                        <td>${game.away}</td>
+                        <td>${game.winner ?? ''}</td>
+                        <td>${game.date ?? ''}</td>
+                    </tr>`;
+                }
             });
-            displayArea.innerHTML += html;
+            html += `</table>`;
         });
+        displayArea.innerHTML = html;
     }
 }
 
-// Initialize
+// Init
 loadData();

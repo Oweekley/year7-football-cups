@@ -1,76 +1,49 @@
-/* Basic Reset */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
 body {
-    background-color: #f0f4f7;
-    color: #333;
-    line-height: 1.6;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0 20px;
+    background: #f4f4f4;
 }
 
 header {
-    background-color: #00539C;
-    color: #fff;
+    background: #004080;
+    color: white;
     padding: 20px 0;
     text-align: center;
 }
 
-header h1 {
-    font-size: 2rem;
-}
-
-main {
-    max-width: 1200px;
-    margin: 20px auto;
-    padding: 0 20px;
+h1, h2, h3 {
+    margin: 10px 0;
 }
 
 .cup-section {
-    background-color: #fff;
-    padding: 20px;
-    margin-bottom: 25px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-.cup-section h2 {
-    color: #00539C;
-    margin-bottom: 15px;
+    background: white;
+    padding: 15px;
+    margin: 20px 0;
+    border-radius: 8px;
+    box-shadow: 0 0 8px rgba(0,0,0,0.1);
 }
 
 .selectors {
     display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    margin-bottom: 15px;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
 }
 
-.selectors label {
-    font-weight: bold;
+.dynamic-display table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
 }
 
-.selectors select {
-    padding: 5px 10px;
-    border-radius: 5px;
+.dynamic-display th, .dynamic-display td {
     border: 1px solid #ccc;
-}
-
-.dynamic-display {
-    background-color: #f9f9f9;
-    padding: 15px;
-    border-radius: 5px;
-    min-height: 80px;
-}
-
-footer {
+    padding: 5px;
     text-align: center;
-    padding: 15px;
-    background-color: #00539C;
-    color: #fff;
-    margin-top: 30px;
-}/* CSS Document */
+}
 
+.dynamic-display th {
+    background-color: #004080;
+    color: white;
+}
