@@ -65,13 +65,13 @@ let currentLang = 'en';
 function switchLanguage(lang) {
     currentLang = lang;
 
-    // Update all elements with data-i18n
+    // Update static elements
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.dataset.i18n;
         if (translations[lang][key]) el.textContent = translations[lang][key];
     });
 
-    // Update all dynamic content
+    // Update dynamic content
     Object.keys(dropdowns).forEach(cup => updateDisplay(cup));
     updateTeamCardDisplay();
     renderMatches();
@@ -90,7 +90,7 @@ let cardiffData = {};
 let friendliesData = {};
 
 // =======================
-// DOM ELEMENTS (if exist)
+// DOM ELEMENTS
 // =======================
 const dropdowns = {
     Welsh: {
@@ -123,7 +123,7 @@ const welshBracketContainer = document.getElementById('welsh-bracket-container')
 const cardiffBracketContainer = document.getElementById('cardiff-bracket-container');
 
 // =======================
-// LOAD JSON DATA
+// LOAD JSON DATA + CALCULATE STATS
 // =======================
 async function loadAllData() {
     try {
@@ -135,6 +135,10 @@ async function loadAllData() {
         console.error('Error loading JSON:', err);
     }
 
+    // ✅ Calculate stats from all matches
+    calculateTeamStats();
+
+    // Populate dropdowns etc.
     Object.keys(dropdowns).forEach(cup => {
         if (dropdowns[cup].team && dropdowns[cup].data) {
             populateDropdowns(cup);
@@ -148,6 +152,54 @@ async function loadAllData() {
         renderBracket('Welsh', welshData, welshBracketContainer);
         renderBracket('Cardiff', cardiffData, cardiffBracketContainer);
     }
+}
+
+// =======================
+// CALCULATE TEAM STATS
+// =======================
+function calculateTeamStats() {
+    // Reset stats
+    teamsData.forEach(t => {
+        t.played = 0;
+        t.wins = 0;
+        t.gf = 0;
+        t.ga = 0;
+        t.gd = 0;
+    });
+
+    const updateStats = (game) => {
+        if (game.h_score !== null && game.a_score !== null && game.home && game.away && game.away !== "BYE") {
+            const home = teamsData.find(t => t.name === game.home);
+            const away = teamsData.find(t => t.name === game.away);
+            if (!home || !away) return;
+
+            // Played
+            home.played++;
+            away.played++;
+
+            // Goals
+            home.gf += game.h_score;
+            home.ga += game.a_score;
+            away.gf += game.a_score;
+            away.ga += game.h_score;
+
+            // Wins
+            if (game.h_score > game.a_score) home.wins++;
+            else if (game.a_score > game.h_score) away.wins++;
+        }
+    };
+
+    // Process Welsh + Cardiff Cups
+    [welshData, cardiffData].forEach(cup => {
+        cup.rounds?.forEach(round => {
+            round.games?.forEach(updateStats);
+        });
+    });
+
+    // Calculate Goal Difference
+    teamsData.forEach(t => {
+        t.gd = t.gf - t.ga;
+    });
 }
 
 // =======================
@@ -217,13 +269,10 @@ function updateDisplay(cup) {
     const teamSelect = dropdowns[cup].team;
     const dataSelect = dropdowns[cup].data;
     const display = dropdowns[cup].display;
-
     if (!teamSelect || !dataSelect || !display) return;
 
     const teamName = teamSelect.value;
     const dataType = dataSelect.value;
-    if (!teamName || !dataType) return;
-
     display.innerHTML = '';
 
     const team = teamsData.find(t => t.name === teamName);
@@ -234,22 +283,17 @@ function updateDisplay(cup) {
 }
 
 // =======================
-// UPDATE DISPLAY FOR TEAM CARD PAGE
+// TEAM CARD PAGE DISPLAY
 // =======================
 function updateTeamCardDisplay() {
     if (!teamCardSelect || !teamCardDataSelect || !teamCardDisplay) return;
 
     const teamName = teamCardSelect.value;
     const dataType = teamCardDataSelect.value;
-    if (!teamName || !dataType) {
-        teamCardDisplay.innerHTML = '';
-        return;
-    }
+    teamCardDisplay.innerHTML = '';
 
     const team = teamsData.find(t => t.name === teamName);
     if (!team) return;
-
-    teamCardDisplay.innerHTML = '';
 
     if (dataType === 'Team Stats') teamCardDisplay.innerHTML = renderTeamStats(team);
     else {
@@ -261,7 +305,7 @@ function updateTeamCardDisplay() {
 }
 
 // =======================
-// HELPER: RENDER TEAM STATS
+// RENDER TEAM STATS TABLE
 // =======================
 function renderTeamStats(team) {
     return `
@@ -287,57 +331,38 @@ function renderTeamStats(team) {
 }
 
 // =======================
-// HELPER: RENDER MATCH HISTORY
+// RENDER MATCH HISTORY
 // =======================
 function renderMatchHistory(teamName, cupName, data) {
     let html = `<h3>${translations[currentLang][cupName.toLowerCase() + 'Matches'] || cupName + ' Matches'}</h3>`;
 
-    if (cupName !== 'Friendlies') {
-        data.rounds?.forEach(round => {
-            html += `<h4>${translations[currentLang].round} ${round.round || ''} - ${translations[currentLang].deadline}: ${round.deadline || '-'}</h4>`;
-            html += `<table>
-                <tr>
-                    <th>${translations[currentLang].home}</th>
-                    <th>${translations[currentLang].hScore}</th>
-                    <th>${translations[currentLang].aScore}</th>
-                    <th>${translations[currentLang].away}</th>
-                    <th>${translations[currentLang].winner}</th>
-                    <th>${translations[currentLang].date}</th>
-                    <th>${translations[currentLang].matchNotes}</th>
-                </tr>`;
-            round.games?.forEach(game => {
-                if (game.home === teamName || game.away === teamName) {
-                    html += `<tr>
-                        <td>${game.home}</td>
-                        <td>${game.h_score ?? '-'}</td>
-                        <td>${game.a_score ?? '-'}</td>
-                        <td>${game.away}</td>
-                        <td>${game.winner ?? '-'}</td>
-                        <td>${game.date ?? '-'}</td>
-                        <td>${game.notes ?? ''}</td>
-                    </tr>`;
-                }
-            });
-            html += `</table>`;
-        });
-    } else {
-        data.games?.forEach(game => {
+    data.rounds?.forEach(round => {
+        html += `<h4>${translations[currentLang].round} ${round.round || ''} - ${translations[currentLang].deadline}: ${round.deadline || '-'}</h4>`;
+        html += `<table>
+            <tr>
+                <th>${translations[currentLang].home}</th>
+                <th>${translations[currentLang].hScore}</th>
+                <th>${translations[currentLang].aScore}</th>
+                <th>${translations[currentLang].away}</th>
+                <th>${translations[currentLang].winner}</th>
+                <th>${translations[currentLang].date}</th>
+                <th>${translations[currentLang].matchNotes}</th>
+            </tr>`;
+        round.games?.forEach(game => {
             if (game.home === teamName || game.away === teamName) {
-                html += `<table>
-                    <tr>
-                        <td>${game.home}</td>
-                        <td>${game.h_score ?? '-'}</td>
-                        <td>${game.a_score ?? '-'}</td>
-                        <td>${game.away}</td>
-                        <td>${game.winner ?? '-'}</td>
-                        <td>${game.date ?? '-'}</td>
-                        <td>${game.notes ?? ''}</td>
-                    </tr>
-                </table>`;
+                html += `<tr>
+                    <td>${game.home}</td>
+                    <td>${game.h_score ?? '-'}</td>
+                    <td>${game.a_score ?? '-'}</td>
+                    <td>${game.away}</td>
+                    <td>${game.winner ?? '-'}</td>
+                    <td>${game.date ?? '-'}</td>
+                    <td>${game.notes ?? ''}</td>
+                </tr>`;
             }
         });
-    }
-
+        html += `</table>`;
+    });
     return html;
 }
 
@@ -351,35 +376,10 @@ function renderMatches() {
     if (!competition) return;
 
     const data = competition === 'Welsh' ? welshData : competition === 'Cardiff' ? cardiffData : friendliesData;
-    let html = `<h2>${competition} ${translations[currentLang].matchTable}</h2>`;
+    let html = `<h2>${competition} ${translations[currentLang].matchTable || 'Match Table'}</h2>`;
 
-    if (competition !== 'Friendlies') {
-        data.rounds?.forEach(round => {
-            html += `<h3>${translations[currentLang].round} ${round.round || ''} - ${translations[currentLang].deadline}: ${round.deadline || '-'}</h3>`;
-            html += `<table>
-                <tr>
-                    <th>${translations[currentLang].home}</th>
-                    <th>${translations[currentLang].hScore}</th>
-                    <th>${translations[currentLang].aScore}</th>
-                    <th>${translations[currentLang].away}</th>
-                    <th>${translations[currentLang].winner}</th>
-                    <th>${translations[currentLang].date}</th>
-                    <th>${translations[currentLang].matchNotes}</th>
-                </tr>`;
-            round.games?.forEach(game => {
-                html += `<tr>
-                    <td>${game.home}</td>
-                    <td>${game.h_score ?? '-'}</td>
-                    <td>${game.a_score ?? '-'}</td>
-                    <td>${game.away}</td>
-                    <td>${game.winner ?? '-'}</td>
-                    <td>${game.date ?? '-'}</td>
-                    <td>${game.notes ?? ''}</td>
-                </tr>`;
-            });
-            html += `</table>`;
-        });
-    } else {
+    data.rounds?.forEach(round => {
+        html += `<h3>${translations[currentLang].round} ${round.round || ''} - ${translations[currentLang].deadline}: ${round.deadline || '-'}</h3>`;
         html += `<table>
             <tr>
                 <th>${translations[currentLang].home}</th>
@@ -390,7 +390,7 @@ function renderMatches() {
                 <th>${translations[currentLang].date}</th>
                 <th>${translations[currentLang].matchNotes}</th>
             </tr>`;
-        data.games?.forEach(game => {
+        round.games?.forEach(game => {
             html += `<tr>
                 <td>${game.home}</td>
                 <td>${game.h_score ?? '-'}</td>
@@ -402,7 +402,7 @@ function renderMatches() {
             </tr>`;
         });
         html += `</table>`;
-    }
+    });
 
     matchesDisplay.innerHTML = html;
 }
