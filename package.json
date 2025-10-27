@@ -1,0 +1,23 @@
+{
+  "name": "year7-football-cups",
+  "version": "1.0.0",
+  "description": "This project provides a dashboard and bracket display for the Year 7 Football Cups competition, including Welsh Cup, Cardiff Cup, and Friendlies data.",
+  "main": "scraper.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Oweekley/year7-football-cups.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Oweekley/year7-football-cups/issues"
+  },
+  "homepage": "https://github.com/Oweekley/year7-football-cups#readme",
+  "dependencies": {
+    "puppeteer": "^24.26.1"
+  }
+}
