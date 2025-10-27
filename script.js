@@ -42,19 +42,19 @@ const translations = {
   cy: {
     dashboardTitle: "Dangosfwrdd Cwpanau Blwyddyn 7 2025",
     dashboard: "Dangosfwrdd",
-    teamDashboard: "Dangosfwrdd Tîm",
+    teamDashboard: "Dangosfwrdd TÃ®m",
     brackets: "Braketiau",
     welshCupOverview: "Trosolwg Cwpan Cymru",
-    selectTeam: "Dewiswch Dîm:",
+    selectTeam: "Dewiswch DÃ®m:",
     selectData: "Dewiswch Ddata:",
     cardiffCupOverview: "Trosolwg Cwpan Caerdydd",
     friendliesOverview: "Trosolwg Gemau Cyfeillgar",
     stats: "Ystadegau",
     played: "Gemau",
     wins: "Enillodd",
-    gf: "Gôl I",
-    ga: "Gôl Yn Erbyn",
-    gd: "Gwahaniaeth Gôl",
+    gf: "GÃ´l I",
+    ga: "GÃ´l Yn Erbyn",
+    gd: "Gwahaniaeth GÃ´l",
     notes: "Nodiadau:",
     welshMatches: "Gemau Cymru",
     round: "Rownd",
@@ -147,13 +147,26 @@ async function loadData() {
       }
     };
 
-    const [teamsRaw, welsh, cardiff, friendlies, updated] = await Promise.all([
-      safeFetch("teams.json"),
-      safeFetch("welsh.json"),
-      safeFetch("cardiff.json"),
-      safeFetch("friendlies.json"),
-      safeFetch("last_updated.json").catch(() => ({ lastUpdated: "Unknown" }))
-    ]);
+    async function loadData() {
+  try {
+    const urls = ["teams.json", "welsh.json", "cardiff.json", "friendlies.json", "last_updated.json"];
+    for (const url of urls) {
+      console.log(" Trying to load:", url);
+      const res = await fetch(url);
+      const text = await res.text();
+      try {
+        JSON.parse(text);
+        console.log(" Parsed successfully:", url);
+      } catch (e) {
+        console.error(" JSON error in", url, e.message);
+        console.log(" First 200 chars:", text.slice(0, 200));
+        throw e;
+      }
+    }
+  } catch (err) {
+    console.error(" Error loading data:", err);
+  }
+}
 
     console.log(" All JSON files fetched successfully!");
 
@@ -371,7 +384,7 @@ themeToggle?.addEventListener("click", () => {
 function renderAll() {
   // Make sure teams actually exist before rendering dropdowns
   if (!state.teams || !state.teams.length) {
-    console.warn(" No teams found — check teams.json");
+    console.warn(" No teams found â€” check teams.json");
     return;
   }
 
