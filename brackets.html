@@ -1,46 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="brackets">Year 7 Cups Brackets</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="brackets">Brackets | Year 7 Cups</title>
+  <meta name="description" content="Interactive knockout stage brackets for the Year 7 Welsh Cup and Cardiff Cup. View rounds, deadlines, and match results." />
+  <link rel="icon" href="favicon.png" type="image/png" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
 </head>
-<body>
-    <header>
-        <h1 data-i18n="brackets">Year 7 Cups Brackets 2025</h1>
-        <nav>
-            <a href="index.html" data-i18n="dashboard">Dashboard</a>
-            <a href="teamCard.html" data-i18n="teamDashboard">Team Dashboard</a>
-            <a href="brackets.html" data-i18n="brackets">Brackets</a>
-        </nav>
-        <!-- Language Switch Buttons -->
-        <div class="lang-switch">
-            <button id="lang-en">EN</button>
-            <button id="lang-cy">CY</button>
+
+<body class="light">
+  <!-- ================= HEADER ================= -->
+  <header>
+    <div class="header-top">
+      <h1 data-i18n="brackets">Brackets</h1>
+
+      <div class="lang-theme-controls">
+        <div class="lang-switch" role="group" aria-label="Language Switch">
+          <button id="lang-en" aria-label="Switch to English">EN</button>
+          <button id="lang-cy" aria-label="Newid i'r Gymraeg">CY</button>
         </div>
-    </header>
+        <button id="theme-toggle" class="dark-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+      </div>
+    </div>
 
-    <main>
-        <section id="welsh-bracket">
-            <h2 data-i18n="welshCupOverview">Welsh Cup Bracket</h2>
-            <div class="bracket-container" id="welsh-bracket-container">
-                <!-- Dynamically generated Welsh Cup bracket -->
-            </div>
-        </section>
+    <nav aria-label="Main Navigation">
+      <a href="index.html" data-i18n="dashboard">Dashboard</a>
+      <a href="teamCard.html" data-i18n="teamDashboard">Team Dashboard</a>
+      <a href="brackets.html" class="active" aria-current="page" data-i18n="brackets">Brackets</a>
+    </nav>
+  </header>
 
-        <section id="cardiff-bracket">
-            <h2 data-i18n="cardiffCupOverview">Cardiff Cup Bracket</h2>
-            <div class="bracket-container" id="cardiff-bracket-container">
-                <!-- Dynamically generated Cardiff Cup bracket -->
-            </div>
-        </section>
-    </main>
+  <!-- ================= MAIN ================= -->
+  <main>
+    <section class="dashboard-overview" aria-labelledby="brackets-title">
+      <h2 id="brackets-title" data-i18n="brackets">Brackets</h2>
+      <p class="subtitle">View the knockout rounds, results, and progression for each cup.</p>
 
-    <footer>
-        <p>© 2025 <span data-i18n="dashboardTitle">Year 7 Cups Dashboard</span></p>
-    </footer>
+      <!-- COMPETITION SELECT -->
+      <div class="selectors">
+        <label for="competition-select" data-i18n="selectData">Select Competition:</label>
+        <select id="competition-select" aria-label="Select Competition">
+          <option value="Welsh">Welsh Cup</option>
+          <option value="Cardiff">Cardiff Cup</option>
+          <option value="Friendlies">Friendlies</option>
+        </select>
+      </div>
 
-    <script src="script.js"></script>
+      <!-- BRACKETS DISPLAY -->
+      <div id="welsh-bracket-container" class="bracket-container">
+        <!-- Welsh Cup bracket rendered here -->
+      </div>
+      <div id="cardiff-bracket-container" class="bracket-container">
+        <!-- Cardiff Cup bracket rendered here -->
+      </div>
+    </section>
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer>
+    <p>© 2025 <span data-i18n="dashboardTitle">Year 7 Cups Dashboard</span> | Built with ❤️ by <strong>Ollie</strong></p>
+  </footer>
+
+  <script src="script.js" defer></script>
 </body>
 </html>

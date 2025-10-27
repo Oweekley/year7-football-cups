@@ -1,48 +1,74 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="teamDashboard">Year 7 Cups – Team Dashboard</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="teamDashboard">Team Dashboard | Year 7 Cups</title>
+  <meta name="description" content="View detailed stats, match history, and performance for every team in the Year 7 Football Cups." />
+  <link rel="icon" href="favicon.png" type="image/png" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
 </head>
-<body>
-    <header>
-        <h1 data-i18n="teamDashboard">Year 7 Cups – Team Dashboard 2025</h1>
-        <nav>
-            <a href="index.html" data-i18n="dashboard">Dashboard</a>
-            <a href="teamCard.html" data-i18n="teamDashboard">Team Dashboard</a>
-            <a href="brackets.html" data-i18n="brackets">Brackets</a>
-        </nav>
-        <!-- Language Switch Buttons -->
-        <div class="lang-switch">
-            <button id="lang-en">EN</button>
-            <button id="lang-cy">CY</button>
+
+<body class="light">
+  <!-- ================= HEADER ================= -->
+  <header>
+    <div class="header-top">
+      <h1 data-i18n="teamDashboard">Team Dashboard</h1>
+
+      <div class="lang-theme-controls">
+        <div class="lang-switch" role="group" aria-label="Language Switch">
+          <button id="lang-en" aria-label="Switch to English">EN</button>
+          <button id="lang-cy" aria-label="Newid i'r Gymraeg">CY</button>
         </div>
-    </header>
+        <button id="theme-toggle" class="dark-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+      </div>
+    </div>
 
-    <main>
-        <section id="team-selector">
-            <label for="team-select" data-i18n="selectTeam">Select Team:</label>
-            <select id="team-select">
-                <option value="">--Choose a Team--</option>
-            </select>
+    <nav aria-label="Main Navigation">
+      <a href="index.html" data-i18n="dashboard">Dashboard</a>
+      <a href="teamCard.html" class="active" aria-current="page" data-i18n="teamDashboard">Team Dashboard</a>
+      <a href="brackets.html" data-i18n="brackets">Brackets</a>
+    </nav>
+  </header>
 
-            <label for="data-select" data-i18n="selectData">Select Data:</label>
-            <select id="data-select">
-                <option value="">--Team Stats / Match History--</option>
-            </select>
-        </section>
+  <!-- ================= MAIN ================= -->
+  <main>
+    <section class="dashboard-overview" aria-labelledby="team-dashboard-title">
+      <h2 id="team-dashboard-title" data-i18n="teamDashboard">Team Dashboard</h2>
+      <p class="subtitle">Explore combined stats and match history for each team across all competitions.</p>
 
-        <section id="team-display">
-            <!-- Team stats and match history will be dynamically generated here -->
-        </section>
-    </main>
+      <!-- TEAM SELECT -->
+      <div class="selectors">
+        <div>
+          <label for="team-select" data-i18n="selectTeam">Select Team:</label>
+          <select id="team-select" aria-label="Select Team">
+            <option value="">--Choose a Team--</option>
+          </select>
+        </div>
 
-    <footer>
-        <p>© 2025 <span data-i18n="dashboardTitle">Year 7 Cups Dashboard</span></p>
-    </footer>
+        <div>
+          <label for="data-select" data-i18n="selectData">Select Data:</label>
+          <select id="data-select" aria-label="Select Data Type">
+            <option value="">--Team Stats / Match History--</option>
+          </select>
+        </div>
+      </div>
 
-    <script src="script.js"></script>
+      <!-- TEAM DISPLAY -->
+      <div class="dynamic-display" id="team-display" aria-live="polite">
+        <!-- Team stats or match history will render here -->
+      </div>
+    </section>
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer>
+    <p>© 2025 <span data-i18n="dashboardTitle">Year 7 Cups Dashboard</span> | Built with ❤️ by <strong>Ollie</strong></p>
+  </footer>
+
+  <script src="script.js" defer></script>
 </body>
 </html>
