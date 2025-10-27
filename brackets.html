@@ -1,37 +1,106 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- ========= META ========= -->
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  />
   <title data-i18n="brackets">Brackets | Year 7 Cups</title>
-  <meta name="description" content="Interactive knockout stage brackets for the Year 7 Welsh Cup and Cardiff Cup. View rounds, deadlines, and match results." />
+  <meta
+    name="description"
+    content="Interactive knockout stage brackets for the Year 7 Welsh Cup and Cardiff Cup. View rounds, deadlines, and match results."
+  />
+  <meta name="theme-color" content="#0077ff" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="robots" content="index,follow" />
+
+  <!-- ========= ICONS / FONTS ========= -->
   <link rel="icon" href="favicon.png" type="image/png" />
-  <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link
+    rel="preload"
+    as="style"
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+  />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+    media="print"
+    onload="this.media='all'"
+  />
+  <noscript>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </noscript>
+
+  <!-- ========= STYLES ========= -->
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preload" as="script" href="script.js" />
+
+  <!-- ========= INLINE UTILITY ========= -->
+  <style>
+    .sr-only {
+      position: absolute !important;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0);
+      white-space: nowrap; border: 0;
+    }
+    /* Smooth fade for bracket loads */
+    .bracket-container {
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .bracket-container.loaded {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    /* Placeholder state */
+    .loading-placeholder {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-muted, #777);
+      font-style: italic;
+    }
+  </style>
 </head>
 
 <body class="light">
+  <!-- Skip link for keyboard navigation -->
+  <a href="#main-content" class="sr-only">Skip to main content</a>
+
   <!-- ================= HEADER ================= -->
-  <header>
+  <header role="banner">
     <div class="header-top">
       <h1 data-i18n="dashboardTitle" tabindex="0">Year 7 Cups Dashboard 2025</h1>
 
       <div class="lang-theme-controls">
         <!-- Language Buttons -->
-        <div class="lang-switch" role="group" aria-label="Language Switch">
-          <button id="lang-en" aria-label="Switch to English">EN</button>
-          <button id="lang-cy" aria-label="Newid i'r Gymraeg">CY</button>
+        <div class="lang-switch" role="group" aria-label="Language switch">
+          <button id="lang-en" type="button" aria-label="Switch to English">EN</button>
+          <button id="lang-cy" type="button" aria-label="Newid i'r Gymraeg">CY</button>
         </div>
 
         <!-- Theme Toggle -->
-        <button id="theme-toggle" class="dark-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+        <button
+          id="theme-toggle"
+          class="dark-toggle"
+          type="button"
+          aria-label="Toggle dark mode"
+          title="Toggle dark mode"
+        >🌙</button>
       </div>
     </div>
 
     <!-- ===== NAVIGATION ===== -->
-    <nav aria-label="Main Navigation">
+    <nav aria-label="Main navigation" role="navigation">
       <a href="index.html" data-i18n="dashboard">Dashboard</a>
       <a href="teamCard.html" data-i18n="teamDashboard">Team Dashboard</a>
       <a href="brackets.html" class="active" data-i18n="brackets" aria-current="page">Brackets</a>
@@ -39,36 +108,101 @@
   </header>
 
   <!-- ================= MAIN ================= -->
-  <main>
-    <section class="dashboard-overview" aria-labelledby="brackets-title">
+  <main id="main-content" role="main">
+    <section
+      class="dashboard-overview"
+      aria-labelledby="brackets-title"
+      role="region"
+      aria-describedby="brackets-desc"
+    >
       <h2 id="brackets-title" data-i18n="brackets">Brackets</h2>
-      <p class="subtitle">View the knockout rounds, results, and progression for each cup.</p>
+      <p id="brackets-desc" class="subtitle">
+        View the knockout rounds, results, and progression for each cup.
+      </p>
 
       <!-- COMPETITION SELECT -->
-      <div class="selectors">
+      <div class="selectors" role="group" aria-label="Select competition">
         <label for="competition-select" data-i18n="selectData">Select Competition:</label>
-        <select id="competition-select" aria-label="Select Competition">
+        <select id="competition-select" aria-label="Select competition to display" autocomplete="off">
           <option value="Welsh">Welsh Cup</option>
           <option value="Cardiff">Cardiff Cup</option>
           <option value="Friendlies">Friendlies</option>
         </select>
       </div>
 
-      <!-- BRACKETS DISPLAY -->
-      <div id="welsh-bracket-container" class="bracket-container">
-        <!-- Welsh Cup bracket rendered here -->
+      <!-- BRACKET DISPLAYS -->
+      <div
+        id="welsh-bracket-container"
+        class="bracket-container"
+        role="region"
+        aria-label="Welsh Cup Bracket"
+        aria-live="polite"
+      >
+        <div class="loading-placeholder" id="welsh-loading">Loading Welsh Cup bracket...</div>
       </div>
-      <div id="cardiff-bracket-container" class="bracket-container">
-        <!-- Cardiff Cup bracket rendered here -->
+
+      <div
+        id="cardiff-bracket-container"
+        class="bracket-container"
+        role="region"
+        aria-label="Cardiff Cup Bracket"
+        aria-live="polite"
+      >
+        <div class="loading-placeholder" id="cardiff-loading">Loading Cardiff Cup bracket...</div>
       </div>
     </section>
   </main>
 
   <!-- ================= FOOTER ================= -->
-  <footer>
-    <p>© 2025 <span data-i18n="dashboardTitle">Year 7 Cups Dashboard</span> | Built with ❤️ by <strong>Ollie</strong></p>
+  <footer role="contentinfo">
+    <p>
+      © 2025 <span data-i18n="dashboardTitle">Year 7 Cups Dashboard</span> |
+      Built with <span aria-hidden="true">❤️</span><span class="sr-only">love</span> by
+      <strong>Ollie</strong>
+    </p>
   </footer>
 
+  <!-- ================= SCRIPT ================= -->
   <script src="script.js" defer></script>
+
+  <!-- Smooth bracket load once data arrives -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const welsh = document.getElementById("welsh-bracket-container");
+      const cardiff = document.getElementById("cardiff-bracket-container");
+
+      const observer = new MutationObserver(() => {
+        if (welsh.innerHTML.trim() && !welsh.classList.contains("loaded")) {
+          welsh.classList.add("loaded");
+          const loadMsg = document.getElementById("welsh-loading");
+          if (loadMsg) loadMsg.remove();
+        }
+        if (cardiff.innerHTML.trim() && !cardiff.classList.contains("loaded")) {
+          cardiff.classList.add("loaded");
+          const loadMsg = document.getElementById("cardiff-loading");
+          if (loadMsg) loadMsg.remove();
+        }
+      });
+
+      observer.observe(welsh, { childList: true, subtree: true });
+      observer.observe(cardiff, { childList: true, subtree: true });
+
+      // Optional: filter bracket by dropdown
+      const select = document.getElementById("competition-select");
+      select.addEventListener("change", () => {
+        const value = select.value;
+        welsh.style.display = value === "Welsh" ? "block" : "none";
+        cardiff.style.display = value === "Cardiff" ? "block" : "none";
+      });
+
+      // Default: show Welsh Cup first
+      welsh.style.display = "block";
+      cardiff.style.display = "none";
+    });
+  </script>
+
+  <noscript>
+    <p class="sr-only">JavaScript is required to display brackets dynamically.</p>
+  </noscript>
 </body>
 </html>

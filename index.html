@@ -1,145 +1,226 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- ===== META & TITLE ===== -->
+  <!-- ========= META ========= -->
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  />
   <title data-i18n="dashboardTitle">Year 7 Cups Dashboard 2025</title>
-  <meta name="description" content="Interactive bilingual dashboard for the Year 7 Football Cups — Welsh Cup, Cardiff Cup, and Friendlies. Auto-updating stats, live tables, and knockout brackets." />
+  <meta
+    name="description"
+    content="Interactive bilingual dashboard for the Year 7 Football Cups — Welsh Cup, Cardiff Cup, and Friendlies. Auto-updating stats, live tables, and knockout brackets."
+  />
   <meta name="theme-color" content="#0077ff" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="robots" content="index,follow" />
 
-  <!-- ===== FAVICON & STYLES ===== -->
+  <!-- Optional PWA bits (harmless if files don’t exist yet) -->
+  <link rel="manifest" href="manifest.webmanifest" />
+
+  <!-- ========= ICONS / FONTS ========= -->
   <link rel="icon" href="favicon.png" type="image/png" />
-  <link rel="stylesheet" href="style.css" />
-
-  <!-- ===== PRECONNECT (Performance Boost) ===== -->
+  <!-- Preconnect improves Google Fonts startup -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <style type="text/css">
-  body,td,th {
-    font-family: Poppins, Inter, "Segoe UI", sans-serif;
-}
+  <!-- Preload then load font stylesheet (hint: better CLS) -->
+  <link
+    rel="preload"
+    as="style"
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+  />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+    media="print"
+    onload="this.media='all'"
+  />
+  <noscript>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </noscript>
+
+  <!-- ========= CSS ========= -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Preload script for a snappier first interaction -->
+  <link rel="preload" as="script" href="script.js" />
+
+  <!-- Small utility for screen-reader-only text (doesn’t touch your main CSS) -->
+  <style>
+    .sr-only {
+      position: absolute !important;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0);
+      white-space: nowrap; border: 0;
+    }
   </style>
 </head>
 
 <body class="light">
-  <!-- ================= HEADER ================= -->
-  <header>
+  <!-- Skip link for keyboard users -->
+  <a href="#main-content" class="sr-only">Skip to main content</a>
+
+  <!-- ============== HEADER ============== -->
+  <header role="banner">
     <div class="header-top">
       <h1 data-i18n="dashboardTitle" tabindex="0">Year 7 Cups Dashboard 2025</h1>
 
       <div class="lang-theme-controls">
         <!-- Language Buttons -->
-        <div class="lang-switch" role="group" aria-label="Language Switch">
-          <button id="lang-en" aria-label="Switch to English">EN</button>
-          <button id="lang-cy" aria-label="Newid i'r Gymraeg">CY</button>
+        <div class="lang-switch" role="group" aria-label="Language switch">
+          <button id="lang-en" type="button" aria-label="Switch to English">EN</button>
+          <button id="lang-cy" type="button" aria-label="Newid i'r Gymraeg">CY</button>
         </div>
 
         <!-- Theme Toggle -->
-        <button id="theme-toggle" class="dark-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+        <button
+          id="theme-toggle"
+          class="dark-toggle"
+          type="button"
+          aria-label="Toggle dark mode"
+          title="Toggle dark mode"
+        >🌙</button>
       </div>
     </div>
 
     <!-- ===== NAVIGATION ===== -->
-    <nav aria-label="Main Navigation">
+    <nav aria-label="Main navigation" role="navigation">
       <a href="index.html" class="active" data-i18n="dashboard" aria-current="page">Dashboard</a>
       <a href="teamCard.html" data-i18n="teamDashboard">Team Dashboard</a>
       <a href="brackets.html" data-i18n="brackets">Brackets</a>
     </nav>
   </header>
 
-  <!-- ================= MAIN CONTENT ================= -->
-  <main>
+  <!-- ============== MAIN ============== -->
+  <main id="main-content" role="main">
     <!-- ====== DASHBOARD OVERVIEW ====== -->
     <section id="overview" class="dashboard-overview" aria-labelledby="overview-title">
       <div class="overview-header">
         <h2 id="overview-title" data-i18n="dashboardTitle">Year 7 Cups Dashboard 2025</h2>
+
         <div class="data-controls">
-          <button id="refresh-btn" class="refresh-btn" data-i18n="refresh" aria-live="polite">Refresh Data</button>
-          <p id="last-updated" class="last-updated" data-i18n="lastUpdated">Last Updated: --</p>
+          <!-- aria-live on button isn’t necessary; we keep it on the status text below -->
+          <button id="refresh-btn" class="refresh-btn" type="button" data-i18n="refresh">
+            Refresh Data
+          </button>
+
+          <!-- Live region announces updates -->
+          <p
+            id="last-updated"
+            class="last-updated"
+            role="status"
+            aria-live="polite"
+            data-i18n="lastUpdated"
+          >
+            Last Updated: --
+          </p>
         </div>
       </div>
 
-      <!-- Leaderboard -->
-      <div id="leaderboard" class="leaderboard-section" aria-live="polite">
+      <!-- Leaderboard (polite live region so screen readers hear updates) -->
+      <div id="leaderboard" class="leaderboard-section" role="region" aria-live="polite" aria-label="Leaderboard">
         <!-- Leaderboard dynamically rendered here -->
       </div>
     </section>
 
     <!-- ====== WELSH CUP ====== -->
-    <section class="cup-section" id="welsh-cup" aria-labelledby="welsh-title">
+    <section class="cup-section" id="welsh-cup" aria-labelledby="welsh-title" role="region" aria-describedby="welsh-help">
       <h2 id="welsh-title" data-i18n="welshCupOverview">Welsh Cup Overview</h2>
-      <div class="selectors">
+      <p id="welsh-help" class="sr-only">Select a team and data type to view stats or match history for the Welsh Cup.</p>
+
+      <div class="selectors" role="group" aria-label="Welsh Cup selectors">
         <div>
           <label for="welsh-team" data-i18n="selectTeam">Select Team:</label>
-          <select id="welsh-team" aria-label="Select Welsh Cup team">
+          <select id="welsh-team" aria-label="Select Welsh Cup team" autocomplete="off">
             <option value="">--Choose a Team--</option>
           </select>
         </div>
+
         <div>
           <label for="welsh-data" data-i18n="selectData">Select Data:</label>
-          <select id="welsh-data" aria-label="Select Welsh Cup data type">
+          <select id="welsh-data" aria-label="Select Welsh Cup data type" autocomplete="off">
             <option value="">--Team Stats / Match History--</option>
           </select>
         </div>
       </div>
+
       <div class="dynamic-display" id="welsh-display" aria-live="polite">
         <!-- Welsh Cup stats / matches will be injected here -->
       </div>
     </section>
 
     <!-- ====== CARDIFF CUP ====== -->
-    <section class="cup-section" id="cardiff-cup" aria-labelledby="cardiff-title">
+    <section class="cup-section" id="cardiff-cup" aria-labelledby="cardiff-title" role="region" aria-describedby="cardiff-help">
       <h2 id="cardiff-title" data-i18n="cardiffCupOverview">Cardiff Cup Overview</h2>
-      <div class="selectors">
+      <p id="cardiff-help" class="sr-only">Select a team and data type to view stats or match history for the Cardiff Cup.</p>
+
+      <div class="selectors" role="group" aria-label="Cardiff Cup selectors">
         <div>
           <label for="cardiff-team" data-i18n="selectTeam">Select Team:</label>
-          <select id="cardiff-team" aria-label="Select Cardiff Cup team">
+          <select id="cardiff-team" aria-label="Select Cardiff Cup team" autocomplete="off">
             <option value="">--Choose a Team--</option>
           </select>
         </div>
+
         <div>
           <label for="cardiff-data" data-i18n="selectData">Select Data:</label>
-          <select id="cardiff-data" aria-label="Select Cardiff Cup data type">
+          <select id="cardiff-data" aria-label="Select Cardiff Cup data type" autocomplete="off">
             <option value="">--Team Stats / Match History--</option>
           </select>
         </div>
       </div>
+
       <div class="dynamic-display" id="cardiff-display" aria-live="polite">
         <!-- Cardiff Cup stats / matches will be injected here -->
       </div>
     </section>
 
     <!-- ====== FRIENDLIES ====== -->
-    <section class="cup-section" id="friendlies" aria-labelledby="friendlies-title">
+    <section class="cup-section" id="friendlies" aria-labelledby="friendlies-title" role="region" aria-describedby="friendlies-help">
       <h2 id="friendlies-title" data-i18n="friendliesOverview">Friendlies Overview</h2>
-      <div class="selectors">
+      <p id="friendlies-help" class="sr-only">Select a team and data type to view friendlies stats or match history.</p>
+
+      <div class="selectors" role="group" aria-label="Friendlies selectors">
         <div>
           <label for="friendlies-team" data-i18n="selectTeam">Select Team:</label>
-          <select id="friendlies-team" aria-label="Select Friendlies team">
+          <select id="friendlies-team" aria-label="Select Friendlies team" autocomplete="off">
             <option value="">--Choose a Team--</option>
           </select>
         </div>
+
         <div>
           <label for="friendlies-data" data-i18n="selectData">Select Data:</label>
-          <select id="friendlies-data" aria-label="Select Friendlies data type">
+          <select id="friendlies-data" aria-label="Select Friendlies data type" autocomplete="off">
             <option value="">--Team Stats / Match History--</option>
           </select>
         </div>
       </div>
+
       <div class="dynamic-display" id="friendlies-display" aria-live="polite">
         <!-- Friendlies stats / matches will be injected here -->
       </div>
     </section>
   </main>
 
-  <!-- ================= FOOTER ================= -->
-  <footer>
-    <p>© 2025 <span data-i18n="dashboardTitle">Year 7 Cups Dashboard</span> | Built with ❤️ by <strong>Ollie</strong></p>
+  <!-- ============== FOOTER ============== -->
+  <footer role="contentinfo">
+    <p>
+      © 2025 <span data-i18n="dashboardTitle">Year 7 Cups Dashboard</span> |
+      Built with <span aria-hidden="true">❤️</span><span class="sr-only">love</span> by
+      <strong>Ollie</strong>
+    </p>
   </footer>
 
-  <!-- ================= SCRIPTS ================= -->
+  <!-- ============== SCRIPTS ============== -->
   <script src="script.js" defer></script>
+  <noscript>
+    <p class="sr-only">JavaScript is required to load live data and interactive features.</p>
+  </noscript>
 </body>
 </html>

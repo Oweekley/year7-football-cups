@@ -1,78 +1,204 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- ========= META ========= -->
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  />
   <title data-i18n="teamDashboard">Team Dashboard | Year 7 Cups</title>
-  <meta name="description" content="View detailed stats, match history, and performance for every team in the Year 7 Football Cups." />
+  <meta
+    name="description"
+    content="View detailed stats, match history, and performance for every team in the Year 7 Football Cups."
+  />
+  <meta name="theme-color" content="#0077ff" />
+  <meta name="color-scheme" content="light dark" />
+
+  <!-- ========= ICONS / FONTS ========= -->
   <link rel="icon" href="favicon.png" type="image/png" />
-  <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link
+    rel="preload"
+    as="style"
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+  />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+    media="print"
+    onload="this.media='all'"
+  />
+  <noscript>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </noscript>
+
+  <!-- ========= STYLES ========= -->
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preload" as="script" href="script.js" />
+
+  <!-- ========= INLINE UTILITY ========= -->
+  <style>
+    .sr-only {
+      position: absolute !important;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0);
+      white-space: nowrap; border: 0;
+    }
+
+    /* Subtle animation for display updates */
+    .dynamic-display {
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .dynamic-display.loaded {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .loading-placeholder {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-muted, #666);
+      font-style: italic;
+    }
+
+    /* Ensure selectors are flexible on small screens */
+    .selectors {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .selectors label {
+      font-weight: 500;
+    }
+    .selectors select {
+      width: 100%;
+      max-width: 250px;
+    }
+
+    .subtitle {
+      font-size: 1.1rem;
+      color: var(--text-muted, #555);
+      margin-bottom: 1rem;
+    }
+  </style>
 </head>
 
 <body class="light">
+  <!-- Skip link for accessibility -->
+  <a href="#main-content" class="sr-only">Skip to main content</a>
+
   <!-- ================= HEADER ================= -->
-  <header>
+  <header role="banner">
     <div class="header-top">
       <h1 data-i18n="dashboardTitle" tabindex="0">Year 7 Cups Dashboard 2025</h1>
 
       <div class="lang-theme-controls">
         <!-- Language Buttons -->
-        <div class="lang-switch" role="group" aria-label="Language Switch">
-          <button id="lang-en" aria-label="Switch to English">EN</button>
-          <button id="lang-cy" aria-label="Newid i'r Gymraeg">CY</button>
+        <div class="lang-switch" role="group" aria-label="Language switch">
+          <button id="lang-en" type="button" aria-label="Switch to English">EN</button>
+          <button id="lang-cy" type="button" aria-label="Newid i'r Gymraeg">CY</button>
         </div>
 
         <!-- Theme Toggle -->
-        <button id="theme-toggle" class="dark-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+        <button
+          id="theme-toggle"
+          class="dark-toggle"
+          type="button"
+          aria-label="Toggle dark mode"
+          title="Toggle dark mode"
+        >🌙</button>
       </div>
     </div>
 
     <!-- ===== NAVIGATION ===== -->
-    <nav aria-label="Main Navigation">
+    <nav aria-label="Main navigation" role="navigation">
       <a href="index.html" data-i18n="dashboard">Dashboard</a>
-      <a href="teamCard.html" lass="active" data-i18n="teamDashboard" aria-current="page">Team Dashboard</a>
+      <a href="teamCard.html" class="active" data-i18n="teamDashboard" aria-current="page">Team Dashboard</a>
       <a href="brackets.html" data-i18n="brackets">Brackets</a>
     </nav>
   </header>
 
   <!-- ================= MAIN ================= -->
-  <main>
-    <section class="dashboard-overview" aria-labelledby="team-dashboard-title">
+  <main id="main-content" role="main">
+    <section
+      class="dashboard-overview"
+      aria-labelledby="team-dashboard-title"
+      aria-describedby="team-dashboard-desc"
+      role="region"
+    >
       <h2 id="team-dashboard-title" data-i18n="teamDashboard">Team Dashboard</h2>
-      <p class="subtitle">Explore combined stats and match history for each team across all competitions.</p>
+      <p id="team-dashboard-desc" class="subtitle">
+        Explore combined stats and match history for each team across all competitions.
+      </p>
 
       <!-- TEAM SELECT -->
-      <div class="selectors">
+      <div class="selectors" role="group" aria-label="Team selection">
         <div>
           <label for="team-select" data-i18n="selectTeam">Select Team:</label>
-          <select id="team-select" aria-label="Select Team">
+          <select id="team-select" aria-label="Select Team" autocomplete="off">
             <option value="">--Choose a Team--</option>
           </select>
         </div>
 
         <div>
           <label for="data-select" data-i18n="selectData">Select Data:</label>
-          <select id="data-select" aria-label="Select Data Type">
+          <select id="data-select" aria-label="Select Data Type" autocomplete="off">
             <option value="">--Team Stats / Match History--</option>
           </select>
         </div>
       </div>
 
       <!-- TEAM DISPLAY -->
-      <div class="dynamic-display" id="team-display" aria-live="polite">
-        <!-- Team stats or match history will render here -->
+      <div
+        class="dynamic-display"
+        id="team-display"
+        aria-live="polite"
+        role="region"
+        aria-label="Team details display"
+      >
+        <div class="loading-placeholder" id="team-loading">Select a team to view details...</div>
       </div>
     </section>
   </main>
 
   <!-- ================= FOOTER ================= -->
-  <footer>
-    <p>© 2025 <span data-i18n="dashboardTitle">Year 7 Cups Dashboard</span> | Built with ❤️ by <strong>Ollie</strong></p>
+  <footer role="contentinfo">
+    <p>
+      © 2025 <span data-i18n="dashboardTitle">Year 7 Cups Dashboard</span> |
+      Built with <span aria-hidden="true">❤️</span><span class="sr-only">love</span> by
+      <strong>Ollie</strong>
+    </p>
   </footer>
 
+  <!-- ================= SCRIPTS ================= -->
   <script src="script.js" defer></script>
+
+  <!-- Small fade-in when team data loads -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const display = document.getElementById("team-display");
+      const observer = new MutationObserver(() => {
+        if (display.innerHTML.trim()) {
+          display.classList.add("loaded");
+          const placeholder = document.getElementById("team-loading");
+          if (placeholder) placeholder.remove();
+        }
+      });
+      observer.observe(display, { childList: true, subtree: true });
+    });
+  </script>
+
+  <noscript>
+    <p class="sr-only">JavaScript is required to load team stats and match history.</p>
+  </noscript>
 </body>
 </html>
