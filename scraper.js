@@ -269,7 +269,7 @@ async function scrapeYear7Cardiff(browser) {
 
 // === MAIN RUNNER ===
 (async () => {
-  const browser = await puppeteer.launch({ headless: true });
+  const browser = await puppeteer.launch({headless: true, args: ["--no-sandbox", "--disable-setuid-sandbox"] });
   try {
     await scrapeU12Welsh(browser);
     await scrapeYear7Cardiff(browser);
