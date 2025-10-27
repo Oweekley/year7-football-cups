@@ -133,15 +133,31 @@ document.getElementById("lang-cy")?.addEventListener("click", () => switchLangua
 // =======================
 async function loadData() {
   try {
+    const safeFetch = async (file) => {
+      console.log(" Fetching:", file);
+      const res = await fetch(file);
+      if (!res.ok) throw new Error(`${file} - ${res.status} ${res.statusText}`);
+      const text = await res.text();
+      try {
+        return JSON.parse(text);
+      } catch (err) {
+        console.error(` JSON parse error in ${file}:`, err.message);
+        console.log("First 200 chars of file:", text.slice(0, 200));
+        throw err;
+      }
+    };
+
     const [teamsRaw, welsh, cardiff, friendlies, updated] = await Promise.all([
-      fetch("teams.json").then(r => r.json()),
-      fetch("welsh.json").then(r => r.json()),
-      fetch("cardiff.json").then(r => r.json()),
-      fetch("friendlies.json").then(r => r.json()),
-      fetch("last_updated.json").then(r => r.json()).catch(() => ({ lastUpdated: "Unknown" }))
+      safeFetch("teams.json"),
+      safeFetch("welsh.json"),
+      safeFetch("cardiff.json"),
+      safeFetch("friendlies.json"),
+      safeFetch("last_updated.json").catch(() => ({ lastUpdated: "Unknown" }))
     ]);
 
-    //Normalize teams.json (works for both array and object formats)
+    console.log(" All JSON files fetched successfully!");
+
+    // Normalize team data
     let teams = [];
     if (Array.isArray(teamsRaw?.teams)) {
       teams = teamsRaw.teams.map(t => ({
@@ -166,7 +182,6 @@ async function loadData() {
     }
 
     state.teams = teams;
-	console.log(" Teams loaded:", state.teams.length, "teams");
     state.cups.Welsh = welsh;
     state.cups.Cardiff = cardiff;
     state.cups.Friendlies = friendlies;
@@ -174,8 +189,9 @@ async function loadData() {
 
     calculateStats();
     renderAll();
+
   } catch (err) {
-    console.error("Error loading data:", err);
+    console.error(" Error loading data:", err);
   }
 }
 
