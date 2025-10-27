@@ -1,53 +1,285 @@
 {
-  "cup": "Welsh Cup",
-  "year": 2025,
+  "cup_name": "U12 Boys Welsh Cup - Cardiff & Vale",
+  "season": "2025-26",
   "rounds": [
     {
-      "round": 1,
-      "deadline": "2025-09-29",
+      "round_number": 1,
+      "deadlines": {},
       "games": [
-        {"home": "Llanishen", "h_score": 10, "a_score": 0, "away": "Fitzalan", "winner": "Llanishen", "date": "2025-09-29"},
-        {"home": "Willows", "h_score": 2, "a_score": 8, "away": "Corpus Christi", "winner": "Corpus Christi", "date": "2025-09-29"},
-        {"home": "St Teilo's", "h_score": 0, "a_score": 3, "away": "Cardiff High", "winner": "Cardiff High", "date": "2025-09-29"},
-        {"home": "Whitmore", "h_score": 1, "a_score": 9, "away": "Plasmawr", "winner": "Plasmawr", "date": "2025-09-29"},
-        {"home": "Bro Edern", "h_score": 8, "a_score": 0, "away": "Cardiff West", "winner": "Bro Edern", "date": "2025-09-29"},
-        {"home": "Cowbridge", "h_score": 10, "a_score": 1, "away": "Llantwit Major", "winner": "Cowbridge", "date": "2025-09-29"},
-        {"home": "Mary Immaculate", "h_score": 3, "a_score": 2, "away": "Bishop of Llandaff", "winner": "Mary Immaculate", "date": "2025-09-29"},
-        {"home": "Pencoedtre", "h_score": 1, "a_score": 10, "away": "Glantaf", "winner": "Glantaf", "date": "2025-09-29"},
-        {"home": "Eastern", "h_score": 1, "a_score": 5, "away": "Radyr", "winner": "Radyr", "date": "2025-09-29"},
-        {"home": "St Richard Gwyn", "h_score": 0, "a_score": 3, "away": "Whitchurch", "winner": "Whitchurch", "date": "2025-09-29"},
-        {"home": "St Cyres", "h_score": 1, "a_score": 6, "away": "Bro Morgannwg", "winner": "Bro Morgannwg", "date": "2025-09-29"},
-        {"home": "Stanwell", "h_score": null, "a_score": null, "away": "BYE", "winner": "Stanwell", "date": null}
+        {
+          "home_team": "Llanishen",
+          "home_score": 10,
+          "away_team": "Fitzalan",
+          "away_score": 0,
+          "winner": "Llanishen",
+          "date": null
+        },
+        {
+          "home_team": "Willows",
+          "home_score": 2,
+          "away_team": "Corpus Christi",
+          "away_score": 8,
+          "winner": "Corpus Christi",
+          "date": null
+        },
+        {
+          "home_team": "St Teilo's",
+          "home_score": 0,
+          "away_team": "Cardiff High",
+          "away_score": 3,
+          "winner": "Cardiff High",
+          "date": null
+        },
+        {
+          "home_team": "Whitmore",
+          "home_score": 1,
+          "away_team": "Plasmawr",
+          "away_score": 9,
+          "winner": "Plasmawr",
+          "date": null
+        },
+        {
+          "home_team": "Bro Edern",
+          "home_score": 8,
+          "away_team": "Cardiff West",
+          "away_score": 0,
+          "winner": "Bro Edern",
+          "date": null
+        },
+        {
+          "home_team": "Cowbridge",
+          "home_score": 10,
+          "away_team": "Llantwit Major",
+          "away_score": 1,
+          "winner": "Cowbridge",
+          "date": null
+        },
+        {
+          "home_team": "Mary Immaculate",
+          "home_score": 3,
+          "away_team": "Bishop of Llandaff",
+          "away_score": 2,
+          "winner": "Mary Immaculate",
+          "date": null
+        },
+        {
+          "home_team": "Pencoedtre",
+          "home_score": 1,
+          "away_team": "Glantaf",
+          "away_score": 10,
+          "winner": "Glantaf",
+          "date": null
+        },
+        {
+          "home_team": "Eastern",
+          "home_score": 1,
+          "away_team": "Radyr",
+          "away_score": 5,
+          "winner": "Radyr",
+          "date": null
+        },
+        {
+          "home_team": "St Richard Gwyn",
+          "home_score": 0,
+          "away_team": "Whitchurch",
+          "away_score": 3,
+          "winner": "Whitchurch",
+          "date": null
+        },
+        {
+          "home_team": "St Cyres",
+          "home_score": 1,
+          "away_team": "Bro Morgannwg",
+          "away_score": 6,
+          "winner": "Bro Morgannwg",
+          "date": null
+        },
+        {
+          "home_team": "Stanwell",
+          "home_score": null,
+          "away_team": "BYE",
+          "away_score": null,
+          "winner": "Stanwell",
+          "date": null
+        }
       ]
     },
     {
-      "round": 2,
-      "deadline": "2025-10-28",
+      "round_number": 2,
+      "deadlines": {},
       "games": [
-        {"home": "Llanishen", "away": "Corpus Christi", "winner": null, "date": null},
-        {"home": "Cardiff High", "away": "Plasmawr", "winner": null, "date": "2025-11-05"},
-        {"home": "Bro Edern", "away": "Cowbridge", "winner": null, "date": null},
-        {"home": "Mary Immaculate", "away": "Glantaf", "winner": null, "date": "2025-11-04"},
-        {"home": "Radyr", "away": "Whitchurch", "winner": null, "date": null},
-        {"home": "Bro Morgannwg", "away": "Stanwell", "winner": null, "date": "2025-11-11"}
-      ]
-    },
-    {
-      "round": 3,
-      "deadline": "2025-11-24",
-      "games": [
-        {"home": "Game 13 winner", "away": "Game 14 winner", "winner": null, "date": null},
-        {"home": "Cowbridge", "away": "Game 16 winner", "winner": null, "date": null},
-        {"home": "Game 17 winner", "away": "Game 18 winner", "winner": null, "date": null}
-      ]
-    },
-    {
-      "round": 4,
-      "deadline": "2025-12-15",
-      "games": [
-        {"home": "Game 19 winner", "away": "BYE", "winner": null, "date": null},
-        {"home": "Game 20 winner", "away": "Game 21 winner", "winner": null, "date": null}
+        {
+          "home_team": "Bro Edern",
+          "home_score": 3,
+          "away_team": "Cowbridge",
+          "away_score": 7,
+          "winner": "Cowbridge",
+          "date": null
+        }
       ]
     }
-  ]
+  ],
+  "team_statistics": {
+    "Llanishen": {
+      "games_played": 1,
+      "wins": 1,
+      "goals_for": 10,
+      "goals_against": 0,
+      "goal_difference": 10
+    },
+    "Fitzalan": {
+      "games_played": 1,
+      "wins": 0,
+      "goals_for": 0,
+      "goals_against": 10,
+      "goal_difference": -10
+    },
+    "Willows": {
+      "games_played": 1,
+      "wins": 0,
+      "goals_for": 2,
+      "goals_against": 8,
+      "goal_difference": -6
+    },
+    "Corpus Christi": {
+      "games_played": 1,
+      "wins": 1,
+      "goals_for": 8,
+      "goals_against": 2,
+      "goal_difference": 6
+    },
+    "St Teilo's": {
+      "games_played": 1,
+      "wins": 0,
+      "goals_for": 0,
+      "goals_against": 3,
+      "goal_difference": -3
+    },
+    "Cardiff High": {
+      "games_played": 1,
+      "wins": 1,
+      "goals_for": 3,
+      "goals_against": 0,
+      "goal_difference": 3
+    },
+    "Whitmore": {
+      "games_played": 1,
+      "wins": 0,
+      "goals_for": 1,
+      "goals_against": 9,
+      "goal_difference": -8
+    },
+    "Plasmawr": {
+      "games_played": 1,
+      "wins": 1,
+      "goals_for": 9,
+      "goals_against": 1,
+      "goal_difference": 8
+    },
+    "Bro Edern": {
+      "games_played": 2,
+      "wins": 1,
+      "goals_for": 11,
+      "goals_against": 7,
+      "goal_difference": 4
+    },
+    "Cardiff West": {
+      "games_played": 1,
+      "wins": 0,
+      "goals_for": 0,
+      "goals_against": 8,
+      "goal_difference": -8
+    },
+    "Cowbridge": {
+      "games_played": 2,
+      "wins": 2,
+      "goals_for": 17,
+      "goals_against": 4,
+      "goal_difference": 13
+    },
+    "Llantwit Major": {
+      "games_played": 1,
+      "wins": 0,
+      "goals_for": 1,
+      "goals_against": 10,
+      "goal_difference": -9
+    },
+    "Mary Immaculate": {
+      "games_played": 1,
+      "wins": 1,
+      "goals_for": 3,
+      "goals_against": 2,
+      "goal_difference": 1
+    },
+    "Bishop of Llandaff": {
+      "games_played": 1,
+      "wins": 0,
+      "goals_for": 2,
+      "goals_against": 3,
+      "goal_difference": -1
+    },
+    "Pencoedtre": {
+      "games_played": 1,
+      "wins": 0,
+      "goals_for": 1,
+      "goals_against": 10,
+      "goal_difference": -9
+    },
+    "Glantaf": {
+      "games_played": 1,
+      "wins": 1,
+      "goals_for": 10,
+      "goals_against": 1,
+      "goal_difference": 9
+    },
+    "Eastern": {
+      "games_played": 1,
+      "wins": 0,
+      "goals_for": 1,
+      "goals_against": 5,
+      "goal_difference": -4
+    },
+    "Radyr": {
+      "games_played": 1,
+      "wins": 1,
+      "goals_for": 5,
+      "goals_against": 1,
+      "goal_difference": 4
+    },
+    "St Richard Gwyn": {
+      "games_played": 1,
+      "wins": 0,
+      "goals_for": 0,
+      "goals_against": 3,
+      "goal_difference": -3
+    },
+    "Whitchurch": {
+      "games_played": 1,
+      "wins": 1,
+      "goals_for": 3,
+      "goals_against": 0,
+      "goal_difference": 3
+    },
+    "St Cyres": {
+      "games_played": 1,
+      "wins": 0,
+      "goals_for": 1,
+      "goals_against": 6,
+      "goal_difference": -5
+    },
+    "Bro Morgannwg": {
+      "games_played": 1,
+      "wins": 1,
+      "goals_for": 6,
+      "goals_against": 1,
+      "goal_difference": 5
+    },
+    "Stanwell": {
+      "games_played": 1,
+      "wins": 1,
+      "goals_for": 0,
+      "goals_against": 0,
+      "goal_difference": 0
+    }
+  }
 }
