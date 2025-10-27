@@ -166,6 +166,7 @@ async function loadData() {
     }
 
     state.teams = teams;
+	console.log(" Teams loaded:", state.teams.length, "teams");
     state.cups.Welsh = welsh;
     state.cups.Cardiff = cardiff;
     state.cups.Friendlies = friendlies;
@@ -352,11 +353,30 @@ themeToggle?.addEventListener("click", () => {
 // REFRESH + RENDER
 // =======================
 function renderAll() {
-  Object.keys(elements.dropdowns).forEach(populateDropdowns);
+  // Make sure teams actually exist before rendering dropdowns
+  if (!state.teams || !state.teams.length) {
+    console.warn(" No teams found — check teams.json");
+    return;
+  }
+
+  Object.keys(elements.dropdowns).forEach(cupName => {
+    if (elements.dropdowns[cupName]) populateDropdowns(cupName);
+  });
+
   renderLeaderboard();
   renderBrackets();
   renderLastUpdated();
 }
+
+// Run only after DOM fully loads
+window.addEventListener("DOMContentLoaded", async () => {
+  await loadData();
+
+  // In case loadData() finishes before dropdowns are ready
+  setTimeout(() => {
+    renderAll();
+  }, 300);
+});
 
 elements.refresh?.addEventListener("click", async () => {
   elements.refresh.disabled = true;
@@ -365,8 +385,3 @@ elements.refresh?.addEventListener("click", async () => {
   elements.refresh.textContent = translations[currentLang].refresh;
   elements.refresh.disabled = false;
 });
-
-// =======================
-// INIT
-// =======================
-loadData();
