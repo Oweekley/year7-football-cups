@@ -42,19 +42,19 @@ const translations = {
   cy: {
     dashboardTitle: "Dangosfwrdd Cwpanau Blwyddyn 7 2025",
     dashboard: "Dangosfwrdd",
-    teamDashboard: "Dangosfwrdd Tîm",
+    teamDashboard: "Dangosfwrdd T�m",
     brackets: "Braketiau",
     welshCupOverview: "Trosolwg Cwpan Cymru",
-    selectTeam: "Dewiswch Dîm:",
+    selectTeam: "Dewiswch D�m:",
     selectData: "Dewiswch Ddata:",
     cardiffCupOverview: "Trosolwg Cwpan Caerdydd",
-    friendliesOverview: "Trosolwg Cyfeillgarwch",
+    friendliesOverview: "Trosolwg Gemau Cyfeillgar",
     stats: "Ystadegau",
-    played: "Chwaraeodd",
+    played: "Gemau",
     wins: "Enillodd",
-    gf: "Gôl I",
-    ga: "Gôl Yn Erbyn",
-    gd: "Gwahaniaeth Gôl",
+    gf: "G�l I",
+    ga: "G�l Yn Erbyn",
+    gd: "Gwahaniaeth G�l",
     notes: "Nodiadau:",
     welshMatches: "Gemau Cymru",
     round: "Rownd",
@@ -79,11 +79,7 @@ let currentLang = "en";
 // =======================
 const state = {
   teams: [],
-  cups: {
-    Welsh: {},
-    Cardiff: {},
-    Friendlies: {}
-  },
+  cups: { Welsh: {}, Cardiff: {}, Friendlies: {} },
   lastUpdated: "Unknown"
 };
 
@@ -95,14 +91,12 @@ const elements = {
     Welsh: {
       team: document.getElementById("welsh-team"),
       data: document.getElementById("welsh-data"),
-      display: document.getElementById("welsh-display"),
-      left: document.getElementById("welsh-left")
+      display: document.getElementById("welsh-display")
     },
     Cardiff: {
       team: document.getElementById("cardiff-team"),
       data: document.getElementById("cardiff-data"),
-      display: document.getElementById("cardiff-display"),
-      left: document.getElementById("cardiff-left")
+      display: document.getElementById("cardiff-display")
     },
     Friendlies: {
       team: document.getElementById("friendlies-team"),
@@ -110,22 +104,13 @@ const elements = {
       display: document.getElementById("friendlies-display")
     }
   },
-  teamCard: {
-    select: document.getElementById("team-select"),
-    dataSelect: document.getElementById("data-select"),
-    display: document.getElementById("team-display")
-  },
-  matches: {
-    select: document.getElementById("competition-select"),
-    display: document.getElementById("matches-display")
-  },
+  leaderboard: document.getElementById("leaderboard"),
+  lastUpdated: document.getElementById("last-updated"),
+  refresh: document.getElementById("refresh-btn"),
   brackets: {
     welsh: document.getElementById("welsh-bracket-container"),
     cardiff: document.getElementById("cardiff-bracket-container")
-  },
-  leaderboard: document.getElementById("leaderboard"),
-  lastUpdated: document.getElementById("last-updated"),
-  refresh: document.getElementById("refresh-btn")
+  }
 };
 
 // =======================
@@ -137,7 +122,6 @@ function switchLanguage(lang) {
     const key = el.dataset.i18n;
     if (translations[lang][key]) el.textContent = translations[lang][key];
   });
-
   renderAll();
 }
 
@@ -145,11 +129,11 @@ document.getElementById("lang-en")?.addEventListener("click", () => switchLangua
 document.getElementById("lang-cy")?.addEventListener("click", () => switchLanguage("cy"));
 
 // =======================
-// DATA LOADING
+// DATA LOADING + NORMALIZATION
 // =======================
 async function loadData() {
   try {
-    const [teams, welsh, cardiff, friendlies, updated] = await Promise.all([
+    const [teamsRaw, welsh, cardiff, friendlies, updated] = await Promise.all([
       fetch("teams.json").then(r => r.json()),
       fetch("welsh.json").then(r => r.json()),
       fetch("cardiff.json").then(r => r.json()),
@@ -157,7 +141,31 @@ async function loadData() {
       fetch("last_updated.json").then(r => r.json()).catch(() => ({ lastUpdated: "Unknown" }))
     ]);
 
-    state.teams = teams.teams || [];
+    //Normalize teams.json (works for both array and object formats)
+    let teams = [];
+    if (Array.isArray(teamsRaw?.teams)) {
+      teams = teamsRaw.teams.map(t => ({
+        name: t.name ?? t.team ?? "",
+        notes: t.notes ?? "",
+        played: t.games_played ?? t.played ?? 0,
+        wins: t.wins ?? 0,
+        gf: t.goals_for ?? t.gf ?? 0,
+        ga: t.goals_against ?? t.ga ?? 0,
+        gd: t.goal_difference ?? t.gd ?? ((t.goals_for ?? 0) - (t.goals_against ?? 0))
+      }));
+    } else if (typeof teamsRaw === "object") {
+      teams = Object.entries(teamsRaw).map(([name, s]) => ({
+        name,
+        notes: s.notes ?? "",
+        played: s.games_played ?? s.played ?? 0,
+        wins: s.wins ?? 0,
+        gf: s.goals_for ?? s.gf ?? 0,
+        ga: s.goals_against ?? s.ga ?? 0,
+        gd: s.goal_difference ?? s.gd ?? ((s.goals_for ?? 0) - (s.goals_against ?? 0))
+      }));
+    }
+
+    state.teams = teams;
     state.cups.Welsh = welsh;
     state.cups.Cardiff = cardiff;
     state.cups.Friendlies = friendlies;
@@ -177,17 +185,16 @@ function calculateStats() {
   state.teams.forEach(t => Object.assign(t, { played: 0, wins: 0, gf: 0, ga: 0, gd: 0 }));
 
   const updateStats = g => {
-    if (!g.home || !g.away || g.away === "BYE" || g.h_score == null || g.a_score == null) return;
-    const home = state.teams.find(t => t.name === g.home);
-    const away = state.teams.find(t => t.name === g.away);
-    if (!home || !away) return;
+    const home = state.teams.find(t => t.name === g.home_team);
+    const away = state.teams.find(t => t.name === g.away_team);
+    if (!home || !away || g.away_team === "BYE" || g.home_score == null || g.away_score == null) return;
 
     home.played++; away.played++;
-    home.gf += g.h_score; home.ga += g.a_score;
-    away.gf += g.a_score; away.ga += g.h_score;
+    home.gf += g.home_score; home.ga += g.away_score;
+    away.gf += g.away_score; away.ga += g.home_score;
 
-    if (g.h_score > g.a_score) home.wins++;
-    else if (g.a_score > g.h_score) away.wins++;
+    if (g.home_score > g.away_score) home.wins++;
+    else if (g.away_score > g.home_score) away.wins++;
   };
 
   Object.values(state.cups).forEach(cup =>
@@ -210,8 +217,8 @@ function populateDropdowns(cupName) {
   state.teams.forEach(t => (team.innerHTML += `<option value="${t.name}">${t.name}</option>`));
   ["Team Stats", "Match History"].forEach(d => (data.innerHTML += `<option value="${d}">${d}</option>`));
 
-  team.addEventListener("change", () => updateCupDisplay(cupName));
-  data.addEventListener("change", () => updateCupDisplay(cupName));
+  team.onchange = () => updateCupDisplay(cupName);
+  data.onchange = () => updateCupDisplay(cupName);
 }
 
 function updateCupDisplay(cupName) {
@@ -241,31 +248,34 @@ function renderTeamStats(team) {
 }
 
 function renderMatchHistory(teamName, cupName, data) {
+  const rounds = data.rounds || [];
   return `
     <h3>${translations[currentLang][cupName.toLowerCase() + "Matches"] || cupName + " Matches"}</h3>
-    ${data.rounds
-      ?.map(
-        r => `
-      <h4>${translations[currentLang].round} ${r.round || ""} - ${translations[currentLang].deadline}: ${r.deadline || "-"}</h4>
+    ${rounds.map(r => `
+      <h4>${translations[currentLang].round} ${r.round_number || ""} - ${translations[currentLang].deadline}: ${r.deadlines?.english || "-"}</h4>
       <table>
-        <tr><th>${translations[currentLang].home}</th><th>${translations[currentLang].hScore}</th><th>${translations[currentLang].aScore}</th><th>${translations[currentLang].away}</th><th>${translations[currentLang].winner}</th><th>${translations[currentLang].date}</th><th>${translations[currentLang].matchNotes}</th></tr>
+        <tr>
+          <th>${translations[currentLang].home}</th>
+          <th>${translations[currentLang].hScore}</th>
+          <th>${translations[currentLang].aScore}</th>
+          <th>${translations[currentLang].away}</th>
+          <th>${translations[currentLang].winner}</th>
+          <th>${translations[currentLang].date}</th>
+        </tr>
         ${r.games
-          ?.filter(g => g.home === teamName || g.away === teamName)
-          .map(
-            g => `<tr>
-              <td>${g.home}</td>
-              <td>${g.h_score ?? "-"}</td>
-              <td>${g.a_score ?? "-"}</td>
-              <td>${g.away}</td>
+          ?.filter(g => g.home_team === teamName || g.away_team === teamName)
+          .map(g => `
+            <tr>
+              <td>${g.home_team}</td>
+              <td>${g.home_score ?? "-"}</td>
+              <td>${g.away_score ?? "-"}</td>
+              <td>${g.away_team}</td>
               <td>${g.winner ?? "-"}</td>
               <td>${g.date ?? "-"}</td>
-              <td>${g.notes ?? ""}</td>
-            </tr>`
-          )
-          .join("")}
-      </table>`
-      )
-      .join("")}
+            </tr>
+          `).join("")}
+      </table>
+    `).join("")}
   `;
 }
 
@@ -280,44 +290,40 @@ function renderLeaderboard() {
     <h2>${translations[currentLang].leaderboard}</h2>
     <table>
       <tr><th>#</th><th>Team</th><th>${translations[currentLang].played}</th><th>${translations[currentLang].wins}</th><th>${translations[currentLang].gf}</th><th>${translations[currentLang].ga}</th><th>${translations[currentLang].gd}</th></tr>
-      ${sorted
-        .map(
-          (t, i) =>
-            `<tr><td>${i + 1}</td><td>${t.name}</td><td>${t.played}</td><td>${t.wins}</td><td>${t.gf}</td><td>${t.ga}</td><td>${t.gd}</td></tr>`
-        )
-        .join("")}
+      ${sorted.map((t, i) =>
+        `<tr><td>${i + 1}</td><td>${t.name}</td><td>${t.played}</td><td>${t.wins}</td><td>${t.gf}</td><td>${t.ga}</td><td>${t.gd}</td></tr>`
+      ).join("")}
     </table>`;
-}
-
-function renderBrackets() {
-  const { welsh, cardiff } = elements.brackets;
-  renderBracket("Welsh", state.cups.Welsh, welsh);
-  renderBracket("Cardiff", state.cups.Cardiff, cardiff);
 }
 
 function renderBracket(cupName, data, container) {
   if (!container) return;
-  container.innerHTML = data.rounds
-    ?.map(
-      r => `
-      <div class="round">
-        <h3>${translations[currentLang].round} ${r.round} - ${translations[currentLang].deadline}: ${r.deadline || "-"}</h3>
-        <div class="games">
-          ${r.games
-            ?.map(
-              g => `
-            <div class="game" title="${g.notes || ""}">
-              <span class="team ${g.winner === g.home ? "winner" : ""}">${g.home}</span>
-              <span class="score">${g.h_score ?? "-"}</span> -
-              <span class="score">${g.a_score ?? "-"}</span>
-              <span class="team ${g.winner === g.away ? "winner" : ""}">${g.away}</span>
-            </div>`
-            )
-            .join("")}
-        </div>
-      </div>`
-    )
-    .join("");
+  const rounds = data.rounds || [];
+  container.innerHTML = rounds.map(r => `
+    <div class="round">
+      <h3>${translations[currentLang].round} ${r.round_number || ""} - ${translations[currentLang].deadline}: ${r.deadlines?.english || "-"}</h3>
+      <div class="games">
+        ${r.games?.map(g => `
+          <div class="game" title="${g.notes || ""}">
+            <span class="team ${g.winner === g.home_team ? "winner" : ""}">${g.home_team}</span>
+            <span class="score">${g.home_score ?? "-"}</span> -
+            <span class="score">${g.away_score ?? "-"}</span>
+            <span class="team ${g.winner === g.away_team ? "winner" : ""}">${g.away_team}</span>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `).join("");
+}
+
+function renderBrackets() {
+  renderBracket("Welsh", state.cups.Welsh, elements.brackets.welsh);
+  renderBracket("Cardiff", state.cups.Cardiff, elements.brackets.cardiff);
+}
+
+function renderLastUpdated() {
+  if (elements.lastUpdated)
+    elements.lastUpdated.textContent = `${translations[currentLang].lastUpdated} ${state.lastUpdated}`;
 }
 
 // =======================
@@ -329,26 +335,21 @@ const savedTheme = localStorage.getItem("theme");
 
 if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
   document.body.classList.add("dark");
-  themeToggle.textContent = "☀️";
+  themeToggle.textContent = "Sun";
 } else {
   document.body.classList.remove("dark");
-  themeToggle.textContent = "🌙";
+  themeToggle.textContent = "Moon";
 }
 
 themeToggle?.addEventListener("click", () => {
   document.body.classList.toggle("dark");
   const isDark = document.body.classList.contains("dark");
-  themeToggle.textContent = isDark ? "☀️" : "🌙";
+  themeToggle.textContent = isDark ? "Sun" : "Moon";
   localStorage.setItem("theme", isDark ? "dark" : "light");
 });
-		  
-function renderLastUpdated() {
-  if (elements.lastUpdated)
-    elements.lastUpdated.textContent = `${translations[currentLang].lastUpdated} ${state.lastUpdated}`;
-}
 
 // =======================
-// REFRESH + FULL RENDER
+// REFRESH + RENDER
 // =======================
 function renderAll() {
   Object.keys(elements.dropdowns).forEach(populateDropdowns);
