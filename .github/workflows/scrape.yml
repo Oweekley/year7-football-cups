@@ -5,6 +5,9 @@ on:
   schedule:
     - cron: "0 6 * * *"  # optional: runs every day at 6am UTC
 
+permissions:
+  contents: write
+
 jobs:
   run-scraper:
     runs-on: ubuntu-latest
