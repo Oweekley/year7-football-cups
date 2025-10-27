@@ -133,44 +133,20 @@ document.getElementById("lang-cy")?.addEventListener("click", () => switchLangua
 // =======================
 async function loadData() {
   try {
-    const safeFetch = async (file) => {
-      console.log(" Fetching:", file);
-      const res = await fetch(file);
-      if (!res.ok) throw new Error(`${file} - ${res.status} ${res.statusText}`);
-      const text = await res.text();
-      try {
-        return JSON.parse(text);
-      } catch (err) {
-        console.error(` JSON parse error in ${file}:`, err.message);
-        console.log("First 200 chars of file:", text.slice(0, 200));
-        throw err;
-      }
-    };
+    console.log(" Loading data files...");
 
-    async function loadData() {
-  try {
-    const urls = ["teams.json", "welsh.json", "cardiff.json", "friendlies.json", "last_updated.json"];
-    for (const url of urls) {
-      console.log(" Trying to load:", url);
-      const res = await fetch(url);
-      const text = await res.text();
-      try {
-        JSON.parse(text);
-        console.log(" Parsed successfully:", url);
-      } catch (e) {
-        console.error(" JSON error in", url, e.message);
-        console.log(" First 200 chars:", text.slice(0, 200));
-        throw e;
-      }
-    }
-  } catch (err) {
-    console.error(" Error loading data:", err);
-  }
-}
+    // Fetch all JSONs
+    const [teamsRaw, welsh, cardiff, friendlies, updated] = await Promise.all([
+      fetch("teams.json").then(r => r.json()),
+      fetch("welsh.json").then(r => r.json()),
+      fetch("cardiff.json").then(r => r.json()),
+      fetch("friendlies.json").then(r => r.json()),
+      fetch("last_updated.json").then(r => r.json()).catch(() => ({ lastUpdated: "Unknown" }))
+    ]);
 
-    console.log(" All JSON files fetched successfully!");
+    console.log(" All JSON files loaded successfully!");
 
-    // Normalize team data
+    // Normalize teams.json (your structure is OBJECT not array)
     let teams = [];
     if (Array.isArray(teamsRaw?.teams)) {
       teams = teamsRaw.teams.map(t => ({
@@ -183,6 +159,7 @@ async function loadData() {
         gd: t.goal_difference ?? t.gd ?? ((t.goals_for ?? 0) - (t.goals_against ?? 0))
       }));
     } else if (typeof teamsRaw === "object") {
+      //  This branch runs for your JSON file!
       teams = Object.entries(teamsRaw).map(([name, s]) => ({
         name,
         notes: s.notes ?? "",
@@ -194,15 +171,17 @@ async function loadData() {
       }));
     }
 
+    // Store it globally
     state.teams = teams;
     state.cups.Welsh = welsh;
     state.cups.Cardiff = cardiff;
     state.cups.Friendlies = friendlies;
     state.lastUpdated = updated.lastUpdated || "Unknown";
 
+    console.log(` Loaded ${teams.length} teams`);
+
     calculateStats();
     renderAll();
-
   } catch (err) {
     console.error(" Error loading data:", err);
   }
