@@ -1,100 +1,125 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="dashboardTitle">Year 7 Cups Dashboard 2025</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="dashboardTitle">Year 7 Cups Dashboard 2025</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="favicon.png" />
+  <meta name="description" content="Interactive bilingual dashboard for the Year 7 Football Cups — Welsh Cup, Cardiff Cup, and Friendlies. Auto-updating stats, match data, and brackets." />
 </head>
+
 <body>
-    <header>
-        <h1 data-i18n="dashboardTitle">Year 7 Cups Dashboard 2025</h1>
-        <nav>
-            <a href="index.html" data-i18n="dashboard">Dashboard</a>
-            <a href="teamCard.html" data-i18n="teamDashboard">Team Dashboard</a>
-            <a href="brackets.html" data-i18n="brackets">Brackets</a>
-        </nav>
-        <!-- Language Switch Buttons -->
-        <div class="lang-switch">
-            <button id="lang-en">EN</button>
-            <button id="lang-cy">CY</button>
+  <!-- ================= HEADER ================= -->
+  <header>
+    <div class="header-top">
+      <h1 data-i18n="dashboardTitle">Year 7 Cups Dashboard 2025</h1>
+
+      <div class="lang-switch">
+        <button id="lang-en" aria-label="Switch to English">EN</button>
+        <button id="lang-cy" aria-label="Newid i'r Gymraeg">CY</button>
+		<button id="theme-toggle">🌙</button>
+      </div>
+    </div>
+
+    <nav>
+      <a href="index.html" class="active" data-i18n="dashboard">Dashboard</a>
+      <a href="teamCard.html" data-i18n="teamDashboard">Team Dashboard</a>
+      <a href="brackets.html" data-i18n="brackets">Brackets</a>
+    </nav>
+  </header>
+
+  <!-- ================= MAIN ================= -->
+  <main>
+
+    <!-- ====== DASHBOARD OVERVIEW ====== -->
+    <section id="overview" class="dashboard-overview">
+      <div class="overview-header">
+        <h2 data-i18n="dashboardTitle">Year 7 Cups Dashboard 2025</h2>
+        <div class="data-controls">
+          <button id="refresh-btn" class="refresh-btn" data-i18n="refresh">Refresh Data</button>
+          <p id="last-updated" class="last-updated" data-i18n="lastUpdated">Last Updated: --</p>
         </div>
-    </header>
+      </div>
 
-    <main>
+      <div id="leaderboard" class="leaderboard-section">
+        <!-- Leaderboard dynamically rendered here -->
+      </div>
+    </section>
 
-        <!-- ===== WELSH CUP ===== -->
-        <section class="cup-section" id="welsh-cup">
-            <h2 data-i18n="welshCupOverview">Welsh Cup Overview</h2>
-            <div class="selectors">
-                <div>
-                    <label for="welsh-team" data-i18n="selectTeam">Select Team:</label>
-                    <select id="welsh-team">
-                        <option value="">--Choose a Team--</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="welsh-data" data-i18n="selectData">Select Data:</label>
-                    <select id="welsh-data">
-                        <option value="">--Team Stats / Match History--</option>
-                    </select>
-                </div>
-            </div>
-            <div class="dynamic-display" id="welsh-display">
-                <!-- Welsh Cup stats / matches will be injected here -->
-            </div>
-        </section>
+    <!-- ====== WELSH CUP ====== -->
+    <section class="cup-section" id="welsh-cup">
+      <h2 data-i18n="welshCupOverview">Welsh Cup Overview</h2>
+      <div class="selectors">
+        <div>
+          <label for="welsh-team" data-i18n="selectTeam">Select Team:</label>
+          <select id="welsh-team">
+            <option value="">--Choose a Team--</option>
+          </select>
+        </div>
+        <div>
+          <label for="welsh-data" data-i18n="selectData">Select Data:</label>
+          <select id="welsh-data">
+            <option value="">--Team Stats / Match History--</option>
+          </select>
+        </div>
+      </div>
+      <div class="dynamic-display" id="welsh-display">
+        <!-- Welsh Cup stats / matches will be injected here -->
+      </div>
+    </section>
 
-        <!-- ===== CARDIFF CUP ===== -->
-        <section class="cup-section" id="cardiff-cup">
-            <h2 data-i18n="cardiffCupOverview">Cardiff Cup Overview</h2>
-            <div class="selectors">
-                <div>
-                    <label for="cardiff-team" data-i18n="selectTeam">Select Team:</label>
-                    <select id="cardiff-team">
-                        <option value="">--Choose a Team--</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="cardiff-data" data-i18n="selectData">Select Data:</label>
-                    <select id="cardiff-data">
-                        <option value="">--Team Stats / Match History--</option>
-                    </select>
-                </div>
-            </div>
-            <div class="dynamic-display" id="cardiff-display">
-                <!-- Cardiff Cup stats / matches will be injected here -->
-            </div>
-        </section>
+    <!-- ====== CARDIFF CUP ====== -->
+    <section class="cup-section" id="cardiff-cup">
+      <h2 data-i18n="cardiffCupOverview">Cardiff Cup Overview</h2>
+      <div class="selectors">
+        <div>
+          <label for="cardiff-team" data-i18n="selectTeam">Select Team:</label>
+          <select id="cardiff-team">
+            <option value="">--Choose a Team--</option>
+          </select>
+        </div>
+        <div>
+          <label for="cardiff-data" data-i18n="selectData">Select Data:</label>
+          <select id="cardiff-data">
+            <option value="">--Team Stats / Match History--</option>
+          </select>
+        </div>
+      </div>
+      <div class="dynamic-display" id="cardiff-display">
+        <!-- Cardiff Cup stats / matches will be injected here -->
+      </div>
+    </section>
 
-        <!-- ===== FRIENDLIES ===== -->
-        <section class="cup-section" id="friendlies">
-            <h2 data-i18n="friendliesOverview">Friendlies Overview</h2>
-            <div class="selectors">
-                <div>
-                    <label for="friendlies-team" data-i18n="selectTeam">Select Team:</label>
-                    <select id="friendlies-team">
-                        <option value="">--Choose a Team--</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="friendlies-data" data-i18n="selectData">Select Data:</label>
-                    <select id="friendlies-data">
-                        <option value="">--Team Stats / Match History--</option>
-                    </select>
-                </div>
-            </div>
-            <div class="dynamic-display" id="friendlies-display">
-                <!-- Friendlies stats / matches will be injected here -->
-            </div>
-        </section>
+    <!-- ====== FRIENDLIES ====== -->
+    <section class="cup-section" id="friendlies">
+      <h2 data-i18n="friendliesOverview">Friendlies Overview</h2>
+      <div class="selectors">
+        <div>
+          <label for="friendlies-team" data-i18n="selectTeam">Select Team:</label>
+          <select id="friendlies-team">
+            <option value="">--Choose a Team--</option>
+          </select>
+        </div>
+        <div>
+          <label for="friendlies-data" data-i18n="selectData">Select Data:</label>
+          <select id="friendlies-data">
+            <option value="">--Team Stats / Match History--</option>
+          </select>
+        </div>
+      </div>
+      <div class="dynamic-display" id="friendlies-display">
+        <!-- Friendlies stats / matches will be injected here -->
+      </div>
+    </section>
 
-    </main>
+  </main>
 
-    <footer>
-        <p>© 2025 <span data-i18n="dashboardTitle">Year 7 Cups Dashboard</span></p>
-    </footer>
+  <!-- ================= FOOTER ================= -->
+  <footer>
+    <p>© 2025 <span data-i18n="dashboardTitle">Year 7 Cups Dashboard</span> | Built with ❤️ by Ollie</p>
+  </footer>
 
-    <script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>

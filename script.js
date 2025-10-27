@@ -1,454 +1,371 @@
+// ============================================================
+//  YEAR 7 CUPS DASHBOARD 2025 - CORE SCRIPT
+//  Features: Bilingual UI, Auto Data Loading, Leaderboards,
+//  Match History, Refresh Button, Last Updated, Brackets.
+// ============================================================
+
 // =======================
-// TRANSLATIONS & LANGUAGE TOGGLE
+// TRANSLATIONS
 // =======================
 const translations = {
-    en: {
-        dashboardTitle: "Year 7 Cups Dashboard 2025",
-        dashboard: "Dashboard",
-        teamDashboard: "Team Dashboard",
-        brackets: "Brackets",
-        welshCupOverview: "Welsh Cup Overview",
-        selectTeam: "Select Team:",
-        selectData: "Select Data:",
-        cardiffCupOverview: "Cardiff Cup Overview",
-        friendliesOverview: "Friendlies Overview",
-        stats: "Stats",
-        played: "Played",
-        wins: "Wins",
-        gf: "GF",
-        ga: "GA",
-        gd: "GD",
-        notes: "Notes:",
-        welshMatches: "Welsh Matches",
-        round: "Round",
-        deadline: "Deadline",
-        home: "Home",
-        hScore: "H Score",
-        aScore: "A Score",
-        away: "Away",
-        winner: "Winner",
-        date: "Date",
-        matchNotes: "Notes"
-    },
-    cy: {
-        dashboardTitle: "Dangosfwrdd Cwpanau Blwyddyn 7 2025",
-        dashboard: "Dangosfwrdd",
-        teamDashboard: "Dangosfwrdd Tîm",
-        brackets: "Braketiau",
-        welshCupOverview: "Trosolwg Cwpan Cymru",
-        selectTeam: "Dewiswch Dîm:",
-        selectData: "Dewiswch Ddata:",
-        cardiffCupOverview: "Trosolwg Cwpan Caerdydd",
-        friendliesOverview: "Trosolwg Cyfeillgarwch",
-        stats: "Ystadegau",
-        played: "Chwaraeodd",
-        wins: "Enillodd",
-        gf: "Gôl I",
-        ga: "Gôl Yn Erbyn",
-        gd: "Gwahaniaeth Gôl",
-        notes: "Nodiadau:",
-        welshMatches: "Gemau Cymru",
-        round: "Rownd",
-        deadline: "Dyddiad Cau",
-        home: "Cartref",
-        hScore: "SG Cartref",
-        aScore: "SG Allan",
-        away: "Allan",
-        winner: "Enillydd",
-        date: "Dyddiad",
-        matchNotes: "Nodiadau"
-    }
+  en: {
+    dashboardTitle: "Year 7 Cups Dashboard 2025",
+    dashboard: "Dashboard",
+    teamDashboard: "Team Dashboard",
+    brackets: "Brackets",
+    welshCupOverview: "Welsh Cup Overview",
+    selectTeam: "Select Team:",
+    selectData: "Select Data:",
+    cardiffCupOverview: "Cardiff Cup Overview",
+    friendliesOverview: "Friendlies Overview",
+    stats: "Stats",
+    played: "Played",
+    wins: "Wins",
+    gf: "GF",
+    ga: "GA",
+    gd: "GD",
+    notes: "Notes:",
+    welshMatches: "Welsh Matches",
+    round: "Round",
+    deadline: "Deadline",
+    home: "Home",
+    hScore: "H Score",
+    aScore: "A Score",
+    away: "Away",
+    winner: "Winner",
+    date: "Date",
+    matchNotes: "Notes",
+    leaderboard: "Leaderboard",
+    refresh: "Refresh Data",
+    lastUpdated: "Last Updated:"
+  },
+  cy: {
+    dashboardTitle: "Dangosfwrdd Cwpanau Blwyddyn 7 2025",
+    dashboard: "Dangosfwrdd",
+    teamDashboard: "Dangosfwrdd Tîm",
+    brackets: "Braketiau",
+    welshCupOverview: "Trosolwg Cwpan Cymru",
+    selectTeam: "Dewiswch Dîm:",
+    selectData: "Dewiswch Ddata:",
+    cardiffCupOverview: "Trosolwg Cwpan Caerdydd",
+    friendliesOverview: "Trosolwg Cyfeillgarwch",
+    stats: "Ystadegau",
+    played: "Chwaraeodd",
+    wins: "Enillodd",
+    gf: "Gôl I",
+    ga: "Gôl Yn Erbyn",
+    gd: "Gwahaniaeth Gôl",
+    notes: "Nodiadau:",
+    welshMatches: "Gemau Cymru",
+    round: "Rownd",
+    deadline: "Dyddiad Cau",
+    home: "Cartref",
+    hScore: "SG Cartref",
+    aScore: "SG Allan",
+    away: "Allan",
+    winner: "Enillydd",
+    date: "Dyddiad",
+    matchNotes: "Nodiadau",
+    leaderboard: "Tabl Cynghrair",
+    refresh: "Adnewyddu Data",
+    lastUpdated: "Diweddarwyd Diwethaf:"
+  }
 };
 
-let currentLang = 'en';
-
-function switchLanguage(lang) {
-    currentLang = lang;
-
-    // Update static elements
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.dataset.i18n;
-        if (translations[lang][key]) el.textContent = translations[lang][key];
-    });
-
-    // Update dynamic content
-    Object.keys(dropdowns).forEach(cup => updateDisplay(cup));
-    updateTeamCardDisplay();
-    renderMatches();
-    if (welshBracketContainer && cardiffBracketContainer) {
-        renderBracket('Welsh', welshData, welshBracketContainer);
-        renderBracket('Cardiff', cardiffData, cardiffBracketContainer);
-    }
-}
+let currentLang = "en";
 
 // =======================
-// GLOBAL JSON VARIABLES
+// GLOBAL STATE
 // =======================
-let teamsData = [];
-let welshData = {};
-let cardiffData = {};
-let friendliesData = {};
+const state = {
+  teams: [],
+  cups: {
+    Welsh: {},
+    Cardiff: {},
+    Friendlies: {}
+  },
+  lastUpdated: "Unknown"
+};
 
 // =======================
-// DOM ELEMENTS
+// DOM REFERENCES
 // =======================
-const dropdowns = {
+const elements = {
+  dropdowns: {
     Welsh: {
-        team: document.getElementById('welsh-team'),
-        data: document.getElementById('welsh-data'),
-        display: document.getElementById('welsh-display'),
-        left: document.getElementById('welsh-left')
+      team: document.getElementById("welsh-team"),
+      data: document.getElementById("welsh-data"),
+      display: document.getElementById("welsh-display"),
+      left: document.getElementById("welsh-left")
     },
     Cardiff: {
-        team: document.getElementById('cardiff-team'),
-        data: document.getElementById('cardiff-data'),
-        display: document.getElementById('cardiff-display'),
-        left: document.getElementById('cardiff-left')
+      team: document.getElementById("cardiff-team"),
+      data: document.getElementById("cardiff-data"),
+      display: document.getElementById("cardiff-display"),
+      left: document.getElementById("cardiff-left")
     },
     Friendlies: {
-        team: document.getElementById('friendlies-team'),
-        data: document.getElementById('friendlies-data'),
-        display: document.getElementById('friendlies-display')
+      team: document.getElementById("friendlies-team"),
+      data: document.getElementById("friendlies-data"),
+      display: document.getElementById("friendlies-display")
     }
+  },
+  teamCard: {
+    select: document.getElementById("team-select"),
+    dataSelect: document.getElementById("data-select"),
+    display: document.getElementById("team-display")
+  },
+  matches: {
+    select: document.getElementById("competition-select"),
+    display: document.getElementById("matches-display")
+  },
+  brackets: {
+    welsh: document.getElementById("welsh-bracket-container"),
+    cardiff: document.getElementById("cardiff-bracket-container")
+  },
+  leaderboard: document.getElementById("leaderboard"),
+  lastUpdated: document.getElementById("last-updated"),
+  refresh: document.getElementById("refresh-btn")
 };
 
-const teamCardSelect = document.getElementById('team-select');
-const teamCardDataSelect = document.getElementById('data-select');
-const teamCardDisplay = document.getElementById('team-display');
+// =======================
+// LANGUAGE SWITCHER
+// =======================
+function switchLanguage(lang) {
+  currentLang = lang;
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.dataset.i18n;
+    if (translations[lang][key]) el.textContent = translations[lang][key];
+  });
 
-const competitionSelect = document.getElementById('competition-select');
-const matchesDisplay = document.getElementById('matches-display');
+  renderAll();
+}
 
-const welshBracketContainer = document.getElementById('welsh-bracket-container');
-const cardiffBracketContainer = document.getElementById('cardiff-bracket-container');
+document.getElementById("lang-en")?.addEventListener("click", () => switchLanguage("en"));
+document.getElementById("lang-cy")?.addEventListener("click", () => switchLanguage("cy"));
 
 // =======================
-// LOAD JSON DATA + CALCULATE STATS
+// DATA LOADING
 // =======================
-async function loadAllData() {
-    try {
-        teamsData = await fetch('teams.json').then(res => res.json()).then(d => d.teams);
-        welshData = await fetch('welsh.json').then(res => res.json());
-        cardiffData = await fetch('cardiff.json').then(res => res.json());
-        friendliesData = await fetch('friendlies.json').then(res => res.json());
-    } catch (err) {
-        console.error('Error loading JSON:', err);
-    }
+async function loadData() {
+  try {
+    const [teams, welsh, cardiff, friendlies, updated] = await Promise.all([
+      fetch("teams.json").then(r => r.json()),
+      fetch("welsh.json").then(r => r.json()),
+      fetch("cardiff.json").then(r => r.json()),
+      fetch("friendlies.json").then(r => r.json()),
+      fetch("last_updated.json").then(r => r.json()).catch(() => ({ lastUpdated: "Unknown" }))
+    ]);
 
-    // ✅ Calculate stats from all matches
-    calculateTeamStats();
+    state.teams = teams.teams || [];
+    state.cups.Welsh = welsh;
+    state.cups.Cardiff = cardiff;
+    state.cups.Friendlies = friendlies;
+    state.lastUpdated = updated.lastUpdated || "Unknown";
 
-    // Populate dropdowns etc.
-    Object.keys(dropdowns).forEach(cup => {
-        if (dropdowns[cup].team && dropdowns[cup].data) {
-            populateDropdowns(cup);
-            updateTeamsLeft(cup);
-        }
-    });
-
-    if (teamCardSelect && teamCardDataSelect) populateTeamCardDropdowns();
-    if (competitionSelect) competitionSelect.addEventListener('change', renderMatches);
-    if (welshBracketContainer && cardiffBracketContainer) {
-        renderBracket('Welsh', welshData, welshBracketContainer);
-        renderBracket('Cardiff', cardiffData, cardiffBracketContainer);
-    }
+    calculateStats();
+    renderAll();
+  } catch (err) {
+    console.error("Error loading data:", err);
+  }
 }
 
 // =======================
 // CALCULATE TEAM STATS
 // =======================
-function calculateTeamStats() {
-    // Reset stats
-    teamsData.forEach(t => {
-        t.played = 0;
-        t.wins = 0;
-        t.gf = 0;
-        t.ga = 0;
-        t.gd = 0;
-    });
+function calculateStats() {
+  state.teams.forEach(t => Object.assign(t, { played: 0, wins: 0, gf: 0, ga: 0, gd: 0 }));
 
-    const updateStats = (game) => {
-        if (game.h_score !== null && game.a_score !== null && game.home && game.away && game.away !== "BYE") {
-            const home = teamsData.find(t => t.name === game.home);
-            const away = teamsData.find(t => t.name === game.away);
-            if (!home || !away) return;
+  const updateStats = g => {
+    if (!g.home || !g.away || g.away === "BYE" || g.h_score == null || g.a_score == null) return;
+    const home = state.teams.find(t => t.name === g.home);
+    const away = state.teams.find(t => t.name === g.away);
+    if (!home || !away) return;
 
-            // Played
-            home.played++;
-            away.played++;
+    home.played++; away.played++;
+    home.gf += g.h_score; home.ga += g.a_score;
+    away.gf += g.a_score; away.ga += g.h_score;
 
-            // Goals
-            home.gf += game.h_score;
-            home.ga += game.a_score;
-            away.gf += game.a_score;
-            away.ga += game.h_score;
+    if (g.h_score > g.a_score) home.wins++;
+    else if (g.a_score > g.h_score) away.wins++;
+  };
 
-            // Wins
-            if (game.h_score > game.a_score) home.wins++;
-            else if (game.a_score > game.h_score) away.wins++;
-        }
-    };
+  Object.values(state.cups).forEach(cup =>
+    cup.rounds?.forEach(r => r.games?.forEach(updateStats))
+  );
 
-    // Process Welsh + Cardiff Cups
-    [welshData, cardiffData].forEach(cup => {
-        cup.rounds?.forEach(round => {
-            round.games?.forEach(updateStats);
-        });
-    });
-
-    // Calculate Goal Difference
-    teamsData.forEach(t => {
-        t.gd = t.gf - t.ga;
-    });
+  state.teams.forEach(t => (t.gd = t.gf - t.ga));
 }
 
 // =======================
-// DROPDOWN POPULATION
+// UI RENDERING HELPERS
 // =======================
-function populateDropdowns(cup) {
-    const teamSelect = dropdowns[cup].team;
-    const dataSelect = dropdowns[cup].data;
+function populateDropdowns(cupName) {
+  const { team, data } = elements.dropdowns[cupName];
+  if (!team || !data) return;
 
-    teamsData.forEach(t => {
-        const opt = document.createElement('option');
-        opt.value = t.name;
-        opt.textContent = t.name;
-        teamSelect.appendChild(opt);
-    });
+  team.innerHTML = `<option value="">--Choose a Team--</option>`;
+  data.innerHTML = `<option value="">--Team Stats / Match History--</option>`;
 
-    ['Team Stats', 'Match History'].forEach(type => {
-        const opt = document.createElement('option');
-        opt.value = type;
-        opt.textContent = type;
-        dataSelect.appendChild(opt);
-    });
+  state.teams.forEach(t => (team.innerHTML += `<option value="${t.name}">${t.name}</option>`));
+  ["Team Stats", "Match History"].forEach(d => (data.innerHTML += `<option value="${d}">${d}</option>`));
 
-    teamSelect.addEventListener('change', () => updateDisplay(cup));
-    dataSelect.addEventListener('change', () => updateDisplay(cup));
+  team.addEventListener("change", () => updateCupDisplay(cupName));
+  data.addEventListener("change", () => updateCupDisplay(cupName));
 }
 
-function populateTeamCardDropdowns() {
-    teamsData.forEach(t => {
-        const opt = document.createElement('option');
-        opt.value = t.name;
-        opt.textContent = t.name;
-        teamCardSelect.appendChild(opt);
-    });
+function updateCupDisplay(cupName) {
+  const { team, data, display } = elements.dropdowns[cupName];
+  const teamName = team.value;
+  const dataType = data.value;
+  if (!teamName || !dataType) return (display.innerHTML = "");
 
-    ['Team Stats', 'Match History'].forEach(type => {
-        const opt = document.createElement('option');
-        opt.value = type;
-        opt.textContent = type;
-        teamCardDataSelect.appendChild(opt);
-    });
+  const teamData = state.teams.find(t => t.name === teamName);
+  const cupData = state.cups[cupName];
 
-    teamCardSelect.addEventListener('change', updateTeamCardDisplay);
-    teamCardDataSelect.addEventListener('change', updateTeamCardDisplay);
+  display.innerHTML =
+    dataType === "Team Stats"
+      ? renderTeamStats(teamData)
+      : renderMatchHistory(teamName, cupName, cupData);
 }
 
-// =======================
-// TEAMS LEFT COUNTER
-// =======================
-function updateTeamsLeft(cup) {
-    if (!dropdowns[cup].left) return;
-
-    const cupData = cup === 'Welsh' ? welshData : cup === 'Cardiff' ? cardiffData : friendliesData;
-    let left = 0;
-    cupData.rounds?.forEach(round => {
-        round.games.forEach(g => {
-            if (!g.winner) left++;
-        });
-    });
-    dropdowns[cup].left.textContent = left;
-}
-
-// =======================
-// UPDATE DISPLAY FOR DASHBOARD
-// =======================
-function updateDisplay(cup) {
-    const teamSelect = dropdowns[cup].team;
-    const dataSelect = dropdowns[cup].data;
-    const display = dropdowns[cup].display;
-    if (!teamSelect || !dataSelect || !display) return;
-
-    const teamName = teamSelect.value;
-    const dataType = dataSelect.value;
-    display.innerHTML = '';
-
-    const team = teamsData.find(t => t.name === teamName);
-    if (!team) return;
-
-    if (dataType === 'Team Stats') display.innerHTML = renderTeamStats(team);
-    else display.innerHTML = renderMatchHistory(teamName, cup, cup === 'Welsh' ? welshData : cup === 'Cardiff' ? cardiffData : friendliesData);
-}
-
-// =======================
-// TEAM CARD PAGE DISPLAY
-// =======================
-function updateTeamCardDisplay() {
-    if (!teamCardSelect || !teamCardDataSelect || !teamCardDisplay) return;
-
-    const teamName = teamCardSelect.value;
-    const dataType = teamCardDataSelect.value;
-    teamCardDisplay.innerHTML = '';
-
-    const team = teamsData.find(t => t.name === teamName);
-    if (!team) return;
-
-    if (dataType === 'Team Stats') teamCardDisplay.innerHTML = renderTeamStats(team);
-    else {
-        ['Welsh', 'Cardiff', 'Friendlies'].forEach(cup => {
-            const cupData = cup === 'Welsh' ? welshData : cup === 'Cardiff' ? cardiffData : friendliesData;
-            teamCardDisplay.innerHTML += renderMatchHistory(teamName, cup, cupData);
-        });
-    }
-}
-
-// =======================
-// RENDER TEAM STATS TABLE
-// =======================
 function renderTeamStats(team) {
-    return `
-        <h3>${team.name} - ${translations[currentLang].stats}</h3>
-        <table>
-            <tr>
-                <th>${translations[currentLang].played}</th>
-                <th>${translations[currentLang].wins}</th>
-                <th>${translations[currentLang].gf}</th>
-                <th>${translations[currentLang].ga}</th>
-                <th>${translations[currentLang].gd}</th>
-            </tr>
-            <tr>
-                <td>${team.played}</td>
-                <td>${team.wins}</td>
-                <td>${team.gf}</td>
-                <td>${team.ga}</td>
-                <td>${team.gd}</td>
-            </tr>
-        </table>
-        <p>${translations[currentLang].notes} ${team.notes}</p>
-    `;
+  return `
+    <h3>${team.name} - ${translations[currentLang].stats}</h3>
+    <table>
+      <tr><th>${translations[currentLang].played}</th><th>${translations[currentLang].wins}</th><th>${translations[currentLang].gf}</th><th>${translations[currentLang].ga}</th><th>${translations[currentLang].gd}</th></tr>
+      <tr><td>${team.played}</td><td>${team.wins}</td><td>${team.gf}</td><td>${team.ga}</td><td>${team.gd}</td></tr>
+    </table>
+    <p>${translations[currentLang].notes} ${team.notes || "-"}</p>
+  `;
 }
 
-// =======================
-// RENDER MATCH HISTORY
-// =======================
 function renderMatchHistory(teamName, cupName, data) {
-    let html = `<h3>${translations[currentLang][cupName.toLowerCase() + 'Matches'] || cupName + ' Matches'}</h3>`;
-
-    data.rounds?.forEach(round => {
-        html += `<h4>${translations[currentLang].round} ${round.round || ''} - ${translations[currentLang].deadline}: ${round.deadline || '-'}</h4>`;
-        html += `<table>
-            <tr>
-                <th>${translations[currentLang].home}</th>
-                <th>${translations[currentLang].hScore}</th>
-                <th>${translations[currentLang].aScore}</th>
-                <th>${translations[currentLang].away}</th>
-                <th>${translations[currentLang].winner}</th>
-                <th>${translations[currentLang].date}</th>
-                <th>${translations[currentLang].matchNotes}</th>
-            </tr>`;
-        round.games?.forEach(game => {
-            if (game.home === teamName || game.away === teamName) {
-                html += `<tr>
-                    <td>${game.home}</td>
-                    <td>${game.h_score ?? '-'}</td>
-                    <td>${game.a_score ?? '-'}</td>
-                    <td>${game.away}</td>
-                    <td>${game.winner ?? '-'}</td>
-                    <td>${game.date ?? '-'}</td>
-                    <td>${game.notes ?? ''}</td>
-                </tr>`;
-            }
-        });
-        html += `</table>`;
-    });
-    return html;
+  return `
+    <h3>${translations[currentLang][cupName.toLowerCase() + "Matches"] || cupName + " Matches"}</h3>
+    ${data.rounds
+      ?.map(
+        r => `
+      <h4>${translations[currentLang].round} ${r.round || ""} - ${translations[currentLang].deadline}: ${r.deadline || "-"}</h4>
+      <table>
+        <tr><th>${translations[currentLang].home}</th><th>${translations[currentLang].hScore}</th><th>${translations[currentLang].aScore}</th><th>${translations[currentLang].away}</th><th>${translations[currentLang].winner}</th><th>${translations[currentLang].date}</th><th>${translations[currentLang].matchNotes}</th></tr>
+        ${r.games
+          ?.filter(g => g.home === teamName || g.away === teamName)
+          .map(
+            g => `<tr>
+              <td>${g.home}</td>
+              <td>${g.h_score ?? "-"}</td>
+              <td>${g.a_score ?? "-"}</td>
+              <td>${g.away}</td>
+              <td>${g.winner ?? "-"}</td>
+              <td>${g.date ?? "-"}</td>
+              <td>${g.notes ?? ""}</td>
+            </tr>`
+          )
+          .join("")}
+      </table>`
+      )
+      .join("")}
+  `;
 }
 
-// =======================
-// RENDER MATCH TABLES PAGE
-// =======================
-function renderMatches() {
-    if (!competitionSelect || !matchesDisplay) return;
-    const competition = competitionSelect.value;
-    matchesDisplay.innerHTML = '';
-    if (!competition) return;
+function renderLeaderboard() {
+  const el = elements.leaderboard;
+  if (!el) return;
+  const sorted = [...state.teams].sort(
+    (a, b) => b.wins - a.wins || b.gd - a.gd || b.gf - a.gf
+  );
 
-    const data = competition === 'Welsh' ? welshData : competition === 'Cardiff' ? cardiffData : friendliesData;
-    let html = `<h2>${competition} ${translations[currentLang].matchTable || 'Match Table'}</h2>`;
-
-    data.rounds?.forEach(round => {
-        html += `<h3>${translations[currentLang].round} ${round.round || ''} - ${translations[currentLang].deadline}: ${round.deadline || '-'}</h3>`;
-        html += `<table>
-            <tr>
-                <th>${translations[currentLang].home}</th>
-                <th>${translations[currentLang].hScore}</th>
-                <th>${translations[currentLang].aScore}</th>
-                <th>${translations[currentLang].away}</th>
-                <th>${translations[currentLang].winner}</th>
-                <th>${translations[currentLang].date}</th>
-                <th>${translations[currentLang].matchNotes}</th>
-            </tr>`;
-        round.games?.forEach(game => {
-            html += `<tr>
-                <td>${game.home}</td>
-                <td>${game.h_score ?? '-'}</td>
-                <td>${game.a_score ?? '-'}</td>
-                <td>${game.away}</td>
-                <td>${game.winner ?? '-'}</td>
-                <td>${game.date ?? '-'}</td>
-                <td>${game.notes ?? ''}</td>
-            </tr>`;
-        });
-        html += `</table>`;
-    });
-
-    matchesDisplay.innerHTML = html;
+  el.innerHTML = `
+    <h2>${translations[currentLang].leaderboard}</h2>
+    <table>
+      <tr><th>#</th><th>Team</th><th>${translations[currentLang].played}</th><th>${translations[currentLang].wins}</th><th>${translations[currentLang].gf}</th><th>${translations[currentLang].ga}</th><th>${translations[currentLang].gd}</th></tr>
+      ${sorted
+        .map(
+          (t, i) =>
+            `<tr><td>${i + 1}</td><td>${t.name}</td><td>${t.played}</td><td>${t.wins}</td><td>${t.gf}</td><td>${t.ga}</td><td>${t.gd}</td></tr>`
+        )
+        .join("")}
+    </table>`;
 }
 
-// =======================
-// RENDER BRACKETS
-// =======================
+function renderBrackets() {
+  const { welsh, cardiff } = elements.brackets;
+  renderBracket("Welsh", state.cups.Welsh, welsh);
+  renderBracket("Cardiff", state.cups.Cardiff, cardiff);
+}
+
 function renderBracket(cupName, data, container) {
-    if (!container) return;
-    container.innerHTML = '';
-
-    data.rounds?.forEach(round => {
-        const roundDiv = document.createElement('div');
-        roundDiv.className = 'round';
-
-        const roundTitle = document.createElement('h3');
-        roundTitle.textContent = `${translations[currentLang].round} ${round.round} - ${translations[currentLang].deadline}: ${round.deadline || '-'}`;
-        roundDiv.appendChild(roundTitle);
-
-        const gamesDiv = document.createElement('div');
-        gamesDiv.className = 'games';
-
-        round.games?.forEach(game => {
-            const gameDiv = document.createElement('div');
-            gameDiv.className = 'game';
-            gameDiv.innerHTML = `
-                <span class="team ${game.winner === game.home ? 'winner' : ''}">${game.home}</span>
-                <span class="score">${game.h_score ?? '-'}</span> -
-                <span class="score">${game.a_score ?? '-'}</span>
-                <span class="team ${game.winner === game.away ? 'winner' : ''}">${game.away}</span>
-            `;
-            gamesDiv.appendChild(gameDiv);
-        });
-
-        roundDiv.appendChild(gamesDiv);
-        container.appendChild(roundDiv);
-    });
+  if (!container) return;
+  container.innerHTML = data.rounds
+    ?.map(
+      r => `
+      <div class="round">
+        <h3>${translations[currentLang].round} ${r.round} - ${translations[currentLang].deadline}: ${r.deadline || "-"}</h3>
+        <div class="games">
+          ${r.games
+            ?.map(
+              g => `
+            <div class="game" title="${g.notes || ""}">
+              <span class="team ${g.winner === g.home ? "winner" : ""}">${g.home}</span>
+              <span class="score">${g.h_score ?? "-"}</span> -
+              <span class="score">${g.a_score ?? "-"}</span>
+              <span class="team ${g.winner === g.away ? "winner" : ""}">${g.away}</span>
+            </div>`
+            )
+            .join("")}
+        </div>
+      </div>`
+    )
+    .join("");
 }
 
 // =======================
-// LANGUAGE BUTTONS
+// DARK MODE TOGGLE
 // =======================
-document.getElementById('lang-en')?.addEventListener('click', () => switchLanguage('en'));
-document.getElementById('lang-cy')?.addEventListener('click', () => switchLanguage('cy'));
+const themeToggle = document.getElementById("theme-toggle");
+const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+const savedTheme = localStorage.getItem("theme");
+
+if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
+  document.body.classList.add("dark");
+  themeToggle.textContent = "☀️";
+} else {
+  document.body.classList.remove("dark");
+  themeToggle.textContent = "🌙";
+}
+
+themeToggle?.addEventListener("click", () => {
+  document.body.classList.toggle("dark");
+  const isDark = document.body.classList.contains("dark");
+  themeToggle.textContent = isDark ? "☀️" : "🌙";
+  localStorage.setItem("theme", isDark ? "dark" : "light");
+});
+		  
+function renderLastUpdated() {
+  if (elements.lastUpdated)
+    elements.lastUpdated.textContent = `${translations[currentLang].lastUpdated} ${state.lastUpdated}`;
+}
 
 // =======================
-// INITIALIZE
+// REFRESH + FULL RENDER
 // =======================
-loadAllData();
+function renderAll() {
+  Object.keys(elements.dropdowns).forEach(populateDropdowns);
+  renderLeaderboard();
+  renderBrackets();
+  renderLastUpdated();
+}
+
+elements.refresh?.addEventListener("click", async () => {
+  elements.refresh.disabled = true;
+  elements.refresh.textContent = `${translations[currentLang].refresh}...`;
+  await loadData();
+  elements.refresh.textContent = translations[currentLang].refresh;
+  elements.refresh.disabled = false;
+});
+
+// =======================
+// INIT
+// =======================
+loadData();
