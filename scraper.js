@@ -1,4 +1,4 @@
-// scrape_all_cardiff_vale.js
+s// scrape_all_cardiff_vale.js
 // Run with: node scrape_all_cardiff_vale.js
 const fs = require("fs");
 const puppeteer = require("puppeteer");
