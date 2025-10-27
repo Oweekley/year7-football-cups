@@ -1,22 +1,54 @@
 @charset "UTF-8";
+
 /* ==============================
-   LIGHT THEME (Default)
+   GLOBAL RESET & BASE
 ============================== */
-body {
-  background-color: #f9fafc;
-  color: #222;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-header, footer {
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: "Poppins", "Segoe UI", "Helvetica Neue", sans-serif;
+  background-color: #f9fafc;
+  color: #222;
+  line-height: 1.6;
+  min-height: 100vh;
+  padding-bottom: 3rem;
+}
+
+/* ==============================
+   LIGHT MODE (Default)
+============================== */
+body.light {
+  background-color: #f9fafc;
+  color: #222;
+}
+
+body.light header,
+body.light footer {
   background-color: #ffffff;
   color: #222;
   border-bottom: 1px solid #e5e7eb;
   box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
 
+body.light section,
+body.light .dynamic-display,
+body.light table {
+  background-color: #ffffff;
+  color: #222;
+  border: 1px solid #e5e7eb;
+}
+
 /* ==============================
-   DARK THEME
+   DARK MODE
 ============================== */
 body.dark {
   background-color: #121212;
@@ -31,17 +63,6 @@ body.dark footer {
   box-shadow: 0 2px 10px rgba(0,0,0,0.6);
 }
 
-/* Cards and sections */
-section, .dynamic-display, table {
-  background-color: #ffffff;
-  color: #222;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 1rem;
-  margin: 1rem 0;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
 body.dark section,
 body.dark .dynamic-display,
 body.dark table {
@@ -50,149 +71,133 @@ body.dark table {
   border-color: #333;
 }
 
-/* Buttons */
-button {
-  background-color: #0077ff;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 0.4rem 0.8rem;
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.1s ease;
-}
-button:hover {
-  background-color: #005fcc;
-  transform: scale(1.05);
-}
-body.dark button {
-  background-color: #0d99ff;
-  color: #fff;
-}
-
 /* ==============================
-   TRANSITIONS
+   HEADER & NAVIGATION
 ============================== */
-* {
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-/* ==============================
-   BASE
-============================== */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: "Poppins", "Segoe UI", sans-serif;
-  background-color: var(--bg-color);
-  color: var(--text-color);
-  line-height: 1.6;
-  transition: var(--transition);
-  padding-bottom: 3rem;
-}
-
-h1, h2, h3, h4 {
-  font-weight: 600;
-  color: var(--text-color);
-}
-
-header, footer {
-  background-color: var(--card-bg);
-  box-shadow: var(--shadow);
-  padding: 1rem 2rem;
+header {
   position: sticky;
   top: 0;
   z-index: 50;
+  padding: 1rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  background-color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  border-bottom: 1px solid #e5e7eb;
 }
 
 header h1 {
   font-size: 1.6rem;
-  color: var(--primary);
+  color: #0077ff;
+  font-weight: 700;
 }
 
 header nav {
   display: flex;
   gap: 1rem;
+  flex-wrap: wrap;
   margin-top: 0.5rem;
 }
 
 header nav a {
   text-decoration: none;
-  color: var(--text-color);
+  color: inherit;
   font-weight: 500;
-  transition: var(--transition);
+  padding-bottom: 2px;
+  transition: color 0.3s ease, border-bottom 0.3s ease;
 }
 
-header nav a.active,
-header nav a:hover {
-  color: var(--primary);
-  border-bottom: 2px solid var(--primary);
+header nav a:hover,
+header nav a.active {
+  color: #0077ff;
+  border-bottom: 2px solid #0077ff;
 }
 
+/* ==============================
+   LANGUAGE & THEME SWITCH
+============================== */
 .lang-switch {
   display: flex;
   gap: 0.5rem;
+  margin-top: 1rem;
 }
 
 .lang-switch button {
-  background-color: var(--primary);
+  background-color: #0077ff;
   color: #fff;
   border: none;
   padding: 0.4rem 0.8rem;
   border-radius: 6px;
   cursor: pointer;
-  transition: var(--transition);
   font-weight: 600;
+  transition: background-color 0.3s ease, transform 0.1s ease;
 }
 
 .lang-switch button:hover {
-  background-color: var(--accent);
+  background-color: #ffcc00;
   color: #000;
+  transform: scale(1.05);
+}
+
+/* ==============================
+   THEME TOGGLE
+============================== */
+#theme-toggle {
+  background-color: transparent;
+  border: 2px solid #0077ff;
+  color: #0077ff;
+  border-radius: 50%;
+  font-size: 1rem;
+  padding: 0.4rem 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+#theme-toggle:hover {
+  background-color: #0077ff;
+  color: #fff;
 }
 
 /* ==============================
    DASHBOARD OVERVIEW
 ============================== */
 .dashboard-overview {
-  background-color: var(--card-bg);
-  margin: 1.5rem auto;
+  max-width: 1200px;
+  margin: 2rem auto;
+  background-color: #ffffff;
   padding: 2rem;
   border-radius: 16px;
-  box-shadow: var(--shadow);
-  max-width: 1200px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
 }
 
 .overview-header {
   display: flex;
-  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
   gap: 1rem;
 }
 
 .refresh-btn {
-  background-color: var(--primary);
+  background-color: #0077ff;
   color: #fff;
   border: none;
   padding: 0.6rem 1.2rem;
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
-  transition: var(--transition);
+  transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .refresh-btn:hover {
-  background-color: var(--accent);
+  background-color: #ffcc00;
   color: #000;
   transform: translateY(-2px);
 }
 
 .last-updated {
   font-size: 0.9rem;
-  color: var(--text-color);
   opacity: 0.8;
 }
 
@@ -200,12 +205,12 @@ header nav a:hover {
    CUP SECTIONS
 ============================== */
 .cup-section {
-  background-color: var(--card-bg);
+  max-width: 1200px;
   margin: 2rem auto;
+  background-color: #ffffff;
   padding: 1.5rem;
   border-radius: 14px;
-  box-shadow: var(--shadow);
-  max-width: 1200px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
 }
 
 .selectors {
@@ -221,16 +226,16 @@ label {
 
 select {
   padding: 0.5rem 0.8rem;
-  border: 1px solid var(--border-color);
+  border: 1px solid #ccc;
   border-radius: 8px;
-  background-color: var(--bg-color);
-  color: var(--text-color);
+  background-color: #f9fafc;
+  color: #222;
   font-weight: 500;
   cursor: pointer;
 }
 
 select:focus {
-  border-color: var(--primary);
+  border-color: #0077ff;
   outline: none;
 }
 
@@ -243,24 +248,25 @@ select:focus {
 .dynamic-display th,
 .dynamic-display td {
   padding: 0.6rem;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #ddd;
   text-align: center;
 }
 
 .dynamic-display th {
-  background-color: var(--primary);
+  background-color: #0077ff;
   color: #fff;
+  font-weight: 600;
 }
 
 .dynamic-display tr:nth-child(even) {
-  background-color: var(--bg-color);
+  background-color: #f3f3f3;
 }
 
 /* ==============================
    LEADERBOARD
 ============================== */
 .leaderboard-section {
-  margin-top: 1.5rem;
+  margin-top: 2rem;
   overflow-x: auto;
 }
 
@@ -272,24 +278,24 @@ select:focus {
 }
 
 .leaderboard-section th {
-  background-color: var(--primary);
+  background-color: #0077ff;
   color: #fff;
   padding: 0.75rem;
 }
 
 .leaderboard-section td {
   padding: 0.6rem;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #ddd;
 }
 
 .leaderboard-section tr:nth-child(even) {
-  background-color: var(--bg-color);
+  background-color: #f3f3f3;
 }
 
 .leaderboard-section tr:hover {
-  background-color: var(--accent);
+  background-color: #ffcc00;
   color: #000;
-  transition: var(--transition);
+  transition: 0.3s;
 }
 
 /* ==============================
@@ -298,44 +304,30 @@ select:focus {
 footer {
   text-align: center;
   padding: 1rem;
-  color: var(--text-color);
-  opacity: 0.8;
-  background-color: var(--card-bg);
-  box-shadow: var(--shadow);
+  color: #555;
+  background-color: #ffffff;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
   margin-top: 3rem;
-}
-
-/* ==============================
-   DARK MODE TOGGLE
-============================== */
-.dark-toggle {
-  background: none;
-  border: 2px solid var(--primary);
-  color: var(--primary);
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: var(--transition);
-}
-.dark-toggle:hover {
-  background-color: var(--primary);
-  color: #fff;
 }
 
 /* ==============================
    RESPONSIVE DESIGN
 ============================== */
 @media (max-width: 768px) {
+  header {
+    align-items: center;
+  }
+  header nav {
+    flex-direction: column;
+    align-items: center;
+  }
   .selectors {
     flex-direction: column;
   }
-
-  header nav {
-    flex-direction: column;
-  }
-
   .dashboard-overview, .cup-section {
     padding: 1rem;
+  }
+  table {
+    font-size: 0.9rem;
   }
 }
