@@ -46,19 +46,19 @@ const translations = {
   cy: {
     dashboardTitle: "Dangosfwrdd Cwpanau Blwyddyn 7 2025",
     dashboard: "Dangosfwrdd",
-    teamDashboard: "Dangosfwrdd Tîm",
+    teamDashboard: "Dangosfwrdd TÃ®m",
     brackets: "Bracetiau",
     welshCupOverview: "Trosolwg Cwpan Cymru",
-    selectTeam: "Dewiswch Dîm:",
+    selectTeam: "Dewiswch DÃ®m:",
     selectData: "Dewiswch Ddata:",
     cardiffCupOverview: "Trosolwg Cwpan Caerdydd",
     friendliesOverview: "Trosolwg Gemau Cyfeillgar",
     stats: "Ystadegau",
     played: "Gemau",
     wins: "Enillodd",
-    gf: "Gôl I",
-    ga: "Gôl Yn Erbyn",
-    gd: "Gwahaniaeth Gôl",
+    gf: "GÃ´l I",
+    ga: "GÃ´l Yn Erbyn",
+    gd: "Gwahaniaeth GÃ´l",
     notes: "Nodiadau:",
     welshMatches: "Gemau Cymru",
     round: "Rownd",
@@ -151,7 +151,7 @@ async function fetchJSON(url) {
 
 async function loadData() {
   try {
-    console.log("🔄 Loading data files...");
+    console.log("ðŸ”„ Loading data files...");
 
     const [teamsRaw, welsh, cardiff, friendlies, updated] = await Promise.all([
       fetchJSON("teams.json"),
@@ -161,7 +161,7 @@ async function loadData() {
       fetchJSON("last_updated.json").catch(() => ({ lastUpdated: "Unknown" }))
     ]);
 
-    console.log("✅ All JSON files loaded successfully.");
+    console.log("âœ… All JSON files loaded successfully.");
 
     // Normalize teams.json
     let teams = [];
@@ -194,7 +194,7 @@ async function loadData() {
     calculateStats();
     renderAll();
   } catch (err) {
-    console.error("❌ Error loading data:", err);
+    console.error("âŒ Error loading data:", err);
     showErrorMessage("Error loading data. Please check your JSON files or network connection.");
   }
 }
@@ -441,129 +441,80 @@ const savedTheme = localStorage.getItem("theme");
 
 if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
   document.body.classList.add("dark");
-  themeToggle.textContent = "☀️";
+  themeToggle.textContent = "â˜€ï¸";
 } else {
-  themeToggle.textContent = "🌙";
+  themeToggle.textContent = "ðŸŒ™";
 }
 
 themeToggle?.addEventListener("click", () => {
   document.body.classList.toggle("dark");
   const isDark = document.body.classList.contains("dark");
-  themeToggle.textContent = isDark ? "☀️" : "🌙";
+  themeToggle.textContent = isDark ? "â˜€ï¸" : "ðŸŒ™";
   localStorage.setItem("theme", isDark ? "dark" : "light");
 });
 
-/* ============================
-   Update Fixtures Modal + Progress
-============================ */
-(function setupUpdateModal() {
-  const btn = document.getElementById('update-fixtures-btn');
-  const modal = document.getElementById('update-modal');
-  if (!btn || !modal) return; // not this page
+// ===== UPDATE FIXTURES MODAL + CALL TO CLOUDFLARE WORKER =====
 
-  const closeBtn = document.getElementById('update-close');
-  const startBtn = document.getElementById('update-start');
-  const passInput = document.getElementById('update-pass');
-  const steps = Array.from(document.querySelectorAll('#update-steps li'));
-  const err = document.getElementById('update-error');
+const workerURL = "https://year7-fixtures-dispatch.oweekley.workers.dev"; // ✅ UPDATE THIS IF CHANGED
 
-  const WORKER_URL = 'https://year7-fixtures-dispatch.oweekley.workers.dev'; // <-- set after deploying the Worker
+const updateBtn = document.getElementById("update-fixtures-btn");
+const modal = document.getElementById("updateModal");
+const cancelBtn = document.getElementById("cancelUpdate");
+const confirmBtn = document.getElementById("confirmUpdate");
+const statusText = document.getElementById("updateStatus");
 
-  const setStep = (name, status) => {
-    // status: "active" | "done" | "reset"
-    steps.forEach(li => {
-      if (status === 'reset') {
-        li.classList.remove('is-active', 'is-done');
-        return;
-      }
-      if (li.dataset.step === name) {
-        li.classList.add(status === 'active' ? 'is-active' : 'is-done');
-        if (status === 'done') li.classList.remove('is-active');
-      }
-    });
-  };
+updateBtn?.addEventListener("click", () => {
+  statusText.textContent = "";
+  modal.classList.remove("hidden");
+});
 
-  const resetUI = () => {
-    err.hidden = true; err.textContent = '';
-    setStep(null, 'reset');
-  };
+cancelBtn?.addEventListener("click", () => {
+  modal.classList.add("hidden");
+});
 
-  const open = () => {
-    resetUI();
-    modal.setAttribute('aria-hidden', 'false');
-    setTimeout(() => passInput?.focus(), 50);
-  };
-  const close = () => {
-    modal.setAttribute('aria-hidden', 'true');
-  };
-
-  btn.addEventListener('click', open);
-  closeBtn?.addEventListener('click', close);
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) close();
-  });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && modal.getAttribute('aria-hidden') === 'false') close();
-  });
-
-  async function runUpdate() {
-    err.hidden = true; err.textContent = '';
-    steps.forEach(li => li.classList.remove('is-active','is-done'));
-
-    const password = passInput.value.trim();
-    if (!password) {
-      err.hidden = false; err.textContent = 'Please enter the password.';
-      return;
-    }
-
-    try {
-      // 1) AUTH
-      setStep('auth','active');
-      // 2) DISPATCH
-      setStep('auth','done');
-      setStep('dispatch','active');
-
-      const res = await fetch(WORKER_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password })
-      });
-
-      if (!res.ok) {
-        const t = await res.text().catch(()=>'');
-        throw new Error(t || `Worker error ${res.status}`);
-      }
-      const json = await res.json();
-
-      // Server returns { ok: true } once workflow is dispatched
-      setStep('dispatch','done');
-      setStep('run','active');
-
-      // We won�t poll GitHub; just show staged progress for UX:
-      await new Promise(r=>setTimeout(r, 1200));
-      setStep('run','done');
-      setStep('commit','active');
-      await new Promise(r=>setTimeout(r, 800));
-      setStep('commit','done');
-      setStep('done','active');
-
-    } catch (e) {
-      err.hidden = false;
-      err.textContent = e.message || 'Something went wrong.';
-      // roll back active markers
-      steps.forEach(li => li.classList.remove('is-active'));
-    }
+confirmBtn?.addEventListener("click", async () => {
+  const password = document.getElementById("adminPassword").value.trim();
+  if (!password) {
+    statusText.style.color = "yellow";
+    statusText.textContent = "Enter password first";
+    return;
   }
 
-  startBtn?.addEventListener('click', runUpdate);
-})();
+  statusText.style.color = "#00c4ff";
+  statusText.textContent = "Running update...";
+
+  try {
+    const res = await fetch(workerURL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "User-Agent": "Year7 Cups Dashboard"
+      },
+      body: JSON.stringify({ password })
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      statusText.style.color = "#00ff88";
+      statusText.textContent = "✅ Updated successfully!";
+      setTimeout(() => modal.classList.add("hidden"), 1500);
+    } else {
+      statusText.style.color = "red";
+      statusText.textContent = data.error || "❌ Failed";
+    }
+  } catch (err) {
+    statusText.style.color = "red";
+    statusText.textContent = "⚠️ Error contacting server";
+  }
+});
 
 // ============================================================
 // GLOBAL RENDER + REFRESH HANDLERS
 // ============================================================
 function renderAll() {
   if (!state.teams?.length) {
-    console.warn("⚠️ No teams found — check teams.json");
+    console.warn("âš ï¸ No teams found â€” check teams.json");
     return;
   }
 
