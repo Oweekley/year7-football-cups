@@ -6,29 +6,92 @@
 // ============================================================
 
 const fs = require("fs");
+const os = require("os");
 const puppeteer = require("puppeteer");
+
+// =======================
+// [LOGGING] Structured console logger (Node, no files)
+// =======================
+const nodeOriginalConsole = {
+  log: console.log.bind(console),
+  info: console.info.bind(console),
+  warn: console.warn.bind(console),
+  error: console.error.bind(console),
+  debug: console.debug ? console.debug.bind(console) : console.log.bind(console)
+};
+const NODE_LEVELS = { debug: 10, info: 20, warn: 30, warning: 30, error: 40, critical: 50 };
+const nodeLevelName = (process.env.LOG_LEVEL || "info").toLowerCase();
+const nodeThreshold = NODE_LEVELS[nodeLevelName] ?? NODE_LEVELS.info;
+const runId =
+  (typeof crypto !== "undefined" && crypto.randomUUID)
+    ? crypto.randomUUID()
+    : `run-${Math.random().toString(36).slice(2)}`;
+const nodeModule = "scraper";
+
+function nodeNow() {
+  return new Date().toISOString();
+}
+function nodeShould(level) {
+  return (NODE_LEVELS[level] ?? 999) >= nodeThreshold;
+}
+function nodeEmit(level, msg, data, err) {
+  if (!nodeShould(level)) return;
+  const entry = {
+    ts: nodeNow(),
+    level: level.toUpperCase(),
+    module: nodeModule,
+    runId,
+    host: os.hostname(),
+    msg: String(msg)
+  };
+  if (data && typeof data === "object") entry.data = data;
+  if (err) entry.err = { message: String(err.message || err), stack: String(err.stack || "") };
+  const line = `[${entry.level}] ${entry.module} ${entry.msg}`;
+  (nodeOriginalConsole[level] || nodeOriginalConsole.log)(line, entry);
+}
+// Global error surfaces
+process.on("unhandledRejection", reason => nodeEmit("error", "unhandledRejection", null, reason));
+process.on("uncaughtException", err => nodeEmit("critical", "uncaughtException", null, err));
+// Lightweight timing helper
+const nodeTime = label => {
+  const start = Date.now();
+  return () => ({ ms: Date.now() - start, label });
+};
+nodeEmit("info", "scraper start", { level: nodeLevelName });
 
 // ===============================
 // HELPERS
 // ===============================
 const MONTH_MAP = {
-  Jan: "January", Feb: "February", Mar: "March", Apr: "April",
-  May: "May", Jun: "June", Jul: "July", Aug: "August",
-  Sep: "September", Sept: "September", Oct: "October",
-  Nov: "November", Dec: "December"
+  Jan: "January",
+  Feb: "February",
+  Mar: "March",
+  Apr: "April",
+  May: "May",
+  Jun: "June",
+  Jul: "July",
+  Aug: "August",
+  Sep: "September",
+  Sept: "September",
+  Oct: "October",
+  Nov: "November",
+  Dec: "December"
 };
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-+ // Keep original signature but route through structured logger
-+ const log = (msg, symbol = "�") => nodeEmit('info', String(msg), { symbol });
+// Keep original signature but route through structured logger
+const log = (msg, symbol = "•") => nodeEmit("info", String(msg), { symbol });
 
 function safeWriteJSON(file, data) {
   try {
     fs.writeFileSync(file, JSON.stringify(data, null, 2), "utf8");
-+    nodeEmit('info', 'write json ok', { file, items: Object.keys(data.team_statistics || data).length });
+    nodeEmit("info", "write json ok", {
+      file,
+      items: Object.keys(data.team_statistics || data).length
+    });
   } catch (err) {
-+    nodeEmit('error', `write json failed: ${file}`, null, err);
+    nodeEmit("error", `write json failed: ${file}`, null, err);
   }
 }
 
@@ -45,7 +108,9 @@ function normalizeTeamName(name) {
 
 function expandDeadline(line) {
   if (!line) return null;
-  const m = line.match(/(\d{1,2})(?:st|nd|rd|th)?\s*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)/i);
+  const m = line.match(
+    /(\d{1,2})(?:st|nd|rd|th)?\s*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)/i
+  );
   if (m) {
     const day = m[1];
     const month = MONTH_MAP[m[2]] || m[2];
@@ -57,7 +122,13 @@ function expandDeadline(line) {
 function ensureTeamStats(stats, team) {
   if (!team || team === "BYE" || team.startsWith("Game ")) return;
   if (!stats[team]) {
-    stats[team] = { games_played: 0, wins: 0, goals_for: 0, goals_against: 0, goal_difference: 0 };
+    stats[team] = {
+      games_played: 0,
+      wins: 0,
+      goals_for: 0,
+      goals_against: 0,
+      goal_difference: 0
+    };
   }
 }
 
@@ -92,12 +163,16 @@ async function fetchParagraphs(page, selectorOrId, label) {
   try {
     await page.waitForSelector(selectorOrId, { timeout: 15000 });
     const paragraphs = await page.$$eval(`${selectorOrId} p`, ps =>
-      ps.map(p => p.innerText.replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim()).filter(Boolean)
+      ps
+        .map(p =>
+          p.innerText.replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim()
+        )
+        .filter(Boolean)
     );
-+    nodeEmit('debug', 'fetched paragraphs', { label, count: paragraphs.length });
+    nodeEmit("debug", "fetched paragraphs", { label, count: paragraphs.length });
     return paragraphs;
   } catch (err) {
-+    nodeEmit('warn', `failed to fetch paragraphs: ${label}`, null, err);
+    nodeEmit("warn", `failed to fetch paragraphs: ${label}`, null, err);
     return [];
   }
 }
@@ -106,13 +181,14 @@ async function fetchParagraphs(page, selectorOrId, label) {
 // SCRAPER 1: U12 Welsh Schools FA
 // ===============================
 async function scrapeU12Welsh(browser) {
-	+  nodeEmit('info', 'scrapeU12Welsh: start');
+  nodeEmit("info", "scrapeU12Welsh: start");
+
   const SOURCE_URL = "https://www.welshschoolsfa.co.uk/cardiffandvale25-26";
   const TARGET_DIV_ID = "1235921298";
   const CUP_NAME = "U12 Boys Welsh Cup - Cardiff & Vale";
   const SEASON = "2025-26";
 
-+  nodeEmit('debug', 'navigating', { url: SOURCE_URL });
+  nodeEmit("debug", "navigating", { url: SOURCE_URL });
 
   const page = await browser.newPage();
   page.setDefaultNavigationTimeout(60000);
@@ -121,7 +197,7 @@ async function scrapeU12Welsh(browser) {
     await page.goto(SOURCE_URL, { waitUntil: "networkidle2" });
     await delay(1500);
 
-    const paragraphs = await page.evaluate((id) => {
+    const paragraphs = await page.evaluate(id => {
       const div = document.querySelector(`[id="${id}"]`);
       if (!div) return [];
       const norm = s => s.replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim();
@@ -130,7 +206,12 @@ async function scrapeU12Welsh(browser) {
         .filter(Boolean);
     }, TARGET_DIV_ID);
 
-    const result = { cup_name: CUP_NAME, season: SEASON, rounds: [], team_statistics: {} };
+    const result = {
+      cup_name: CUP_NAME,
+      season: SEASON,
+      rounds: [],
+      team_statistics: {}
+    };
 
     const parseGameLine = line => {
       line = cleanText(line);
@@ -138,10 +219,20 @@ async function scrapeU12Welsh(browser) {
 
       // Handle BYE
       const bye = line.match(/^(.+?)\s+V\s*(BYE|Bye)$/i);
-      if (bye) return { home: normalizeTeamName(bye[1]), away: "BYE", home_score: null, away_score: null, winner: normalizeTeamName(bye[1]) };
+      if (bye) {
+        return {
+          home: normalizeTeamName(bye[1]),
+          away: "BYE",
+          home_score: null,
+          away_score: null,
+          winner: normalizeTeamName(bye[1])
+        };
+      }
 
       // Score line
-      const score = line.match(/^(?:Game\s*\d+\s*)?(.+?)\s+(\d+)\s*-\s*(\d+)\s+(.+)$/);
+      const score = line.match(
+        /^(?:Game\s*\d+\s*)?(.+?)\s+(\d+)\s*-\s*(\d+)\s+(.+)$/
+      );
       if (score) {
         const home = normalizeTeamName(score[1]);
         const away = normalizeTeamName(score[4]);
@@ -175,7 +266,10 @@ async function scrapeU12Welsh(browser) {
         }
 
         i++;
-        while (i < paragraphs.length && !/ROUND\s*\d+|ROWND\s*\d+|U13|U14|U15/i.test(paragraphs[i])) {
+        while (
+          i < paragraphs.length &&
+          !/ROUND\s*\d+|ROWND\s*\d+|U13|U14|U15/i.test(paragraphs[i])
+        ) {
           const parsed = parseGameLine(paragraphs[i]);
           if (parsed && parsed.home && parsed.away) {
             const entry = {
@@ -206,9 +300,10 @@ async function scrapeU12Welsh(browser) {
 
     safeWriteJSON("welsh.json", result);
   } catch (err) {
-    console.error("❌ Welsh scrape failed:", err.message);
+    nodeEmit("error", "Welsh scrape failed", null, err);
   } finally {
     await page.close();
+    nodeEmit("info", "scrapeU12Welsh: done");
   }
 }
 
@@ -221,7 +316,7 @@ async function scrapeYear7Cardiff(browser) {
   const CUP_NAME = "Year 7 Boys Cardiff & Vale Cup";
   const SEASON = "2025-26";
 
-  log(`\n🟩 Starting Cardiff & Vale scrape...`);
+  log("\n🧩 Starting Cardiff & Vale scrape...");
 
   const page = await browser.newPage();
   page.setDefaultNavigationTimeout(60000);
@@ -266,19 +361,29 @@ async function scrapeYear7Cardiff(browser) {
         }
 
         i++;
-        while (i < paragraphs.length && !paragraphs[i].match(/(ROUND\s*\d+|QUARTER FINAL|SEMI FINAL|FINAL)/i)) {
+        while (
+          i < paragraphs.length &&
+          !paragraphs[i].match(/(ROUND\s*\d+|QUARTER FINAL|SEMI FINAL|FINAL)/i)
+        ) {
           const line = paragraphs[i];
 
           // Handle BYES
           if (/^BYES/i.test(line)) {
             i++;
-            while (i < paragraphs.length && paragraphs[i] && !/^(ROUND|QUARTER|SEMI|FINAL)/i.test(paragraphs[i])) {
+            while (
+              i < paragraphs.length &&
+              paragraphs[i] &&
+              !/^(ROUND|QUARTER|SEMI|FINAL)/i.test(paragraphs[i])
+            ) {
               const team = cleanText(paragraphs[i]);
               if (!team || team === "." || /^V$/i.test(team)) break;
               round.games.push({
-                home_team: team, home_score: null,
-                away_team: "BYE", away_score: null,
-                winner: team, date: null
+                home_team: team,
+                home_score: null,
+                away_team: "BYE",
+                away_score: null,
+                winner: team,
+                date: null
               });
               recordMatch(result.team_statistics, { home: team, away: "BYE" });
               i++;
@@ -314,11 +419,11 @@ async function scrapeYear7Cardiff(browser) {
     delete result.team_statistics["BYE"];
 
     safeWriteJSON("cardiff.json", result);
-+  } catch (err) {
-+    nodeEmit('error', 'Cardiff scrape failed', null, err);
+  } catch (err) {
+    nodeEmit("error", "Cardiff scrape failed", null, err);
   } finally {
     await page.close();
-+    nodeEmit('info', 'scrapeYear7Cardiff: done');
+    nodeEmit("info", "scrapeYear7Cardiff: done");
   }
 }
 
@@ -326,7 +431,8 @@ async function scrapeYear7Cardiff(browser) {
 // MERGE TEAM STATISTICS
 // ===============================
 function mergeTeamStats() {
-+  nodeEmit('info', 'mergeTeamStats: start');
+  nodeEmit("info", "mergeTeamStats: start");
+
   const welsh = JSON.parse(fs.readFileSync("welsh.json", "utf8"));
   const cardiff = JSON.parse(fs.readFileSync("cardiff.json", "utf8"));
 
@@ -358,56 +464,16 @@ function mergeTeamStats() {
   addStats(cardiff.team_statistics, "Cardiff & Vale Cup");
 
   safeWriteJSON("teams.json", merged);
-	+  nodeEmit('info', 'mergeTeamStats: done', { teams: Object.keys(merged).length });
-
+  nodeEmit("info", "mergeTeamStats: done", { teams: Object.keys(merged).length });
 }
-
-+ // =======================
-+ // [LOGGING] Structured console logger (Node, no files)
-+ // =======================
-+ const os = require('os');
-+ const nodeOriginalConsole = {
-+   log: console.log.bind(console),
-+   info: console.info.bind(console),
-+   warn: console.warn.bind(console),
-+   error: console.error.bind(console),
-+   debug: console.debug ? console.debug.bind(console) : console.log.bind(console),
-+ };
-+ const NODE_LEVELS = { debug: 10, info: 20, warn: 30, warning: 30, error: 40, critical: 50 };
-+ const nodeLevelName = (process.env.LOG_LEVEL || 'info').toLowerCase();
-+ const nodeThreshold = NODE_LEVELS[nodeLevelName] ?? NODE_LEVELS.info;
-+ const runId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID()
-+              : 'run-' + Math.random().toString(36).slice(2);
-+ const nodeModule = 'scraper';
-+ function nodeNow(){ return new Date().toISOString(); }
-+ function nodeShould(level){ return (NODE_LEVELS[level] ?? 999) >= nodeThreshold; }
-+ function nodeEmit(level, msg, data, err){
-+   if (!nodeShould(level)) return;
-+   const entry = {
-+     ts: nodeNow(), level: level.toUpperCase(), module: nodeModule,
-+     runId, host: os.hostname(), msg: String(msg)
-+   };
-+   if (data && typeof data === 'object') entry.data = data;
-+   if (err) entry.err = { message: String(err.message || err), stack: String(err.stack || '') };
-+   const line = `[${entry.level}] ${entry.module} ${entry.msg}`;
-+   (nodeOriginalConsole[level] || nodeOriginalConsole.log)(line, entry);
-+ }
-+ // Global error surfaces
-+ process.on('unhandledRejection', (reason) => nodeEmit('error', 'unhandledRejection', null, reason));
-+ process.on('uncaughtException', (err) => nodeEmit('critical', 'uncaughtException', null, err));
-+ // Lightweight timing helper
-+ const nodeTime = (label) => {
-+   const start = Date.now();
-+   return () => ({ ms: Date.now() - start, label });
-+ };
-+ nodeEmit('info', 'scraper start', { level: nodeLevelName });
 
 // ===============================
 // MAIN EXECUTION
 // ===============================
 (async () => {
-  +  nodeEmit('info', 'puppeteer launching');
-+  const browser = await puppeteer.launch({
+  nodeEmit("info", "puppeteer launching");
+
+  const browser = await puppeteer.launch({
     headless: true,
     args: ["--no-sandbox", "--disable-setuid-sandbox"]
   });
@@ -416,11 +482,11 @@ function mergeTeamStats() {
     await scrapeU12Welsh(browser);
     await scrapeYear7Cardiff(browser);
     mergeTeamStats();
-    nodeEmit('info', 'all tasks complete');
+    nodeEmit("info", "all tasks complete");
   } catch (err) {
-    nodeEmit('critical', 'global scrape error', null, err);
+    nodeEmit("critical", "global scrape error", null, err);
   } finally {
     await browser.close();
-	  nodeEmit('info', 'puppeteer closed');
+    nodeEmit("info", "puppeteer closed");
   }
 })();
