@@ -2,310 +2,284 @@
   "Llanishen": {
     "cups": [
       "Welsh Cup",
-      "Cardiff & Vale Cup",
-      null
+      "Cardiff & Vale Cup"
     ],
-    "games_played": 4,
-    "wins": 4,
-    "goals_for": 26,
-    "goals_against": 2,
-    "goal_difference": 24
+    "games_played": 2,
+    "wins": 2,
+    "goals_for": 13,
+    "goals_against": 1,
+    "goal_difference": 12
   },
   "Fitzalan": {
     "cups": [
       "Welsh Cup",
-      "Cardiff & Vale Cup",
-      null
+      "Cardiff & Vale Cup"
     ],
-    "games_played": 4,
+    "games_played": 2,
     "wins": 0,
-    "goals_for": 2,
-    "goals_against": 30,
-    "goal_difference": -28
+    "goals_for": 1,
+    "goals_against": 15,
+    "goal_difference": -14
   },
   "Willows": {
     "cups": [
       "Welsh Cup",
-      "Cardiff & Vale Cup",
-      null
+      "Cardiff & Vale Cup"
     ],
-    "games_played": 4,
+    "games_played": 2,
     "wins": 0,
-    "goals_for": 4,
-    "goals_against": 22,
-    "goal_difference": -18
+    "goals_for": 2,
+    "goals_against": 11,
+    "goal_difference": -9
   },
   "Corpus Christi": {
     "cups": [
       "Welsh Cup",
-      "Cardiff & Vale Cup",
-      null
+      "Cardiff & Vale Cup"
     ],
-    "games_played": 4,
-    "wins": 2,
-    "goals_for": 26,
-    "goals_against": 16,
-    "goal_difference": 10
+    "games_played": 2,
+    "wins": 1,
+    "goals_for": 13,
+    "goals_against": 8,
+    "goal_difference": 5
   },
   "St Teilo's": {
     "cups": [
       "Welsh Cup",
-      "Cardiff & Vale Cup",
-      null
+      "Cardiff & Vale Cup"
     ],
-    "games_played": 4,
-    "wins": 2,
+    "games_played": 2,
+    "wins": 1,
     "goals_for": 0,
-    "goals_against": 6,
-    "goal_difference": -6
+    "goals_against": 3,
+    "goal_difference": -3
   },
   "Cardiff High": {
     "cups": [
       "Welsh Cup",
-      "Cardiff & Vale Cup",
-      null
+      "Cardiff & Vale Cup"
     ],
-    "games_played": 4,
-    "wins": 4,
-    "goals_for": 14,
+    "games_played": 2,
+    "wins": 2,
+    "goals_for": 7,
     "goals_against": 0,
-    "goal_difference": 14
+    "goal_difference": 7
   },
   "Whitmore": {
     "cups": [
       "Welsh Cup",
-      "Cardiff & Vale Cup",
-      null
+      "Cardiff & Vale Cup"
     ],
-    "games_played": 4,
+    "games_played": 2,
     "wins": 0,
-    "goals_for": 10,
-    "goals_against": 34,
-    "goal_difference": -24
+    "goals_for": 5,
+    "goals_against": 17,
+    "goal_difference": -12
   },
   "Plasmawr": {
     "cups": [
       "Welsh Cup",
-      "Cardiff & Vale Cup",
-      null
+      "Cardiff & Vale Cup"
     ],
-    "games_played": 4,
-    "wins": 4,
-    "goals_for": 34,
-    "goals_against": 2,
-    "goal_difference": 32
+    "games_played": 2,
+    "wins": 2,
+    "goals_for": 17,
+    "goals_against": 1,
+    "goal_difference": 16
   },
   "Bro Edern": {
     "cups": [
       "Welsh Cup",
-      "Cardiff & Vale Cup",
-      null
+      "Cardiff & Vale Cup"
     ],
-    "games_played": 6,
-    "wins": 4,
-    "goals_for": 22,
-    "goals_against": 14,
-    "goal_difference": 8
+    "games_played": 3,
+    "wins": 2,
+    "goals_for": 11,
+    "goals_against": 7,
+    "goal_difference": 4
   },
   "Cardiff West": {
     "cups": [
       "Welsh Cup",
-      "Cardiff & Vale Cup",
-      null
+      "Cardiff & Vale Cup"
     ],
-    "games_played": 4,
+    "games_played": 2,
     "wins": 0,
     "goals_for": 0,
-    "goals_against": 28,
-    "goal_difference": -28
+    "goals_against": 14,
+    "goal_difference": -14
   },
   "Cowbridge": {
     "cups": [
       "Welsh Cup",
-      "Cardiff & Vale Cup",
-      null
+      "Cardiff & Vale Cup"
     ],
-    "games_played": 6,
-    "wins": 4,
-    "goals_for": 38,
-    "goals_against": 18,
-    "goal_difference": 20
+    "games_played": 3,
+    "wins": 2,
+    "goals_for": 19,
+    "goals_against": 9,
+    "goal_difference": 10
   },
   "Llantwit Major": {
     "cups": [
       "Welsh Cup",
-      "Cardiff & Vale Cup",
-      null
+      "Cardiff & Vale Cup"
     ],
-    "games_played": 4,
-    "wins": 2,
-    "goals_for": 18,
-    "goals_against": 28,
-    "goal_difference": -10
+    "games_played": 2,
+    "wins": 1,
+    "goals_for": 9,
+    "goals_against": 14,
+    "goal_difference": -5
   },
   "Mary Immaculate": {
     "cups": [
       "Welsh Cup",
-      "Cardiff & Vale Cup",
-      null
+      "Cardiff & Vale Cup"
     ],
-    "games_played": 4,
-    "wins": 4,
-    "goals_for": 18,
-    "goals_against": 4,
-    "goal_difference": 14
+    "games_played": 2,
+    "wins": 2,
+    "goals_for": 9,
+    "goals_against": 2,
+    "goal_difference": 7
   },
   "Bishop of Llandaff": {
     "cups": [
       "Welsh Cup",
-      "Cardiff & Vale Cup",
-      null
+      "Cardiff & Vale Cup"
     ],
-    "games_played": 4,
+    "games_played": 2,
     "wins": 0,
-    "goals_for": 6,
-    "goals_against": 12,
-    "goal_difference": -6
+    "goals_for": 3,
+    "goals_against": 6,
+    "goal_difference": -3
   },
   "Pencoedtre": {
     "cups": [
       "Welsh Cup",
-      "Cardiff & Vale Cup",
-      null
+      "Cardiff & Vale Cup"
     ],
-    "games_played": 4,
-    "wins": 2,
-    "goals_for": 2,
-    "goals_against": 20,
-    "goal_difference": -18
+    "games_played": 2,
+    "wins": 1,
+    "goals_for": 1,
+    "goals_against": 10,
+    "goal_difference": -9
   },
   "Glantaf": {
     "cups": [
       "Welsh Cup",
-      "Cardiff & Vale Cup",
-      null
+      "Cardiff & Vale Cup"
     ],
-    "games_played": 4,
-    "wins": 4,
-    "goals_for": 42,
-    "goals_against": 4,
-    "goal_difference": 38
+    "games_played": 2,
+    "wins": 2,
+    "goals_for": 21,
+    "goals_against": 2,
+    "goal_difference": 19
   },
   "Eastern": {
     "cups": [
       "Welsh Cup",
-      "Cardiff & Vale Cup",
-      null
+      "Cardiff & Vale Cup"
     ],
-    "games_played": 4,
-    "wins": 2,
-    "goals_for": 2,
-    "goals_against": 10,
-    "goal_difference": -8
+    "games_played": 2,
+    "wins": 1,
+    "goals_for": 1,
+    "goals_against": 5,
+    "goal_difference": -4
   },
   "Radyr": {
     "cups": [
       "Welsh Cup",
-      "Cardiff & Vale Cup",
-      null
+      "Cardiff & Vale Cup"
     ],
-    "games_played": 4,
-    "wins": 4,
-    "goals_for": 10,
-    "goals_against": 2,
-    "goal_difference": 8
+    "games_played": 2,
+    "wins": 2,
+    "goals_for": 5,
+    "goals_against": 1,
+    "goal_difference": 4
   },
   "St Richard Gwyn": {
     "cups": [
       "Welsh Cup",
-      "Cardiff & Vale Cup",
-      null
+      "Cardiff & Vale Cup"
     ],
-    "games_played": 4,
-    "wins": 2,
+    "games_played": 2,
+    "wins": 1,
     "goals_for": 0,
-    "goals_against": 6,
-    "goal_difference": -6
+    "goals_against": 3,
+    "goal_difference": -3
   },
   "Whitchurch": {
     "cups": [
       "Welsh Cup",
-      "Cardiff & Vale Cup",
-      null
+      "Cardiff & Vale Cup"
     ],
-    "games_played": 4,
-    "wins": 4,
-    "goals_for": 12,
+    "games_played": 2,
+    "wins": 2,
+    "goals_for": 6,
     "goals_against": 0,
-    "goal_difference": 12
+    "goal_difference": 6
   },
   "St Cyres": {
     "cups": [
       "Welsh Cup",
-      "Cardiff & Vale Cup",
-      null
+      "Cardiff & Vale Cup"
     ],
-    "games_played": 4,
-    "wins": 2,
-    "goals_for": 12,
-    "goals_against": 14,
-    "goal_difference": -2
+    "games_played": 2,
+    "wins": 1,
+    "goals_for": 6,
+    "goals_against": 7,
+    "goal_difference": -1
   },
   "Bro Morgannwg": {
     "cups": [
       "Welsh Cup",
-      "Cardiff & Vale Cup",
-      null
+      "Cardiff & Vale Cup"
     ],
-    "games_played": 4,
-    "wins": 4,
-    "goals_for": 22,
-    "goals_against": 6,
-    "goal_difference": 16
+    "games_played": 2,
+    "wins": 2,
+    "goals_for": 11,
+    "goals_against": 3,
+    "goal_difference": 8
   },
   "Stanwell": {
     "cups": [
       "Welsh Cup",
-      "Cardiff & Vale Cup",
-      null
+      "Cardiff & Vale Cup"
     ],
-    "games_played": 4,
-    "wins": 2,
+    "games_played": 2,
+    "wins": 1,
     "goals_for": 0,
-    "goals_against": 8,
-    "goal_difference": -8
+    "goals_against": 4,
+    "goal_difference": -4
   },
   "Cantonian": {
     "cups": [
-      "Cardiff & Vale Cup",
-      null
+      "Cardiff & Vale Cup"
     ],
-    "games_played": 2,
+    "games_played": 1,
     "wins": 0,
-    "goals_for": 2,
-    "goals_against": 22,
-    "goal_difference": -20
+    "goals_for": 1,
+    "goals_against": 11,
+    "goal_difference": -10
   },
   "St Illtyds": {
     "cups": [
-      "Cardiff & Vale Cup",
-      null
+      "Cardiff & Vale Cup"
     ],
-    "games_played": 2,
-    "wins": 2,
-    "goals_for": 12,
-    "goals_against": 10,
-    "goal_difference": 2
+    "games_played": 1,
+    "wins": 1,
+    "goals_for": 6,
+    "goals_against": 5,
+    "goal_difference": 1
   },
   "Cathays": {
     "cups": [
-      "Cardiff & Vale Cup",
-      null
+      "Cardiff & Vale Cup"
     ],
-    "games_played": 2,
+    "games_played": 1,
     "wins": 0,
     "goals_for": 0,
-    "goals_against": 16,
-    "goal_difference": -16
+    "goals_against": 8,
+    "goal_difference": -8
   }
 }
