@@ -76,6 +76,7 @@
     "goals_against": 17,
     "goal_difference": -12
   },
+<<<<<<< HEAD
   "Plasmawr": {
     "cups": [
       "Welsh Cup",
@@ -87,6 +88,8 @@
     "goals_against": 1,
     "goal_difference": 16
   },
+=======
+>>>>>>> edf8f3c (WIP: local changes before pulling remote)
   "Bro Edern": {
     "cups": [
       "Welsh Cup",
@@ -164,6 +167,7 @@
     "goals_against": 10,
     "goal_difference": -9
   },
+<<<<<<< HEAD
   "Glantaf": {
     "cups": [
       "Welsh Cup",
@@ -175,6 +179,8 @@
     "goals_against": 2,
     "goal_difference": 19
   },
+=======
+>>>>>>> edf8f3c (WIP: local changes before pulling remote)
   "Eastern": {
     "cups": [
       "Welsh Cup",

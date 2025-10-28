@@ -511,6 +511,17 @@ body.dark #update-pass {
 .update-steps li.is-done { text-decoration: none; }
 .update-error { margin-top: .8rem; color: #e11d48; font-weight:600; }
 
+.cta {
+  border: 0;
+  border-radius: 12px;
+  padding: .7rem 1rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #0077ff, #00c4ff);
+  color: #fff;
+  cursor: pointer;
+}
+.cta:hover { transform: translateY(-1px); }
+
 /* ==============================
    FOOTER
 ============================== */

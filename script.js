@@ -455,57 +455,109 @@ themeToggle?.addEventListener("click", () => {
 
 // ===== UPDATE FIXTURES MODAL + CALL TO CLOUDFLARE WORKER =====
 
-const workerURL = "https://year7-fixtures-dispatch.oweekley.workers.dev"; // ✅ UPDATE THIS IF CHANGED
+// ⚠️ If you change the Worker subdomain, update this:
+const workerURL = "https://year7-fixtures-dispatch.oweekley.workers.dev/run";
 
-const updateBtn = document.getElementById("update-fixtures-btn");
-const modal = document.getElementById("updateModal");
-const cancelBtn = document.getElementById("cancelUpdate");
-const confirmBtn = document.getElementById("confirmUpdate");
-const statusText = document.getElementById("updateStatus");
+// Modal elements (match the HTML above)
+const updateBtn    = document.getElementById("update-fixtures-btn");
+const modal        = document.getElementById("update-modal");
+const closeBtn     = document.getElementById("update-close");
+const startBtn     = document.getElementById("update-start");
+const passInput    = document.getElementById("update-pass");
+const stepsList    = document.getElementById("update-steps");
+const errorEl      = document.getElementById("update-error");
 
-updateBtn?.addEventListener("click", () => {
-  statusText.textContent = "";
-  modal.classList.remove("hidden");
+function openModal() {
+  modal?.setAttribute("aria-hidden", "false");
+  errorEl.hidden = true;
+  passInput.value = "";
+  resetSteps();
+  passInput.focus({ preventScroll: true });
+}
+function closeModal() {
+  modal?.setAttribute("aria-hidden", "true");
+}
+
+function resetSteps() {
+  stepsList?.querySelectorAll("li").forEach(li => {
+    li.classList.remove("is-active", "is-done");
+  });
+}
+function setStep(name, state) {
+  const li = stepsList?.querySelector(`li[data-step="${name}"]`);
+  if (!li) return;
+  if (state === "active") {
+    li.classList.add("is-active");
+  } else if (state === "done") {
+    li.classList.remove("is-active");
+    li.classList.add("is-done");
+  } else if (state === "reset") {
+    li.classList.remove("is-active", "is-done");
+  }
+}
+
+updateBtn?.addEventListener("click", openModal);
+closeBtn?.addEventListener("click", closeModal);
+modal?.addEventListener("click", (e) => {
+  if (e.target === modal) closeModal(); // click backdrop to close
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && modal?.getAttribute("aria-hidden") === "false") closeModal();
 });
 
-cancelBtn?.addEventListener("click", () => {
-  modal.classList.add("hidden");
-});
+startBtn?.addEventListener("click", async () => {
+  errorEl.hidden = true;
 
-confirmBtn?.addEventListener("click", async () => {
-  const password = document.getElementById("adminPassword").value.trim();
+  const password = passInput.value.trim();
   if (!password) {
-    statusText.style.color = "yellow";
-    statusText.textContent = "Enter password first";
+    errorEl.textContent = "Please enter the admin password.";
+    errorEl.hidden = false;
+    passInput.focus();
     return;
   }
 
-  statusText.style.color = "#00c4ff";
-  statusText.textContent = "Running update...";
+  // Stepper UI
+  resetSteps();
+  setStep("auth", "active");
 
   try {
+    // Call the Cloudflare Worker
     const res = await fetch(workerURL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "User-Agent": "Year7 Cups Dashboard"
-      },
+      headers: { "Content-Type": "application/json" },
+      mode: "cors",
       body: JSON.stringify({ password })
     });
 
-    const data = await res.json();
+    // Move steps regardless of outcome so user sees progress
+    setStep("auth", "done");
+    setStep("dispatch", "active");
 
-    if (data.success) {
-      statusText.style.color = "#00ff88";
-      statusText.textContent = "✅ Updated successfully!";
-      setTimeout(() => modal.classList.add("hidden"), 1500);
-    } else {
-      statusText.style.color = "red";
-      statusText.textContent = data.error || "❌ Failed";
+    // Parse response
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok || !data?.success) {
+      const msg = data?.error || `Request failed (${res.status})`;
+      throw new Error(msg);
     }
+
+    // Fake progress steps (we can’t watch GitHub live from here)
+    setStep("dispatch", "done");
+    setStep("run", "active");
+    setTimeout(() => {
+      setStep("run", "done");
+      setStep("commit", "active");
+      setTimeout(() => {
+        setStep("commit", "done");
+        setStep("done", "active");
+      }, 600);
+    }, 600);
+
   } catch (err) {
-    statusText.style.color = "red";
-    statusText.textContent = "⚠️ Error contacting server";
+    // Show error
+    setStep("dispatch", "done"); // where it likely failed
+    errorEl.textContent = `⚠️ ${err.message || "Error contacting server"}`;
+    errorEl.hidden = false;
   }
 });
 
