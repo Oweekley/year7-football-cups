@@ -46,27 +46,27 @@ const translations = {
   cy: {
     dashboardTitle: "Dangosfwrdd Cwpanau Blwyddyn 7 2025",
     dashboard: "Dangosfwrdd",
-    teamDashboard: "Dangosfwrdd TÃƒÂ®m",
+    teamDashboard: "Dangosfwrdd Tim",
     brackets: "Bracetiau",
     welshCupOverview: "Trosolwg Cwpan Cymru",
-    selectTeam: "Dewiswch DÃƒÂ®m:",
+    selectTeam: "Dewiswch Tim:",
     selectData: "Dewiswch Ddata:",
     cardiffCupOverview: "Trosolwg Cwpan Caerdydd",
     friendliesOverview: "Trosolwg Gemau Cyfeillgar",
     stats: "Ystadegau",
     played: "Gemau",
     wins: "Enillodd",
-    gf: "GÃƒÂ´l I",
-    ga: "GÃƒÂ´l Yn Erbyn",
-    gd: "Gwahaniaeth GÃƒÂ´l",
+    gf: "Gol I",
+    ga: "Gol Yn Erbyn",
+    gd: "Gwahaniaeth Gol",
     notes: "Nodiadau:",
     welshMatches: "Gemau Cymru",
     round: "Rownd",
     deadline: "Dyddiad Cau",
     home: "Cartref",
     hScore: "SG Cartref",
-    aScore: "SG Allan",
-    away: "Allan",
+    aScore: "SG Ffwrdd",
+    away: "Ffwrdd",
     winner: "Enillydd",
     date: "Dyddiad",
     matchNotes: "Hanes Gemau",
@@ -162,13 +162,15 @@ function pickNumber(obj, ...keys) {
 function mapTeamRecord(name, rec = {}) {
   const gf = pickNumber(rec, "gf", "goals_for");
   const ga = pickNumber(rec, "ga", "goals_against");
-  const gd = pickNumber(rec, "gd", "goal_difference", "goal_diff") || (gf - ga);
+  const gd = pickNumber(rec, "gd", "goal_difference", "goal_diff") || gf - ga;
   return {
     name,
     notes: rec.notes || "",
     played: pickNumber(rec, "played", "games", "games_played"),
     wins: pickNumber(rec, "wins"),
-    gf, ga, gd
+    gf,
+    ga,
+    gd
   };
 }
 
@@ -189,9 +191,9 @@ function deriveTeamsFromCups(cups) {
 function normalizeTeams(teamsRaw, cups) {
   // 1) If it's an array like { teams: [...] }
   if (Array.isArray(teamsRaw?.teams)) {
-    return teamsRaw.teams.map(t =>
-      mapTeamRecord(t.name ?? t.team ?? "", t)
-    ).filter(t => t.name);
+    return teamsRaw.teams
+      .map(t => mapTeamRecord(t.name ?? t.team ?? "", t))
+      .filter(t => t.name);
   }
 
   // 2) If it's a map { "Team": { games_played, goals_for, ... }, ... }
@@ -205,7 +207,7 @@ function normalizeTeams(teamsRaw, cups) {
 
 async function loadData() {
   try {
-    console.log("ðŸ”§ Loading data files...");
+    console.info("Loading: start");
 
     // Load the cups first so we can derive teams if needed
     const [welsh, cardiff, friendlies] = await Promise.all([
@@ -229,19 +231,28 @@ async function loadData() {
     calculateStats();
     renderAll();
 
-    // Helpful debug once per load
-    console.debug("Teams ready:", state.teams.length, state.teams.slice(0, 5));
-
+    // [LOGGING]
+    console.debug("teams ready", {
+      count: state.teams.length,
+      sample: state.teams.slice(0, 5).map(t => t.name)
+    });
+    console.info("Loading: done", { lastUpdated: state.lastUpdated });
   } catch (err) {
-    console.error("âŒ Error loading data:", err);
+    console.error("Error loading data", err);
     showErrorMessage("Error loading data. Please check your JSON files or network connection.");
   }
 }
 
 function showErrorMessage(message) {
+  console.warn("ui: showErrorMessage", { message });
   document
     .querySelectorAll(".dynamic-display, .bracket-container, #leaderboard")
-    .forEach(el => { if (el) el.innerHTML = `<p style="color:crimson;text-align:center;padding:1rem">${message}</p>`; });
+    .forEach(el => {
+      if (el) {
+        el.innerHTML =
+          `<p style="color:crimson;text-align:center;padding:1rem">${message}</p>`;
+      }
+    });
 }
 
 // ============================================================
@@ -255,15 +266,20 @@ function calculateStats() {
     const away = state.teams.find(t => t.name === g.away_team);
     if (!home || !away || g.away_team === "BYE" || g.home_score == null || g.away_score == null) return;
 
-    home.played++; away.played++;
-    home.gf += +g.home_score; home.ga += +g.away_score;
-    away.gf += +g.away_score; away.ga += +g.home_score;
+    home.played++;
+    away.played++;
+    home.gf += +g.home_score;
+    home.ga += +g.away_score;
+    away.gf += +g.away_score;
+    away.ga += +g.home_score;
 
     if (g.home_score > g.away_score) home.wins++;
     else if (g.away_score > g.home_score) away.wins++;
   };
 
-  Object.values(state.cups).forEach(cup => cup.rounds?.forEach(r => r.games?.forEach(updateStats)));
+  Object.values(state.cups).forEach(cup =>
+    cup.rounds?.forEach(r => r.games?.forEach(updateStats))
+  );
   state.teams.forEach(t => (t.gd = t.gf - t.ga));
 }
 
@@ -300,7 +316,8 @@ function initTeamDashboard() {
   if (!teamSelect || !dataSelect || !display) return;
 
   // Populate dropdowns
-  teamSelect.innerHTML = `<option value="">--${translations[currentLang].selectTeam.replace(":", "")}--</option>`;
+  teamSelect.innerHTML =
+    `<option value="">--${translations[currentLang].selectTeam.replace(":", "")}--</option>`;
   state.teams.forEach(t => {
     const opt = document.createElement("option");
     opt.value = t.name;
@@ -336,7 +353,9 @@ function initTeamDashboard() {
       const matchSections = Object.entries(state.cups)
         .map(([cupName, data]) => renderMatchHistory(teamName, cupName, data))
         .filter(html => html.includes("<tr>"))
-        .join("<hr style='margin:2rem 0;border:none;border-top:1px solid rgba(0,0,0,0.1)'>");
+        .join(
+          "<hr style='margin:2rem 0;border:none;border-top:1px solid rgba(0,0,0,0.1)'>"
+        );
 
       display.innerHTML = matchSections || `<p>No match data available for ${teamName}.</p>`;
     }
@@ -381,7 +400,8 @@ function renderMatchHistory(teamName, cupName, data) {
   return `
     <h3>${translations[currentLang][cupName.toLowerCase() + "Matches"] || cupName + " Matches"}</h3>
     ${rounds
-      .map(r => `
+      .map(
+        r => `
         <h4>${translations[currentLang].round} ${r.round_number || ""} - ${translations[currentLang].deadline}: ${r.deadlines?.english || "-"}</h4>
         <table>
           <tr>
@@ -423,11 +443,27 @@ function renderLeaderboard() {
   el.innerHTML = `
     <h2>${translations[currentLang].leaderboard}</h2>
     <table>
-      <tr><th>#</th><th>Team</th><th>${translations[currentLang].played}</th><th>${translations[currentLang].wins}</th><th>${translations[currentLang].gf}</th><th>${translations[currentLang].ga}</th><th>${translations[currentLang].gd}</th></tr>
+      <tr>
+        <th>#</th>
+        <th>Team</th>
+        <th>${translations[currentLang].played}</th>
+        <th>${translations[currentLang].wins}</th>
+        <th>${translations[currentLang].gf}</th>
+        <th>${translations[currentLang].ga}</th>
+        <th>${translations[currentLang].gd}</th>
+      </tr>
       ${sorted
         .map(
           (t, i) =>
-            `<tr><td>${i + 1}</td><td>${t.name}</td><td>${t.played}</td><td>${t.wins}</td><td>${t.gf}</td><td>${t.ga}</td><td>${t.gd}</td></tr>`
+            `<tr>
+              <td>${i + 1}</td>
+              <td>${t.name}</td>
+              <td>${t.played}</td>
+              <td>${t.wins}</td>
+              <td>${t.gf}</td>
+              <td>${t.ga}</td>
+              <td>${t.gd}</td>
+            </tr>`
         )
         .join("")}
     </table>`;
@@ -467,8 +503,10 @@ function renderBrackets() {
 }
 
 function renderLastUpdated() {
-  if (elements.lastUpdated)
-    elements.lastUpdated.textContent = `${translations[currentLang].lastUpdated} ${state.lastUpdated}`;
+  if (elements.lastUpdated) {
+    elements.lastUpdated.textContent =
+      `${translations[currentLang].lastUpdated} ${state.lastUpdated}`;
+  }
 }
 
 // ============================================================
@@ -498,13 +536,13 @@ themeToggle?.addEventListener("click", () => {
 const workerURL = "https://year7-fixtures-dispatch.oweekley.workers.dev/run";
 
 // Modal elements (match the HTML above)
-const updateBtn    = document.getElementById("update-fixtures-btn");
-const modal        = document.getElementById("update-modal");
-const closeBtn     = document.getElementById("update-close");
-const startBtn     = document.getElementById("update-start");
-const passInput    = document.getElementById("update-pass");
-const stepsList    = document.getElementById("update-steps");
-const errorEl      = document.getElementById("update-error");
+const updateBtn = document.getElementById("update-fixtures-btn");
+const modal = document.getElementById("update-modal");
+const closeBtn = document.getElementById("update-close");
+const startBtn = document.getElementById("update-start");
+const passInput = document.getElementById("update-pass");
+const stepsList = document.getElementById("update-steps");
+const errorEl = document.getElementById("update-error");
 
 function openModal() {
   modal?.setAttribute("aria-hidden", "false");
@@ -513,6 +551,7 @@ function openModal() {
   resetSteps();
   passInput.focus({ preventScroll: true });
 }
+
 function closeModal() {
   modal?.setAttribute("aria-hidden", "true");
 }
@@ -522,6 +561,7 @@ function resetSteps() {
     li.classList.remove("is-active", "is-done");
   });
 }
+
 function setStep(name, state) {
   const li = stepsList?.querySelector(`li[data-step="${name}"]`);
   if (!li) return;
@@ -537,15 +577,16 @@ function setStep(name, state) {
 
 updateBtn?.addEventListener("click", openModal);
 closeBtn?.addEventListener("click", closeModal);
-modal?.addEventListener("click", (e) => {
+modal?.addEventListener("click", e => {
   if (e.target === modal) closeModal(); // click backdrop to close
 });
-document.addEventListener("keydown", (e) => {
+document.addEventListener("keydown", e => {
   if (e.key === "Escape" && modal?.getAttribute("aria-hidden") === "false") closeModal();
 });
 
 startBtn?.addEventListener("click", async () => {
   errorEl.hidden = true;
+  console.info("update: start click");
 
   const password = passInput.value.trim();
   if (!password) {
@@ -577,10 +618,12 @@ startBtn?.addEventListener("click", async () => {
 
     if (!res.ok || !data?.success) {
       const msg = data?.error || `Request failed (${res.status})`;
+      console.warn("update: worker returned error", { status: res.status, msg });
       throw new Error(msg);
     }
+    console.info("update: worker accepted", { status: res.status });
 
-    // Fake progress steps (we canâ€™t watch GitHub live from here)
+    // Fake progress steps (we can’t watch GitHub live from here)
     setStep("dispatch", "done");
     setStep("run", "active");
     setTimeout(() => {
@@ -591,23 +634,116 @@ startBtn?.addEventListener("click", async () => {
         setStep("done", "active");
       }, 600);
     }, 600);
-
   } catch (err) {
     // Show error
     setStep("dispatch", "done"); // where it likely failed
-    errorEl.textContent = `âš ï¸ ${err.message || "Error contacting server"}`;
+    console.error("update: failed", err);
+    errorEl.textContent = `Warning: ${err.message || "Error contacting server"}`;
     errorEl.hidden = false;
   }
 });
+
+// =======================
+// [LOGGING] Structured console logger (browser, no files)
+// =======================
+(function setupBrowserLogger() {
+  const original = {
+    log: console.log.bind(console),
+    info: console.info.bind(console),
+    warn: console.warn.bind(console),
+    error: console.error.bind(console),
+    debug: console.debug.bind(console)
+  };
+
+  const LEVELS = { debug: 10, info: 20, warn: 30, warning: 30, error: 40, critical: 50 };
+  const qs = new URLSearchParams(location.search);
+  const hintedDebug = qs.has("debug") || qs.get("logLevel") === "debug";
+  const stored = (localStorage.getItem("logLevel") || "").toLowerCase();
+  const envLevel = hintedDebug ? "debug" : stored || "info";
+  const threshold = LEVELS[envLevel] ?? LEVELS.info;
+  const sessionId =
+    (crypto && crypto.randomUUID ? crypto.randomUUID() : `sess-${Math.random().toString(36).slice(2)}`);
+  const moduleName = "frontend";
+
+  function now() {
+    return new Date().toISOString();
+  }
+  function should(level) {
+    return (LEVELS[level] ?? 999) >= threshold;
+  }
+  function asEntry(level, msg, data, err) {
+    const entry = {
+      ts: now(),
+      level: level.toUpperCase(),
+      module: moduleName,
+      sessionId,
+      msg: String(msg)
+    };
+    if (data && typeof data === "object") entry.data = data;
+    if (err) entry.err = { message: String(err.message || err), stack: String(err.stack || "") };
+    return entry;
+  }
+  const emit = (level, msg, data, err) => {
+    if (!should(level)) return;
+    const e = asEntry(level, msg, data, err);
+    const line = `[${e.level}] ${e.module} ${e.msg}`;
+    (original[level] || original.log)(line, e);
+  };
+
+  // Patch console.* (non-intrusive; preserves original output + adds structure)
+  console.log = (...a) => emit("info", a[0], a[1]);
+  console.info = (...a) => emit("info", a[0], a[1]);
+  console.warn = (...a) => emit("warn", a[0], a[1]);
+  console.error = (...a) => {
+    const [msg, maybeErrOrData] = a;
+    if (maybeErrOrData instanceof Error) emit("error", msg, null, maybeErrOrData);
+    else emit("error", msg, maybeErrOrData);
+  };
+  console.debug = (...a) => emit("debug", a[0], a[1]);
+
+  // Global error surfaces
+  window.addEventListener("error", e => {
+    emit(
+      "critical",
+      "window.onerror",
+      { filename: e.filename, lineno: e.lineno, colno: e.colno },
+      e.error || e.message
+    );
+  });
+  window.addEventListener("unhandledrejection", e => {
+    emit("error", "unhandledrejection", null, e.reason || "Promise rejection");
+  });
+
+  // Fetch timing wrapper (transparent; returns the same response)
+  const _fetch = window.fetch.bind(window);
+  window.fetch = async (...args) => {
+    const started = performance.now();
+    const url = args[0];
+    try {
+      const res = await _fetch(...args);
+      const dur = Math.round(performance.now() - started);
+      emit("debug", "fetch", { url, status: res.status, ms: dur });
+      return res;
+    } catch (err) {
+      const dur = Math.round(performance.now() - started);
+      emit("error", "fetch error", { url, ms: dur }, err);
+      throw err;
+    }
+  };
+
+  // Lifecycle hints (non-functional)
+  emit("info", "frontend init", { level: envLevel });
+})();
 
 // ============================================================
 // GLOBAL RENDER + REFRESH HANDLERS
 // ============================================================
 function renderAll() {
   if (!state.teams?.length) {
-    console.warn("Ã¢Å¡Â Ã¯Â¸Â No teams found Ã¢â‚¬â€ check teams.json");
+    console.warn("No teams found — check teams.json");
     return;
   }
+  console.debug("renderAll: start");
 
   Object.keys(elements.dropdowns).forEach(cupName => {
     if (elements.dropdowns[cupName]) populateDropdowns(cupName);
@@ -616,11 +752,15 @@ function renderAll() {
   renderLeaderboard();
   renderBrackets();
   renderLastUpdated();
+
+  console.debug("renderAll: done");
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
+  console.info("app: DOMContentLoaded");
   await loadData();
   setTimeout(() => {
+    console.debug("app: post-load renderAll+initTeamDashboard");
     renderAll();
     initTeamDashboard(); // Initialize teamCard.html if present
   }, 300);
