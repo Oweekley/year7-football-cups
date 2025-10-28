@@ -138,71 +138,110 @@ document.getElementById("lang-en")?.addEventListener("click", () => switchLangua
 document.getElementById("lang-cy")?.addEventListener("click", () => switchLanguage("cy"));
 
 // ============================================================
-// DATA FETCHING + NORMALIZATION
+// DATA FETCHING + NORMALIZATION (robust to any team schema)
 // ============================================================
 async function fetchJSON(url) {
   if (state.cache[url]) return state.cache[url];
-  const res = await fetch(url);
+  const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`Failed to load ${url}: ${res.status}`);
   const json = await res.json();
   state.cache[url] = json;
   return json;
 }
 
+// helper: get the first numeric value from a list of possible keys
+function pickNumber(obj, ...keys) {
+  for (const k of keys) {
+    const v = obj?.[k];
+    if (typeof v === "number" && Number.isFinite(v)) return v;
+    if (typeof v === "string" && v.trim() !== "" && !isNaN(+v)) return +v;
+  }
+  return 0;
+}
+
+function mapTeamRecord(name, rec = {}) {
+  const gf = pickNumber(rec, "gf", "goals_for");
+  const ga = pickNumber(rec, "ga", "goals_against");
+  const gd = pickNumber(rec, "gd", "goal_difference", "goal_diff") || (gf - ga);
+  return {
+    name,
+    notes: rec.notes || "",
+    played: pickNumber(rec, "played", "games", "games_played"),
+    wins: pickNumber(rec, "wins"),
+    gf, ga, gd
+  };
+}
+
+// build list of unique teams from the rounds if teams.json is missing or empty
+function deriveTeamsFromCups(cups) {
+  const set = new Set();
+  Object.values(cups).forEach(cup => {
+    (cup?.rounds || []).forEach(r => {
+      (r?.games || []).forEach(g => {
+        if (g.home_team && g.home_team !== "BYE") set.add(g.home_team);
+        if (g.away_team && g.away_team !== "BYE") set.add(g.away_team);
+      });
+    });
+  });
+  return [...set].map(name => ({ name, notes: "", played: 0, wins: 0, gf: 0, ga: 0, gd: 0 }));
+}
+
+function normalizeTeams(teamsRaw, cups) {
+  // 1) If it's an array like { teams: [...] }
+  if (Array.isArray(teamsRaw?.teams)) {
+    return teamsRaw.teams.map(t =>
+      mapTeamRecord(t.name ?? t.team ?? "", t)
+    ).filter(t => t.name);
+  }
+
+  // 2) If it's a map { "Team": { games_played, goals_for, ... }, ... }
+  if (teamsRaw && typeof teamsRaw === "object" && !Array.isArray(teamsRaw)) {
+    return Object.entries(teamsRaw).map(([name, rec]) => mapTeamRecord(name, rec));
+  }
+
+  // 3) Fallback: derive from cups
+  return deriveTeamsFromCups(cups);
+}
+
 async function loadData() {
   try {
-    console.log("ðŸ”„ Loading data files...");
+    console.log("🔧 Loading data files...");
 
-    const [teamsRaw, welsh, cardiff, friendlies, updated] = await Promise.all([
-      fetchJSON("teams.json"),
+    // Load the cups first so we can derive teams if needed
+    const [welsh, cardiff, friendlies] = await Promise.all([
       fetchJSON("welsh.json"),
       fetchJSON("cardiff.json"),
-      fetchJSON("friendlies.json"),
+      fetchJSON("friendlies.json")
+    ]);
+
+    // Load teams + updated, but both are optional
+    const [teamsRaw, updated] = await Promise.all([
+      fetchJSON("teams.json").catch(() => null),
       fetchJSON("last_updated.json").catch(() => ({ lastUpdated: "Unknown" }))
     ]);
 
-    console.log("âœ… All JSON files loaded successfully.");
+    // Update state
+    state.cups = { Welsh: welsh || {}, Cardiff: cardiff || {}, Friendlies: friendlies || {} };
+    state.teams = normalizeTeams(teamsRaw, state.cups);
+    state.lastUpdated = updated?.lastUpdated || "Unknown";
 
-    // Normalize teams.json
-    let teams = [];
-    if (Array.isArray(teamsRaw?.teams)) {
-      teams = teamsRaw.teams.map(t => ({
-        name: t.name ?? t.team ?? "",
-        notes: t.notes ?? "",
-        played: +t.played || 0,
-        wins: +t.wins || 0,
-        gf: +t.gf || 0,
-        ga: +t.ga || 0,
-        gd: +t.gd || ((+t.gf || 0) - (+t.ga || 0))
-      }));
-    } else if (typeof teamsRaw === "object") {
-      teams = Object.entries(teamsRaw).map(([name, s]) => ({
-        name,
-        notes: s.notes ?? "",
-        played: +s.played || 0,
-        wins: +s.wins || 0,
-        gf: +s.gf || 0,
-        ga: +s.ga || 0,
-        gd: +s.gd || ((+s.gf || 0) - (+s.ga || 0))
-      }));
-    }
-
-    state.teams = teams;
-    state.cups = { Welsh: welsh, Cardiff: cardiff, Friendlies: friendlies };
-    state.lastUpdated = updated.lastUpdated || "Unknown";
-
+    // Compute current season stats from cup rounds (overrides stale numbers)
     calculateStats();
     renderAll();
+
+    // Helpful debug once per load
+    console.debug("Teams ready:", state.teams.length, state.teams.slice(0, 5));
+
   } catch (err) {
-    console.error("âŒ Error loading data:", err);
+    console.error("❌ Error loading data:", err);
     showErrorMessage("Error loading data. Please check your JSON files or network connection.");
   }
 }
 
 function showErrorMessage(message) {
-  document.querySelectorAll(".dynamic-display, .bracket-container, #leaderboard").forEach(el => {
-    if (el) el.innerHTML = `<p style="color:crimson;text-align:center;padding:1rem">${message}</p>`;
-  });
+  document
+    .querySelectorAll(".dynamic-display, .bracket-container, #leaderboard")
+    .forEach(el => { if (el) el.innerHTML = `<p style="color:crimson;text-align:center;padding:1rem">${message}</p>`; });
 }
 
 // ============================================================
