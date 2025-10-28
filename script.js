@@ -46,19 +46,19 @@ const translations = {
   cy: {
     dashboardTitle: "Dangosfwrdd Cwpanau Blwyddyn 7 2025",
     dashboard: "Dangosfwrdd",
-    teamDashboard: "Dangosfwrdd TÃ®m",
+    teamDashboard: "Dangosfwrdd TÃƒÂ®m",
     brackets: "Bracetiau",
     welshCupOverview: "Trosolwg Cwpan Cymru",
-    selectTeam: "Dewiswch DÃ®m:",
+    selectTeam: "Dewiswch DÃƒÂ®m:",
     selectData: "Dewiswch Ddata:",
     cardiffCupOverview: "Trosolwg Cwpan Caerdydd",
     friendliesOverview: "Trosolwg Gemau Cyfeillgar",
     stats: "Ystadegau",
     played: "Gemau",
     wins: "Enillodd",
-    gf: "GÃ´l I",
-    ga: "GÃ´l Yn Erbyn",
-    gd: "Gwahaniaeth GÃ´l",
+    gf: "GÃƒÂ´l I",
+    ga: "GÃƒÂ´l Yn Erbyn",
+    gd: "Gwahaniaeth GÃƒÂ´l",
     notes: "Nodiadau:",
     welshMatches: "Gemau Cymru",
     round: "Rownd",
@@ -205,7 +205,7 @@ function normalizeTeams(teamsRaw, cups) {
 
 async function loadData() {
   try {
-    console.log("🔧 Loading data files...");
+    console.log("ðŸ”§ Loading data files...");
 
     // Load the cups first so we can derive teams if needed
     const [welsh, cardiff, friendlies] = await Promise.all([
@@ -233,7 +233,7 @@ async function loadData() {
     console.debug("Teams ready:", state.teams.length, state.teams.slice(0, 5));
 
   } catch (err) {
-    console.error("❌ Error loading data:", err);
+    console.error("âŒ Error loading data:", err);
     showErrorMessage("Error loading data. Please check your JSON files or network connection.");
   }
 }
@@ -480,21 +480,21 @@ const savedTheme = localStorage.getItem("theme");
 
 if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
   document.body.classList.add("dark");
-  themeToggle.textContent = "â˜€ï¸";
+  themeToggle.textContent = "🌙";
 } else {
-  themeToggle.textContent = "ðŸŒ™";
+  themeToggle.textContent = "🌞";
 }
 
 themeToggle?.addEventListener("click", () => {
   document.body.classList.toggle("dark");
   const isDark = document.body.classList.contains("dark");
-  themeToggle.textContent = isDark ? "â˜€ï¸" : "ðŸŒ™";
+  themeToggle.textContent = isDark ? "🌙" : "🌞";
   localStorage.setItem("theme", isDark ? "dark" : "light");
 });
 
 // ===== UPDATE FIXTURES MODAL + CALL TO CLOUDFLARE WORKER =====
 
-// ⚠️ If you change the Worker subdomain, update this:
+// âš ï¸ If you change the Worker subdomain, update this:
 const workerURL = "https://year7-fixtures-dispatch.oweekley.workers.dev/run";
 
 // Modal elements (match the HTML above)
@@ -580,7 +580,7 @@ startBtn?.addEventListener("click", async () => {
       throw new Error(msg);
     }
 
-    // Fake progress steps (we can’t watch GitHub live from here)
+    // Fake progress steps (we canâ€™t watch GitHub live from here)
     setStep("dispatch", "done");
     setStep("run", "active");
     setTimeout(() => {
@@ -595,7 +595,7 @@ startBtn?.addEventListener("click", async () => {
   } catch (err) {
     // Show error
     setStep("dispatch", "done"); // where it likely failed
-    errorEl.textContent = `⚠️ ${err.message || "Error contacting server"}`;
+    errorEl.textContent = `âš ï¸ ${err.message || "Error contacting server"}`;
     errorEl.hidden = false;
   }
 });
@@ -605,7 +605,7 @@ startBtn?.addEventListener("click", async () => {
 // ============================================================
 function renderAll() {
   if (!state.teams?.length) {
-    console.warn("âš ï¸ No teams found â€” check teams.json");
+    console.warn("Ã¢Å¡Â Ã¯Â¸Â No teams found Ã¢â‚¬â€ check teams.json");
     return;
   }
 
