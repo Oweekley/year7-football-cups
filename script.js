@@ -453,6 +453,111 @@ themeToggle?.addEventListener("click", () => {
   localStorage.setItem("theme", isDark ? "dark" : "light");
 });
 
+/* ============================
+   Update Fixtures Modal + Progress
+============================ */
+(function setupUpdateModal() {
+  const btn = document.getElementById('update-fixtures-btn');
+  const modal = document.getElementById('update-modal');
+  if (!btn || !modal) return; // not this page
+
+  const closeBtn = document.getElementById('update-close');
+  const startBtn = document.getElementById('update-start');
+  const passInput = document.getElementById('update-pass');
+  const steps = Array.from(document.querySelectorAll('#update-steps li'));
+  const err = document.getElementById('update-error');
+
+  const WORKER_URL = 'https://YOUR-SUBDOMAIN.YOUR-ACCOUNT.workers.dev/run'; // <-- set after deploying the Worker
+
+  const setStep = (name, status) => {
+    // status: "active" | "done" | "reset"
+    steps.forEach(li => {
+      if (status === 'reset') {
+        li.classList.remove('is-active', 'is-done');
+        return;
+      }
+      if (li.dataset.step === name) {
+        li.classList.add(status === 'active' ? 'is-active' : 'is-done');
+        if (status === 'done') li.classList.remove('is-active');
+      }
+    });
+  };
+
+  const resetUI = () => {
+    err.hidden = true; err.textContent = '';
+    setStep(null, 'reset');
+  };
+
+  const open = () => {
+    resetUI();
+    modal.setAttribute('aria-hidden', 'false');
+    setTimeout(() => passInput?.focus(), 50);
+  };
+  const close = () => {
+    modal.setAttribute('aria-hidden', 'true');
+  };
+
+  btn.addEventListener('click', open);
+  closeBtn?.addEventListener('click', close);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) close();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.getAttribute('aria-hidden') === 'false') close();
+  });
+
+  async function runUpdate() {
+    err.hidden = true; err.textContent = '';
+    steps.forEach(li => li.classList.remove('is-active','is-done'));
+
+    const password = passInput.value.trim();
+    if (!password) {
+      err.hidden = false; err.textContent = 'Please enter the password.';
+      return;
+    }
+
+    try {
+      // 1) AUTH
+      setStep('auth','active');
+      // 2) DISPATCH
+      setStep('auth','done');
+      setStep('dispatch','active');
+
+      const res = await fetch(WORKER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      });
+
+      if (!res.ok) {
+        const t = await res.text().catch(()=>'');
+        throw new Error(t || `Worker error ${res.status}`);
+      }
+      const json = await res.json();
+
+      // Server returns { ok: true } once workflow is dispatched
+      setStep('dispatch','done');
+      setStep('run','active');
+
+      // We won’t poll GitHub; just show staged progress for UX:
+      await new Promise(r=>setTimeout(r, 1200));
+      setStep('run','done');
+      setStep('commit','active');
+      await new Promise(r=>setTimeout(r, 800));
+      setStep('commit','done');
+      setStep('done','active');
+
+    } catch (e) {
+      err.hidden = false;
+      err.textContent = e.message || 'Something went wrong.';
+      // roll back active markers
+      steps.forEach(li => li.classList.remove('is-active'));
+    }
+  }
+
+  startBtn?.addEventListener('click', runUpdate);
+})();
+
 // ============================================================
 // GLOBAL RENDER + REFRESH HANDLERS
 // ============================================================

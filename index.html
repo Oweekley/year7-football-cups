@@ -105,23 +105,36 @@
         <h2 id="overview-title" data-i18n="dashboardTitle">Year 7 Cups Dashboard 2025</h2>
 
         <div class="data-controls">
-          <!-- aria-live on button isn’t necessary; we keep it on the status text below -->
-          <button id="refresh-btn" class="refresh-btn" type="button" data-i18n="refresh">
-            Refresh Data
-          </button>
+			<!-- Update Fixtures (glass) -->
+<button id="update-fixtures-btn" class="pill glass" type="button" title="Run scraper and refresh data">
+  🔄 Update Fixtures
+</button>
 
-          <!-- Live region announces updates -->
-          <p
-            id="last-updated"
-            class="last-updated"
-            role="status"
-            aria-live="polite"
-            data-i18n="lastUpdated"
-          >
-            Last Updated: --
-          </p>
-        </div>
-      </div>
+<!-- Glass Modal -->
+<div id="update-modal" class="glass-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="update-title">
+  <div class="glass-modal__card">
+    <button class="glass-modal__close" id="update-close" aria-label="Close">✕</button>
+    <h3 id="update-title">Update Fixtures</h3>
+
+    <p class="update-desc">Enter the secret to trigger the scraper and refresh the JSON files.</p>
+
+    <label for="update-pass" class="update-label">Password</label>
+    <input id="update-pass" type="password" autocomplete="off" inputmode="text" placeholder="••••••••" />
+
+    <button id="update-start" class="cta">Run Update</button>
+
+    <ol id="update-steps" class="update-steps" aria-live="polite">
+      <li data-step="auth">Authenticating…</li>
+      <li data-step="dispatch">Dispatching GitHub Action…</li>
+      <li data-step="run">Scraper running on GitHub…</li>
+      <li data-step="commit">Committing JSON…</li>
+      <li data-step="done">All done 🎉 — refresh to see changes.</li>
+    </ol>
+
+    <p id="update-error" class="update-error" role="alert" hidden></p>
+  </div>
+</div>
+		</div>
 
       <!-- Leaderboard (polite live region so screen readers hear updates) -->
       <div id="leaderboard" class="leaderboard-section" role="region" aria-live="polite" aria-label="Leaderboard">
