@@ -467,7 +467,7 @@ themeToggle?.addEventListener("click", () => {
   const steps = Array.from(document.querySelectorAll('#update-steps li'));
   const err = document.getElementById('update-error');
 
-  const WORKER_URL = 'https://YOUR-SUBDOMAIN.YOUR-ACCOUNT.workers.dev/run'; // <-- set after deploying the Worker
+  const WORKER_URL = 'https://year7-fixtures-dispatch.oweekley.workers.dev'; // <-- set after deploying the Worker
 
   const setStep = (name, status) => {
     // status: "active" | "done" | "reset"
