@@ -1,36 +1,37 @@
-name: Run Scraper and Update Data
+name: Run Scraper
 
 on:
-  workflow_dispatch:   # 👈 adds the "Run workflow" button
-  schedule:
-    - cron: "0 6 * * *"  # optional: runs every day at 6am UTC
-
-permissions:
-  contents: write
+  workflow_dispatch:
+    inputs:
+      source:
+        description: 'Triggered by admin page or manually'
+        required: false
+        default: 'manual'
 
 jobs:
-  run-scraper:
+  scrape:
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22  # use your local Node version
+          node-version: 20
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run scraper
         run: node scraper.js
 
-      - name: Commit and push updated JSON files
+      - name: Commit and push updates
         run: |
-          git config --global user.name "GitHub Action Bot"
-          git config --global user.email "actions@github.com"
-          git add welsh.json cardiff.json teams.json
-          git commit -m "Auto-update JSON data from scraper" || echo "No changes to commit"
+          git config user.name "GitHub Action"
+          git config user.email "actions@github.com"
+          git add *.json
+          git commit -m "🤖 Auto update JSONs from scraper"
           git push
