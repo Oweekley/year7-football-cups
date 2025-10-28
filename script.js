@@ -494,7 +494,7 @@ themeToggle?.addEventListener("click", () => {
 
 // ===== UPDATE FIXTURES MODAL + CALL TO CLOUDFLARE WORKER =====
 
-// âš ï¸ If you change the Worker subdomain, update this:
+// If you change the Worker subdomain, update this:
 const workerURL = "https://year7-fixtures-dispatch.oweekley.workers.dev/run";
 
 // Modal elements (match the HTML above)
