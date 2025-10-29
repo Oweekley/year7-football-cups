@@ -1,8 +1,17 @@
 // ============================================================
-//  scrape_all_cardiff_vale.js (Improved Version)
-//  Run with: node scrape_all_cardiff_vale.js
-//  Purpose: Generate welsh.json, cardiff.json, teams.json
-//  Compatible with the Year 7 Cups Dashboard front-end
+//  SCRAPER – YEAR 7 CUPS DATA
+//  What this file does (simple overview):
+//  - Scrapes two sources (Welsh + Cardiff) with Puppeteer
+//  - Writes welsh.json, cardiff.json and merges teams into teams.json
+//  - Updates last_updated.json with a timestamp after completion
+//
+//  How to run:
+//    node scraper.js
+//
+//  How to debug quickly:
+//  - Set LOG_LEVEL=debug before running for more logs:
+//      LOG_LEVEL=debug node scraper.js
+//  - Look for lines marked with "DEBUG:" and un-comment to print extra details
 // ============================================================
 
 const fs = require("fs");
@@ -95,6 +104,20 @@ function safeWriteJSON(file, data) {
   }
 }
 
+function writeLastUpdated(meta) {
+  const payload = {
+    last_updated: new Date().toISOString(),
+    source: "scraper",
+    ...(meta || {})
+  };
+  try {
+    fs.writeFileSync("last_updated.json", JSON.stringify(payload, null, 2), "utf8");
+    nodeEmit("info", "last_updated.json updated", payload);
+  } catch (err) {
+    nodeEmit("error", "failed to update last_updated.json", null, err);
+  }
+}
+
 function cleanText(str) {
   return str ? str.replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim() : "";
 }
@@ -170,6 +193,8 @@ async function fetchParagraphs(page, selectorOrId, label) {
         .filter(Boolean)
     );
     nodeEmit("debug", "fetched paragraphs", { label, count: paragraphs.length });
+    // DEBUG: dump first few lines to verify selector mapping
+    // nodeEmit("debug", "sample paragraphs", { sample: paragraphs.slice(0, 5) });
     return paragraphs;
   } catch (err) {
     nodeEmit("warn", `failed to fetch paragraphs: ${label}`, null, err);
@@ -196,6 +221,8 @@ async function scrapeU12Welsh(browser) {
   try {
     await page.goto(SOURCE_URL, { waitUntil: "networkidle2" });
     await delay(1500);
+    // DEBUG: capture page title/URL
+    // nodeEmit("debug", "page opened", { title: await page.title(), url: page.url() });
 
     const paragraphs = await page.evaluate(id => {
       const div = document.querySelector(`[id="${id}"]`);
@@ -212,6 +239,8 @@ async function scrapeU12Welsh(browser) {
       rounds: [],
       team_statistics: {}
     };
+    // DEBUG: verify initial result schema
+    // nodeEmit("debug", "result skeleton", result);
 
     const parseGameLine = line => {
       line = cleanText(line);
@@ -251,6 +280,8 @@ async function scrapeU12Welsh(browser) {
       if (roundMatch) {
         const roundNum = parseInt(roundMatch[1] || roundMatch[2], 10);
         const round = { round_number: roundNum, deadlines: {}, games: [] };
+        // DEBUG: show detected round
+        // nodeEmit("debug", "detected round", { round_number: roundNum, index: i });
 
         // Find deadline
         for (let j = i + 1; j < i + 6 && j < paragraphs.length; j++) {
@@ -282,6 +313,8 @@ async function scrapeU12Welsh(browser) {
             };
             round.games.push(entry);
             recordMatch(result.team_statistics, parsed);
+            // DEBUG: log a sample game
+            // if (round.games.length <= 2) nodeEmit("debug", "game parsed", entry);
           }
           i++;
         }
@@ -324,6 +357,8 @@ async function scrapeYear7Cardiff(browser) {
   try {
     await page.goto(SOURCE_URL, { waitUntil: "networkidle2" });
     await delay(2000);
+    // DEBUG: check page
+    // nodeEmit("debug", "page opened", { title: await page.title(), url: page.url() });
 
     const paragraphs = await fetchParagraphs(page, `#${SECTION_ID}`, "Cardiff Cup");
     const result = { cup_name: CUP_NAME, season: SEASON, rounds: [], team_statistics: {} };
@@ -348,6 +383,8 @@ async function scrapeYear7Cardiff(browser) {
         const numMatch = label.match(/ROUND\s*(\d+)/i);
         const roundNum = numMatch ? parseInt(numMatch[1]) : label;
         const round = { round_number: roundNum, deadlines: {}, games: [] };
+        // DEBUG: round marker
+        // nodeEmit("debug", "detected round", { label, roundNum });
 
         for (let j = i + 1; j < i + 5 && j < paragraphs.length; j++) {
           if (/deadline/i.test(paragraphs[j])) {
@@ -402,6 +439,8 @@ async function scrapeYear7Cardiff(browser) {
               date: round.deadlines.english_expanded || null
             });
             recordMatch(result.team_statistics, score);
+            // DEBUG: first game example
+            // if (round.games.length === 1) nodeEmit("debug", "first game", round.games[0]);
           }
           i++;
         }
@@ -435,6 +474,8 @@ function mergeTeamStats() {
 
   const welsh = JSON.parse(fs.readFileSync("welsh.json", "utf8"));
   const cardiff = JSON.parse(fs.readFileSync("cardiff.json", "utf8"));
+  // DEBUG: check how many teams in each source
+  // nodeEmit("debug", "source team stats", { welsh: Object.keys(welsh.team_statistics||{}).length, cardiff: Object.keys(cardiff.team_statistics||{}).length });
 
   const merged = {};
 
@@ -464,7 +505,9 @@ function mergeTeamStats() {
   addStats(cardiff.team_statistics, "Cardiff & Vale Cup");
 
   safeWriteJSON("teams.json", merged);
-  nodeEmit("info", "mergeTeamStats: done", { teams: Object.keys(merged).length });
+  const teamCount = Object.keys(merged).length;
+  nodeEmit("info", "mergeTeamStats: done", { teams: teamCount });
+  return teamCount;
 }
 
 // ===============================
@@ -481,10 +524,13 @@ function mergeTeamStats() {
   try {
     await scrapeU12Welsh(browser);
     await scrapeYear7Cardiff(browser);
-    mergeTeamStats();
+    const teamsCount = mergeTeamStats();
+    writeLastUpdated({ teams: teamsCount, files: { welsh: "welsh.json", cardiff: "cardiff.json", teams: "teams.json" } });
     nodeEmit("info", "all tasks complete");
   } catch (err) {
     nodeEmit("critical", "global scrape error", null, err);
+    // Still write an attempted update timestamp for visibility
+    writeLastUpdated({ error: String(err && err.message ? err.message : err) });
   } finally {
     await browser.close();
     nodeEmit("info", "puppeteer closed");

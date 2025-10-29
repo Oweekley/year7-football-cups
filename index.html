@@ -19,12 +19,35 @@
   <meta name="robots" content="index,follow" />
   <meta name="author" content="Ollie Weekley" />
   <meta name="keywords" content="football, soccer, year 7, welsh cup, cardiff cup, school sports, statistics, brackets" />
+  
+  <!-- Enhanced SEO and Social Media -->
+  <meta property="og:title" data-i18n="dashboardTitle" content="Year 7 Cups Dashboard 2025" />
+  <meta property="og:description" data-i18n="metaDescription" content="Interactive bilingual dashboard for the Year 7 Football Cups — Welsh Cup, Cardiff Cup, and Friendlies. Auto-updating stats, live tables, and knockout brackets." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://year7-football-cups.vercel.app" />
+  <meta property="og:site_name" content="Year 7 Football Cups" />
+  
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" data-i18n="dashboardTitle" content="Year 7 Cups Dashboard 2025" />
+  <meta name="twitter:description" data-i18n="metaDescription" content="Interactive bilingual dashboard for the Year 7 Football Cups — Welsh Cup, Cardiff Cup, and Friendlies. Auto-updating stats, live tables, and knockout brackets." />
+  
+  <!-- Performance and Security -->
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+  <meta name="format-detection" content="telephone=no" />
+  
+  <!-- PWA and Mobile -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" data-i18n="dashboardTitle" content="Year 7 Cups Dashboard" />
+  <meta name="msapplication-TileColor" content="#0077ff" />
 
   <!-- Optional PWA bits (harmless if files don’t exist yet) -->
   <link rel="manifest" href="manifest.webmanifest" />
 
-  <!-- ========= ICONS / FONTS ========= -->
-  <link rel="icon" href="favicon.png" type="image/png" />
+  <!-- ========= FONTS ========= -->
+  
   <!-- Preconnect improves Google Fonts startup -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -40,6 +63,15 @@
     media="print"
     onload="this.media='all'"
   />
+  
+  <!-- Critical CSS for above-the-fold content -->
+  <style>
+    /* Critical CSS for immediate rendering */
+    body { margin: 0; font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif; }
+    .header { background: linear-gradient(135deg, #0077ff 0%, #0056b3 100%); color: white; padding: 1rem; }
+    .loading { display: flex; justify-content: center; align-items: center; min-height: 200px; }
+    .error-message { background: #fee; color: #c33; padding: 1rem; border-radius: 8px; margin: 1rem; }
+  </style>
   <noscript>
     <link
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
@@ -98,21 +130,23 @@
       <a href="index.html" class="active" data-i18n="dashboard" aria-current="page">Dashboard</a>
       <a href="teamCard.html" data-i18n="teamDashboard">Team Dashboard</a>
       <a href="brackets.html" data-i18n="brackets">Brackets</a>
+      <a href="#" id="admin-link" data-i18n="admin">Admin</a>
     </nav>
   </header>
 
   <!-- ============== MAIN ============== -->
-  <main id="main-content" role="main">
+  <main id="main-content" role="main" aria-label="Year 7 Football Cups Dashboard">
     <!-- ====== DASHBOARD OVERVIEW ====== -->
     <section id="overview" class="dashboard-overview" aria-labelledby="overview-title">
       <div class="overview-header">
         <h2 id="overview-title" data-i18n="dashboardTitle">Year 7 Cups Dashboard 2025</h2>
 
-        <div class="data-controls">
+        <div class="data-controls" role="toolbar" aria-label="Data management controls">
 			<!-- Update Fixtures (glass) -->
-<button id="update-fixtures-btn" class="pill glass" type="button" title="Run scraper and refresh data" data-i18n="runScraper">
+<button id="update-fixtures-btn" class="pill glass" type="button" title="Run scraper and refresh data" data-i18n="runScraper" aria-describedby="update-help">
   ↻ <span data-i18n="updateFixtures">Update Fixtures</span>
 </button>
+<div id="update-help" class="sr-only" data-i18n="updateHelp">Click to manually refresh competition data from external sources</div>
 
 <!-- Glass Modal -->
 <div id="update-modal" class="glass-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="update-title">
@@ -215,6 +249,245 @@
 
   <!-- ============== SCRIPTS ============== -->
   <script src="script.js" defer></script>
+  
+  <!-- ============== COMPREHENSIVE LOGGING ============== -->
+  <!--
+    What this script logs (quick overview):
+    - Page summary, meta count, nav readiness, accessibility counts
+    - Performance (FCP/DOM/Load), errors, visibility, network, resize
+
+    How to debug quickly:
+    - Look for lines starting with "DEBUG:" and remove the leading slashes
+      to print detailed objects or extra diagnostics.
+  -->
+  <script>
+    // ===== PAGE LOAD SUMMARY =====
+    (function(){
+      const ua = navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome') ? 'Safari' :
+                 navigator.userAgent.includes('Chrome') ? 'Chrome' :
+                 navigator.userAgent.includes('Firefox') ? 'Firefox' : 'Browser';
+      console.log(`[PAGE] index.html loaded – ua=${ua}, ${window.innerWidth}x${window.innerHeight}, ${navigator.language}`);
+      // DEBUG: print full environment details
+      // console.log('[PAGE] details', {
+      //   timestamp: new Date().toISOString(),
+      //   userAgent: navigator.userAgent,
+      //   viewport: { width: window.innerWidth, height: window.innerHeight },
+      //   language: navigator.language,
+      //   cookieEnabled: navigator.cookieEnabled,
+      //   online: navigator.onLine
+      // });
+    })();
+
+    // ===== META TAGS SUMMARY =====
+    const metaTags = Array.from(document.querySelectorAll('meta')).map(meta => ({
+      name: meta.name || meta.property,
+      content: meta.content,
+      charset: meta.charset
+    })).filter(meta => meta.name || meta.charset);
+    console.log(`[META] Meta tags loaded – tags=${metaTags.length}`);
+    // DEBUG: print all meta tags
+    // console.log('[META] tags', metaTags);
+
+    // ===== NAVIGATION + CONTROLS READY =====
+    document.addEventListener('DOMContentLoaded', () => {
+      (function(){
+        const links = document.querySelectorAll('nav a').length;
+        const active = document.querySelector('nav a.active')?.textContent || 'unknown';
+        const skip = document.querySelector('.sr-only[href="#main-content"]') ? 'present' : 'missing';
+        console.log(`[NAV] Navigation elements ready – links=${links}, active=${active}, skip=${skip}`);
+        // DEBUG: Inspect nav links
+        // console.log('[NAV] links', Array.from(document.querySelectorAll('nav a')).map(a => a.textContent.trim()));
+      })();
+
+      // ===== LANGUAGE BUTTONS =====
+      const langButtons = document.querySelectorAll('.lang-switch button');
+      langButtons.forEach((btn, index) => {
+        btn.addEventListener('click', () => {
+          console.log('[LANG] Language button clicked', {
+            button: btn.textContent,
+            index: index,
+            timestamp: new Date().toISOString()
+          });
+          // DEBUG: confirm current document language
+          // console.log('[LANG] html lang', document.documentElement.lang);
+        });
+      });
+
+      // ===== THEME TOGGLE =====
+      const themeToggle = document.getElementById('theme-toggle');
+      if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+          console.log('[THEME] Theme toggle clicked', {
+            currentTheme: document.body.className,
+            timestamp: new Date().toISOString()
+          });
+          // DEBUG: saved theme
+          // console.log('[THEME] localStorage.theme', localStorage.getItem('theme'));
+        });
+      }
+
+      // ===== UPDATE FIXTURES BUTTON =====
+      const updateBtn = document.getElementById('update-fixtures-btn');
+      if (updateBtn) {
+        updateBtn.addEventListener('click', () => {
+          console.log('[UPDATE] Update fixtures button clicked', {
+            timestamp: new Date().toISOString()
+          });
+          // DEBUG: verify modal visibility
+          // console.log('[UPDATE] modal aria-hidden', document.getElementById('update-modal')?.getAttribute('aria-hidden'));
+        });
+      }
+
+      // ===== UPDATE MODAL =====
+      const modal = document.getElementById('update-modal');
+      const modalClose = document.getElementById('update-close');
+      if (modal && modalClose) {
+        modalClose.addEventListener('click', () => {
+          console.log('[MODAL] Update modal closed', {
+            timestamp: new Date().toISOString()
+          });
+          // DEBUG: confirm modal is hidden
+          // console.log('[MODAL] aria-hidden', modal.getAttribute('aria-hidden'));
+        });
+      }
+
+      // ===== FORM INTERACTIONS =====
+      const passwordInput = document.getElementById('update-pass');
+      const updateStart = document.getElementById('update-start');
+      if (passwordInput) {
+        passwordInput.addEventListener('input', () => {
+          console.log('[FORM] Password input changed', {
+            length: passwordInput.value.length,
+            timestamp: new Date().toISOString()
+          });
+          // DEBUG: never log the password itself
+          // console.log('[FORM] password present?', Boolean(passwordInput.value));
+        });
+      }
+      if (updateStart) {
+        updateStart.addEventListener('click', () => {
+          console.log('[FORM] Update start button clicked', {
+            hasPassword: !!passwordInput?.value,
+            timestamp: new Date().toISOString()
+          });
+          // DEBUG: disable network for testing
+          // event.preventDefault();
+        });
+      }
+
+      // ===== SELECT (DROPDOWNS) =====
+      const selectors = document.querySelectorAll('select');
+      selectors.forEach((select, index) => {
+        select.addEventListener('change', () => {
+          console.log('[SELECT] Dropdown changed', {
+            id: select.id,
+            value: select.value,
+            index: index,
+            timestamp: new Date().toISOString()
+          });
+          // DEBUG: print all selected values
+          // console.log('[SELECT] all', Array.from(document.querySelectorAll('select')).map(s => ({ id: s.id, value: s.value })));
+        });
+      });
+
+      // ===== ACCESSIBILITY COUNTS =====
+      (function(){
+        const sr = document.querySelectorAll('.sr-only').length;
+        const aria = document.querySelectorAll('[aria-label]').length;
+        const roles = document.querySelectorAll('[role]').length;
+        const live = document.querySelectorAll('[aria-live]').length;
+        console.log(`[A11Y] Accessibility features – aria=${aria}, roles=${roles}, sr=${sr}, live=${live}`);
+        // DEBUG: inspect aria-live regions
+        // console.log('[A11Y] live regions', Array.from(document.querySelectorAll('[aria-live]')).map(n => n.outerHTML.slice(0, 80)));
+      })();
+
+      // ===== PERFORMANCE SUMMARY (FCP/DOM/Load) =====
+      if (window.performance) {
+        const nav = (performance.getEntriesByType('navigation')[0]) || {};
+        const paints = performance.getEntriesByType('paint');
+        const fcp = paints.find(e => e.name === 'first-contentful-paint')?.startTime;
+        const dom = Math.max(0, (nav.domContentLoadedEventEnd ?? 0) - (nav.startTime ?? 0));
+        const load = Math.max(0, (nav.loadEventEnd ?? 0) - (nav.startTime ?? 0));
+        const fmt = v => (typeof v === 'number' && isFinite(v)) ? `${Math.round(v)}ms` : '—';
+        console.log(`[PERF] Page performance – FCP=${fmt(fcp)}, DOM=${fmt(dom)}, Load=${fmt(load)}`);
+        // DEBUG: print full navigation entry
+        // console.log('[PERF] navigation entry', nav);
+      }
+    });
+
+    // ===== RUNTIME ERRORS =====
+    window.addEventListener('error', (event) => {
+      console.log('[ERROR] JavaScript error', {
+        message: event.message,
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno,
+        timestamp: new Date().toISOString()
+      });
+      // DEBUG: print full error object
+      // console.log('[ERROR] details', event.error);
+    });
+
+    // ===== UNHANDLED PROMISE REJECTIONS =====
+    window.addEventListener('unhandledrejection', (event) => {
+      console.log('[ERROR] Unhandled promise rejection', {
+        reason: event.reason,
+        timestamp: new Date().toISOString()
+      });
+      // DEBUG: inspect rejection reason
+      // console.log('[ERROR] rejection details', event.reason);
+    });
+
+    // ===== PAGE VISIBILITY =====
+    document.addEventListener('visibilitychange', () => {
+      console.log('[VISIBILITY] Page visibility changed', {
+        hidden: document.hidden,
+        visibilityState: document.visibilityState,
+        timestamp: new Date().toISOString()
+      });
+    });
+
+    // ===== NETWORK STATUS =====
+    window.addEventListener('online', () => {
+      console.log('[NETWORK] Connection restored', {
+        timestamp: new Date().toISOString()
+      });
+    });
+
+    window.addEventListener('offline', () => {
+      console.log('[NETWORK] Connection lost', {
+        timestamp: new Date().toISOString()
+      });
+    });
+
+    // ===== RESIZE (SIGNIFICANT CHANGES ONLY) =====
+    let resizeTimeout;
+    let lastSize = { w: window.innerWidth, h: window.innerHeight };
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const dw = Math.abs(w - lastSize.w);
+        const dh = Math.abs(h - lastSize.h);
+        const significant = dw >= 100 || dh >= 100 || (w < h) !== (lastSize.w < lastSize.h);
+        if (significant) {
+          console.log('[RESIZE] Window resized', {
+            width: w,
+            height: h,
+            timestamp: new Date().toISOString()
+          });
+          lastSize = { w, h };
+          // DEBUG: also show the delta
+          // console.log('[RESIZE] delta', { dw, dh });
+        }
+      }, 250);
+    });
+
+    // Scroll logging (throttled)
+    // Scroll logging disabled to reduce console noise
+  </script>
+
   <noscript>
     <p class="sr-only">JavaScript is required to load live data and interactive features.</p>
   </noscript>

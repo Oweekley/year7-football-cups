@@ -125,6 +125,7 @@
       <a href="index.html" data-i18n="dashboard">Dashboard</a>
       <a href="teamCard.html" class="active" data-i18n="teamDashboard" aria-current="page">Team Dashboard</a>
       <a href="brackets.html" data-i18n="brackets">Brackets</a>
+      <a href="#" id="admin-link" data-i18n="admin">Admin</a>
     </nav>
   </header>
 
@@ -137,23 +138,21 @@
       role="region"
     >
       <h2 id="team-dashboard-title" data-i18n="teamDashboard">Team Dashboard</h2>
-      <p id="team-dashboard-desc" class="subtitle">
-        Explore combined stats and match history for each team across all competitions.
-      </p>
+      <p id="team-dashboard-desc" class="subtitle" data-i18n="exploreCombinedStats">Explore combined stats and match history for each team across all competitions.</p>
 
       <!-- TEAM SELECT -->
       <div class="selectors" role="group" aria-label="Team selection">
         <div>
           <label for="team-select" data-i18n="selectTeam">Select Team:</label>
           <select id="team-select" aria-label="Select Team" autocomplete="off">
-            <option value="">--Choose a Team--</option>
+            <option value="" data-i18n="chooseTeam">--Choose a Team--</option>
           </select>
         </div>
 
         <div>
           <label for="data-select" data-i18n="selectData">Select Data:</label>
           <select id="data-select" aria-label="Select Data Type" autocomplete="off">
-            <option value="">--Team Stats / Match History--</option>
+            <option value="" data-i18n="chooseData">--Team Stats / Match History--</option>
           </select>
         </div>
       </div>
@@ -166,7 +165,7 @@
         role="region"
         aria-label="Team details display"
       >
-        <div class="loading-placeholder" id="team-loading">Select a team to view details...</div>
+        <div class="loading-placeholder" id="team-loading" data-i18n="selectTeamAndData">Select a team to view details...</div>
       </div>
     </section>
   </main>
@@ -184,17 +183,247 @@
   <script src="script.js" defer></script>
 
   <!-- Small fade-in when team data loads -->
+  <!--
+    What this inline script does (quick overview):
+    - Logs when the team dashboard is ready
+    - Watches the team display area for changes
+    - Logs selector changes, language/theme clicks, navigation events
+    - Prints performance and accessibility summaries
+
+    How to debug quickly:
+    - Look for "DEBUG:" lines and un-comment to print more details
+  -->
   <script>
+    // Page load logging
+    console.log('[PAGE] teamCard.html loaded', {
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+      viewport: { width: window.innerWidth, height: window.innerHeight },
+      language: navigator.language,
+      online: navigator.onLine
+    });
+    // DEBUG: page url/title
+    // console.log('[PAGE] details', { url: location.href, title: document.title });
+
     document.addEventListener("DOMContentLoaded", () => {
+      console.log('[TEAMCARD] DOM ready, initializing team dashboard', {
+        timestamp: new Date().toISOString()
+      });
+
       const display = document.getElementById("team-display");
-      const observer = new MutationObserver(() => {
+      const teamSelect = document.getElementById("team-select");
+      const dataSelect = document.getElementById("data-select");
+
+      console.log('[TEAMCARD] Team dashboard elements found', {
+        display: !!display,
+        teamSelect: !!teamSelect,
+        dataSelect: !!dataSelect,
+        timestamp: new Date().toISOString()
+      });
+      // DEBUG: confirm IDs
+      // console.log('[TEAMCARD] ids', { display: display?.id, teamSelect: teamSelect?.id, dataSelect: dataSelect?.id });
+
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'childList') {
+            console.log('[TEAMCARD] Team display content changed', {
+              addedNodes: mutation.addedNodes.length,
+              removedNodes: mutation.removedNodes.length,
+              contentLength: display.innerHTML.length,
+              timestamp: new Date().toISOString()
+            });
+            // DEBUG: show a short snippet
+            // console.log('[TEAMCARD] snippet', display.innerHTML.slice(0, 120));
+          }
+        });
+
         if (display.innerHTML.trim()) {
+          console.log('[TEAMCARD] Team data loaded and displayed', {
+            contentLength: display.innerHTML.length,
+            hasLoadedClass: display.classList.contains("loaded"),
+            timestamp: new Date().toISOString()
+          });
           display.classList.add("loaded");
           const placeholder = document.getElementById("team-loading");
-          if (placeholder) placeholder.remove();
+          if (placeholder) {
+            console.log('[TEAMCARD] Removing team loading placeholder');
+            placeholder.remove();
+          }
         }
       });
       observer.observe(display, { childList: true, subtree: true });
+
+      console.log('[TEAMCARD] Mutation observer set up for team display', {
+        timestamp: new Date().toISOString()
+      });
+
+      // Team selector logging
+      if (teamSelect) {
+        console.log('[TEAMCARD] Team selector found', {
+          options: teamSelect.options.length,
+          currentValue: teamSelect.value,
+          timestamp: new Date().toISOString()
+        });
+        // DEBUG: print all team options
+        // console.log('[TEAMCARD] team options', Array.from(teamSelect.options).map(o => o.textContent));
+
+        teamSelect.addEventListener('change', () => {
+          console.log('[TEAMCARD] Team selection changed', {
+            selectedTeam: teamSelect.value,
+            selectedText: teamSelect.options[teamSelect.selectedIndex]?.textContent,
+            timestamp: new Date().toISOString()
+          });
+        });
+      }
+
+      // Data selector logging
+      if (dataSelect) {
+        console.log('[TEAMCARD] Data selector found', {
+          options: dataSelect.options.length,
+          currentValue: dataSelect.value,
+          timestamp: new Date().toISOString()
+        });
+        // DEBUG: print data options
+        // console.log('[TEAMCARD] data options', Array.from(dataSelect.options).map(o => o.textContent));
+
+        dataSelect.addEventListener('change', () => {
+          console.log('[TEAMCARD] Data type selection changed', {
+            selectedData: dataSelect.value,
+            selectedText: dataSelect.options[dataSelect.selectedIndex]?.textContent,
+            timestamp: new Date().toISOString()
+          });
+        });
+      }
+
+      // Language and theme controls logging
+      const langButtons = document.querySelectorAll('.lang-switch button');
+      console.log('[TEAMCARD] Language buttons found', {
+        count: langButtons.length,
+        buttons: Array.from(langButtons).map(btn => btn.textContent),
+        timestamp: new Date().toISOString()
+      });
+
+      langButtons.forEach((btn, index) => {
+        btn.addEventListener('click', () => {
+          console.log('[TEAMCARD] Language button clicked', {
+            button: btn.textContent,
+            index: index,
+            timestamp: new Date().toISOString()
+          });
+        });
+      });
+
+      const themeToggle = document.getElementById('theme-toggle');
+      if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+          console.log('[TEAMCARD] Theme toggle clicked', {
+            currentTheme: document.body.className,
+            timestamp: new Date().toISOString()
+          });
+        });
+      }
+
+      // Navigation logging
+      const navLinks = document.querySelectorAll('nav a');
+      console.log('[TEAMCARD] Navigation links found', {
+        count: navLinks.length,
+        activeLink: document.querySelector('nav a.active')?.textContent,
+        timestamp: new Date().toISOString()
+      });
+      // DEBUG: list nav texts
+      // console.log('[TEAMCARD] nav', Array.from(navLinks).map(a => a.textContent.trim()));
+
+      navLinks.forEach((link, index) => {
+        link.addEventListener('click', () => {
+          console.log('[TEAMCARD] Navigation link clicked', {
+            text: link.textContent,
+            href: link.href,
+            index: index,
+            timestamp: new Date().toISOString()
+          });
+        });
+      });
+
+      // Performance logging
+      if (window.performance) {
+        const perfData = window.performance.getEntriesByType('navigation')[0];
+        console.log('[TEAMCARD] Page performance', {
+          loadTime: perfData.loadEventEnd - perfData.loadEventStart,
+          domContentLoaded: perfData.domContentLoadedEventEnd - perfData.domContentLoadedEventStart,
+          firstPaint: performance.getEntriesByType('paint').find(entry => entry.name === 'first-paint')?.startTime,
+          firstContentfulPaint: performance.getEntriesByType('paint').find(entry => entry.name === 'first-contentful-paint')?.startTime,
+          timestamp: new Date().toISOString()
+        });
+        // DEBUG: navigation entry
+        // console.log('[TEAMCARD] navigation', perfData);
+      }
+
+      // Accessibility logging
+      console.log('[TEAMCARD] Accessibility features', {
+        skipLinks: document.querySelectorAll('.sr-only').length,
+        ariaLabels: document.querySelectorAll('[aria-label]').length,
+        roleAttributes: document.querySelectorAll('[role]').length,
+        liveRegions: document.querySelectorAll('[aria-live]').length,
+        timestamp: new Date().toISOString()
+      });
+
+      // Team data loading simulation (if no data is loaded yet)
+      setTimeout(() => {
+        if (display.innerHTML.trim() === '' || display.innerHTML.includes('Select a team')) {
+          console.log('[TEAMCARD] No team data loaded yet, showing placeholder', {
+            displayContent: display.innerHTML,
+            timestamp: new Date().toISOString()
+          });
+        }
+      }, 1000);
+    });
+
+    // Error logging
+    window.addEventListener('error', (event) => {
+      console.log('[TEAMCARD] JavaScript error', {
+        message: event.message,
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno,
+        timestamp: new Date().toISOString()
+      });
+    });
+
+    // Unhandled promise rejection logging
+    window.addEventListener('unhandledrejection', (event) => {
+      console.log('[TEAMCARD] Unhandled promise rejection', {
+        reason: event.reason,
+        timestamp: new Date().toISOString()
+      });
+    });
+
+    // Resize logging for responsive team display
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        console.log('[TEAMCARD] Window resized', {
+          width: window.innerWidth,
+          height: window.innerHeight,
+          teamDisplayContent: document.getElementById("team-display")?.innerHTML.length || 0,
+          timestamp: new Date().toISOString()
+        });
+        // DEBUG: orientation
+        // console.log('[TEAMCARD] orientation', window.innerWidth > window.innerHeight ? 'landscape' : 'portrait');
+      }, 250);
+    });
+
+    // Scroll logging for team data viewing
+    let scrollTimeout;
+    window.addEventListener('scroll', () => {
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        console.log('[TEAMCARD] Page scrolled', {
+          scrollY: window.scrollY,
+          scrollX: window.scrollX,
+          timestamp: new Date().toISOString()
+        });
+      }, 100);
     });
   </script>
 

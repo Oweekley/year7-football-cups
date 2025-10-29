@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title data-i18n="admin">Admin</title>
+  <meta name="description" content="Admin page to edit team notes and add friendly results" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preload" as="script" href="script.js" />
+  <style>
+    :root { --admin-radius: 12px; --admin-gap: 1rem; }
+    .header-top { padding: 1rem; display: flex; align-items: center; justify-content: space-between; }
+    .container { max-width: 960px; margin: 0 auto; padding: 1rem; }
+    .subtitle { color: var(--text-muted, #555); margin: .25rem 0 1rem; }
+    .admin-grid { display: grid; gap: var(--admin-gap); grid-template-columns: 1fr; }
+    .admin-card {
+      padding: 1rem;
+      border-radius: var(--admin-radius);
+      border: 1px solid rgba(0,0,0,0.08);
+      background: rgba(255,255,255,0.8);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    }
+    body.dark .admin-card { background: rgba(20,20,20,0.6); border-color: rgba(255,255,255,0.08); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+    .admin-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--admin-gap); }
+    .admin-actions { display: flex; gap: .5rem; flex-wrap: wrap; align-items: end; }
+    .divider { height: 1px; background: rgba(0,0,0,0.08); margin: 1rem 0; }
+    body.dark .divider { background: rgba(255,255,255,0.08); }
+    .success { color: #0a7a2f; font-weight: 600; }
+
+    /* Form elements */
+    label { display: flex; flex-direction: column; gap: .35rem; font-weight: 500; }
+    input[type="text"], input[type="number"], input[type="date"], input[type="password"], select, textarea {
+      appearance: none;
+      -webkit-appearance: none;
+      border: 1px solid rgba(0,0,0,0.15);
+      background: var(--surface, #fff);
+      color: inherit;
+      border-radius: 10px;
+      padding: .65rem .75rem;
+      outline: none;
+      transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+    body.dark input, body.dark select, body.dark textarea { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.14); }
+    input:focus, select:focus, textarea:focus { border-color: #0077ff; box-shadow: 0 0 0 3px rgba(0,119,255,0.15); }
+    textarea { resize: vertical; min-height: 120px; }
+
+    /* Buttons (fallback if .cta not present) */
+    .cta, .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: .4rem; border-radius: 999px; padding: .6rem 1rem; cursor: pointer;
+      background: #0077ff; color: #fff; border: none; font-weight: 600;
+      box-shadow: 0 6px 16px rgba(0,119,255,0.25);
+      transition: transform .06s ease, box-shadow .15s ease, background .15s ease;
+    }
+    .cta:hover, .btn:hover { box-shadow: 0 8px 20px rgba(0,119,255,0.3); }
+    .cta:active, .btn:active { transform: translateY(1px); }
+    .btn-secondary { background: transparent; color: #0077ff; border: 1px solid rgba(0,119,255,0.35); }
+    body.dark .btn-secondary { color: #4da3ff; border-color: rgba(77,163,255,0.35); }
+
+    /* Locked card layout */
+    #admin-locked .admin-row { align-items: end; }
+
+    @media (min-width: 900px) {
+      .admin-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 720px) {
+      .admin-row { grid-template-columns: 1fr; }
+    }
+  </style>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#0077ff" />
+  <meta name="color-scheme" content="light dark" />
+  <script defer src="script.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const $ = sel => document.querySelector(sel);
+      const $$ = sel => Array.from(document.querySelectorAll(sel));
+
+      // Elements
+      const sectionLocked = $('#admin-locked');
+      const sectionBody = $('#admin-body');
+      const passInput = $('#admin-pass');
+      const unlockBtn = $('#admin-unlock');
+      const notesTeam = $('#notes-team');
+      const notesTextarea = $('#notes-text');
+      const notesSaveBtn = $('#notes-save');
+      const notesSaved = $('#notes-saved');
+      const frDate = $('#fr-date');
+      const frHome = $('#fr-home');
+      const frAway = $('#fr-away');
+      const frHomeGoals = $('#fr-home-goals');
+      const frAwayGoals = $('#fr-away-goals');
+      const frNotes = $('#fr-notes');
+      const frSubmit = $('#fr-submit');
+      const submitHintId = 'fr-submit-hint';
+      const exportTeamsBtn = $('#export-teams');
+      const exportFriendliesBtn = $('#export-friendlies');
+
+      async function ensureDataLoaded() {
+        try {
+          if (typeof state === 'undefined' || !Array.isArray(state.teams) || state.teams.length === 0) {
+            if (typeof window.loadData === 'function') {
+              await window.loadData();
+            }
+          }
+        } catch (e) {
+          console.warn('[ADMIN] ensureDataLoaded failed', e);
+        }
+      }
+
+      // Auto-unlock if verified via nav
+      (async () => {
+        if (sessionStorage.getItem('admin_unlocked') === 'true') {
+          sectionLocked.hidden = true;
+          sectionBody.hidden = false;
+          await ensureDataLoaded();
+          initAdmin();
+        }
+      })();
+
+      // Gate admin UI with a simple password field (local check only)
+      unlockBtn?.addEventListener('click', async () => {
+        const val = (passInput.value || '').trim();
+        if (!val) { passInput.focus(); return; }
+        // Basic unlock only; real auth should be done server-side
+        sectionLocked.hidden = true;
+        sectionBody.hidden = false;
+        await ensureDataLoaded();
+        initAdmin();
+      });
+
+      function initAdmin() {
+        // Populate team selects when app data is ready
+        const initTeams = () => {
+          if (typeof state === 'undefined' || !Array.isArray(state.teams) || state.teams.length === 0) {
+            setTimeout(initTeams, 200);
+            return;
+          }
+          // Team list
+          const sorted = [...state.teams].sort((a,b) => a.name.localeCompare(b.name));
+          notesTeam.innerHTML = `<option value="">--${translate('chooseTeam')}--</option>`;
+          frHome.innerHTML = `<option value="">--${translate('chooseTeam')}--</option>`;
+          frAway.innerHTML = `<option value="">--${translate('chooseTeam')}--</option>`;
+          sorted.forEach(t => {
+            const opt1 = document.createElement('option'); opt1.value = t.name; opt1.textContent = t.name; notesTeam.appendChild(opt1);
+            const opt2 = document.createElement('option'); opt2.value = t.name; opt2.textContent = t.name; frHome.appendChild(opt2.cloneNode(true));
+            const opt3 = document.createElement('option'); opt3.value = t.name; opt3.textContent = t.name; frAway.appendChild(opt3);
+          });
+          // Ensure selects are enabled now that data is ready
+          notesTeam.removeAttribute('disabled');
+          frHome.removeAttribute('disabled');
+          frAway.removeAttribute('disabled');
+
+          // Load selected team notes
+          notesTeam.addEventListener('change', () => {
+            const team = state.teams.find(t => t.name === notesTeam.value);
+            notesTextarea.value = team?.notes || '';
+            notesSaved.textContent = '';
+          });
+
+          // Initialize friendly form validity
+          if (typeof updateFriendlyValidity === 'function') updateFriendlyValidity();
+        };
+        initTeams();
+
+        // Save notes to in-memory state
+        notesSaveBtn.addEventListener('click', () => {
+          const name = notesTeam.value;
+          if (!name) { notesTeam.focus(); return; }
+          const team = state.teams.find(t => t.name === name);
+          if (!team) return;
+          const oldNotes = team.notes || '';
+          team.notes = String(notesTextarea.value || '').trim();
+          if (oldNotes !== team.notes) {
+            logger?.dataChange?.('team-notes', oldNotes, team.notes);
+          }
+          notesSaved.textContent = translate('saved');
+          setTimeout(() => notesSaved.textContent = '', 1500);
+        });
+
+        // Add friendly result to in-memory state
+        function updateFriendlyValidity() {
+          // Date is optional; require distinct teams only
+          const valid = Boolean(frHome.value && frAway.value && frHome.value !== frAway.value);
+          if (valid) {
+            frSubmit.disabled = false;
+            frSubmit.removeAttribute('disabled');
+            const hint = document.getElementById(submitHintId);
+            if (hint) hint.remove();
+          } else {
+            frSubmit.disabled = true;
+            frSubmit.setAttribute('disabled', 'disabled');
+            let hint = document.getElementById(submitHintId);
+            if (!hint) {
+              hint = document.createElement('div');
+              hint.id = submitHintId;
+              hint.style.fontSize = '.9rem';
+              hint.style.color = 'var(--text-muted, #666)';
+              frSubmit.parentElement?.appendChild(hint);
+            }
+            hint.textContent = (frHome.value && frAway.value && frHome.value === frAway.value)
+              ? 'Home and away teams must be different.'
+              : 'Choose home and away teams to enable submit.';
+          }
+        }
+        [frDate, frHome, frAway].forEach(el => el.addEventListener('input', updateFriendlyValidity));
+        [frHome, frAway].forEach(el => el.addEventListener('change', updateFriendlyValidity));
+
+        frSubmit.addEventListener('click', () => {
+          const date = frDate.value;
+          const home = frHome.value;
+          const away = frAway.value;
+          const hs = frHomeGoals.value;
+          const as = frAwayGoals.value;
+          if (!date || !home || !away) return;
+          if (home === away) return;
+
+          const friendly = {
+            date,
+            home_team: home,
+            away_team: away,
+            home_score: hs !== '' ? Number(hs) : null,
+            away_score: as !== '' ? Number(as) : null,
+            notes: frNotes.value || ''
+          };
+
+          const cup = state.cups.Friendlies || (state.cups.Friendlies = { rounds: [] });
+          if (!Array.isArray(cup.rounds)) cup.rounds = [];
+          // Use single rolling round for Friendlies (round 1)
+          let round = cup.rounds[0];
+          if (!round) {
+            round = { round_number: 1, deadlines: {}, games: [] };
+            cup.rounds.push(round);
+          }
+          round.games = Array.isArray(round.games) ? round.games : [];
+          round.games.push(friendly);
+          logger?.success?.('Friendly result added');
+
+          // Reset form
+          frDate.value = '';
+          frHome.selectedIndex = 0;
+          frAway.selectedIndex = 0;
+          frHomeGoals.value = '';
+          frAwayGoals.value = '';
+          frNotes.value = '';
+          updateFriendlyValidity();
+        });
+
+        // Export helpers
+        function download(filename, dataObj) {
+          const blob = new Blob([JSON.stringify(dataObj, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url; a.download = filename; a.click();
+          URL.revokeObjectURL(url);
+        }
+
+        exportTeamsBtn.addEventListener('click', () => {
+          // Export teams.json as an array under { teams: [...] }
+          const payload = { teams: state.teams.map(t => ({
+            name: t.name,
+            notes: t.notes || '',
+            played: t.played || 0,
+            wins: t.wins || 0,
+            gf: t.gf || 0,
+            ga: t.ga || 0,
+            gd: t.gd || 0
+          })) };
+          download('teams.json', payload);
+        });
+
+        exportFriendliesBtn.addEventListener('click', () => {
+          const friendlies = state.cups.Friendlies || { rounds: [] };
+          const payload = {
+            cup_name: 'Friendlies',
+            season: state?.currentSeason || translate('currentSeason') || '',
+            rounds: friendlies.rounds || [],
+            team_statistics: {}
+          };
+          download('friendlies.json', payload);
+        });
+      }
+    });
+  </script>
+</head>
+<body>
+  <header role="banner">
+    <div class="header-top">
+      <h1 data-i18n="adminPageTitle">Admin - Manage Notes and Friendlies</h1>
+
+      <div class="lang-theme-controls">
+        <div class="lang-switch" role="group" aria-label="Language switch">
+          <button id="lang-en" type="button" aria-label="Switch to English">EN</button>
+          <button id="lang-cy" type="button" aria-label="Newid i'r Gymraeg">CY</button>
+        </div>
+
+        <button
+          id="theme-toggle"
+          class="dark-toggle"
+          type="button"
+          aria-label="Toggle dark mode"
+          title="Toggle dark mode"
+          data-i18n="toggleDarkMode"
+        >☾</button>
+      </div>
+    </div>
+
+    <nav aria-label="Main navigation" role="navigation">
+      <a href="index.html" data-i18n="dashboard">Dashboard</a>
+      <a href="teamCard.html" data-i18n="teamDashboard">Team Dashboard</a>
+      <a href="brackets.html" data-i18n="brackets">Brackets</a>
+      <a href="#" class="active" aria-current="page" data-i18n="admin">Admin</a>
+    </nav>
+  </header>
+
+  <main class="container" role="main">
+    <p class="subtitle" data-i18n="adminDescription">Edit team notes or add friendly results.</p>
+
+    <section id="admin-locked" class="admin-card" aria-labelledby="unlock-title">
+      <h2 id="unlock-title" data-i18n="unlockAdmin">Unlock Admin</h2>
+      <p class="subtitle" data-i18n="enterSecret">Enter the secret to trigger the scraper and refresh the JSON files.</p>
+      <div class="admin-row">
+        <label>
+          <span data-i18n="adminPassword">Password</span>
+          <input id="admin-pass" type="password" placeholder="••••••" autocomplete="off" />
+        </label>
+        <div class="admin-actions">
+          <button id="admin-unlock" class="cta" type="button" data-i18n="unlockAdmin">Unlock Admin</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="admin-body" class="admin-grid" hidden>
+      <div class="admin-card" aria-labelledby="notes-title">
+        <h2 id="notes-title" data-i18n="editNotes">Edit Notes</h2>
+        <div class="admin-row selectors" role="group" aria-label="Team selection">
+          <label>
+            <span data-i18n="selectTeam">Select Team:</span>
+            <select id="notes-team" aria-label="Select Team" autocomplete="off">
+              <option value="" data-i18n="chooseTeam">--Choose a Team--</option>
+            </select>
+          </label>
+          <div class="admin-actions">
+            <button id="notes-save" class="cta" type="button" data-i18n="saveNotes">Save Notes</button>
+            <span id="notes-saved" class="success" aria-live="polite"></span>
+          </div>
+        </div>
+        <label>
+          <span data-i18n="notes">Notes</span>
+          <textarea id="notes-text" rows="5" placeholder="Type notes here..."></textarea>
+        </label>
+      </div>
+
+      <div class="admin-card" aria-labelledby="friendly-title">
+        <h2 id="friendly-title" data-i18n="addFriendly">Add Friendly Result</h2>
+        <div class="admin-row selectors" role="group" aria-label="Friendly details">
+          <label>
+            <span data-i18n="date">Date</span>
+            <input id="fr-date" type="date" />
+          </label>
+          <label>
+            <span data-i18n="homeTeam">Home Team</span>
+            <select id="fr-home" aria-label="Select Home Team" autocomplete="off">
+              <option value="" data-i18n="chooseTeam">--Choose a Team--</option>
+            </select>
+          </label>
+        </div>
+        <div class="admin-row selectors" role="group" aria-label="Friendly details 2">
+          <label>
+            <span data-i18n="awayTeam">Away Team</span>
+            <select id="fr-away" aria-label="Select Away Team" autocomplete="off">
+              <option value="" data-i18n="chooseTeam">--Choose a Team--</option>
+            </select>
+          </label>
+          <label>
+            <span data-i18n="homeGoals">Home Goals</span>
+            <input id="fr-home-goals" type="number" min="0" inputmode="numeric" />
+          </label>
+        </div>
+        <div class="admin-row">
+          <label>
+            <span data-i18n="awayGoals">Away Goals</span>
+            <input id="fr-away-goals" type="number" min="0" inputmode="numeric" />
+          </label>
+          <div style="display:flex; align-items:end;">
+            <button id="fr-submit" class="cta" type="button" data-i18n="submit" disabled>Submit</button>
+          </div>
+        </div>
+        <label>
+          <span data-i18n="notes">Notes</span>
+          <textarea id="fr-notes" rows="3" placeholder="Optional notes..."></textarea>
+        </label>
+      </div>
+
+      <div class="admin-card" aria-labelledby="export-title">
+        <h2 id="export-title" data-i18n="export">Export</h2>
+        <div class="admin-actions">
+          <button id="export-teams" type="button" data-i18n="exportTeamsJson">Export teams.json</button>
+          <button id="export-friendlies" type="button" data-i18n="exportFriendliesJson">Export friendlies.json</button>
+        </div>
+        <div class="divider"></div>
+        <p style="color:#666; font-size:.9rem;">
+          Tip: Commit the downloaded files to your repository to publish changes.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer role="contentinfo">
+    <p>
+      © 2025 <span data-i18n="dashboardTitle">Year 7 Cups Dashboard</span>
+    </p>
+  </footer>
+</body>
+</html>
+
+

@@ -1,6 +1,116 @@
 @charset "UTF-8";
 
 /* ==============================
+   YEAR 7 FOOTBALL CUPS DASHBOARD
+   Version: 2.0.0
+   Last Updated: 2025-01-29
+   
+   Features:
+   - Modern glassmorphism design
+   - Dark/light mode support
+   - Responsive design
+   - Accessibility compliant
+   - Performance optimized
+   - PWA ready
+============================== */
+
+/* ==============================
+   CSS CUSTOM PROPERTIES (VARIABLES)
+============================== */
+:root {
+  /* Color Palette */
+  --primary: #0077ff;
+  --primary-dark: #0056b3;
+  --primary-light: #4da6ff;
+  --secondary: #6c757d;
+  --success: #28a745;
+  --warning: #ffc107;
+  --error: #dc3545;
+  --info: #17a2b8;
+  
+  /* Neutral Colors */
+  --white: #ffffff;
+  --gray-50: #f8f9fa;
+  --gray-100: #e9ecef;
+  --gray-200: #dee2e6;
+  --gray-300: #ced4da;
+  --gray-400: #adb5bd;
+  --gray-500: #6c757d;
+  --gray-600: #495057;
+  --gray-700: #343a40;
+  --gray-800: #212529;
+  --gray-900: #1a1a1a;
+  
+  /* Typography */
+  --font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-4xl: 2.25rem;
+  
+  /* Spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  
+  /* Border Radius */
+  --radius-sm: 0.25rem;
+  --radius: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  
+  /* Transitions */
+  --transition-fast: 150ms ease-in-out;
+  --transition: 250ms ease-in-out;
+  --transition-slow: 350ms ease-in-out;
+  
+  /* Z-Index Scale */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+}
+
+/* Dark mode variables */
+[data-theme="dark"] {
+  --white: #1a1a1a;
+  --gray-50: #212529;
+  --gray-100: #343a40;
+  --gray-200: #495057;
+  --gray-300: #6c757d;
+  --gray-400: #adb5bd;
+  --gray-500: #ced4da;
+  --gray-600: #dee2e6;
+  --gray-700: #e9ecef;
+  --gray-800: #f8f9fa;
+  --gray-900: #ffffff;
+}
+
+/* ==============================
    GLOBAL RESET & BASE
 ============================== */
 *,
@@ -703,9 +813,10 @@ body.dark .round {
 }
 
 .team.winner::after {
-  content: '🏆';
+  content: '★';
   margin-left: 0.5rem;
   font-size: 0.8rem;
+  color: #ffd700;
 }
 
 .score {
@@ -870,7 +981,7 @@ body.dark footer { background: rgba(25, 25, 28, 0.9); }
 /* ==============================
    RESPONSIVE DESIGN
 ============================== */
-@media (max-width: 1024px) {
+@media (max-width : 1363px ){
   .dashboard-overview,
   .cup-section {
     margin: 1.5rem auto;
@@ -934,7 +1045,7 @@ body.dark footer { background: rgba(25, 25, 28, 0.9); }
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width : 529px ){
   .dashboard-overview h2,
   .cup-section h2 {
     font-size: 1.5rem;
@@ -1173,6 +1284,21 @@ button:disabled:hover,
   border-radius: 12px;
   margin: 1rem 0;
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.no-data-message {
+  background: #f8f9fa;
+  color: #6c757d;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin: 0.5rem 0;
+  border: 1px solid #e9ecef;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.no-data-message .fade-in {
+  animation: fadeIn 0.3s ease-in-out;
 }
 
 /* ==============================

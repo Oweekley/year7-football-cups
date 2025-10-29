@@ -1,43 +1,59 @@
 // ============================================================
 //  YEAR 7 CUPS DASHBOARD 2025 - CORE SCRIPT (Optimized & Unified)
-//  Improvements:
+//  Version: 2.0.0
+//  Last Updated: 2025-01-29
+//  
+//  Features:
 //  - Cleaner structure, comments, and modular rendering
 //  - Improved bilingual support + dark mode consistency
 //  - Error handling & data caching for smoother UX
 //  - Fully supports teamCard.html dropdowns
 //  - Keeps 100% compatibility with existing HTML + JSON
 //  - Comprehensive logging system for debugging and monitoring
+//  - Advanced performance optimizations
+//  - Enhanced accessibility features
+//  - Robust error recovery mechanisms
+//  - Memory leak prevention
+//  - Advanced caching strategies
 // ============================================================
 
 // =======================
-// COMPREHENSIVE LOGGING SYSTEM
+// SIMPLE LOGGING SYSTEM
 // =======================
-class Logger {
+// Prevent duplicate initialization using sessionStorage (survives page reloads)
+const INIT_KEY = 'football_app_initialized';
+const isInitialized = sessionStorage.getItem(INIT_KEY) === 'true';
+
+// Detect Dreamweaver Live Preview
+const isDreamweaverPreview = window.location.protocol === 'file:' && 
+  (window.navigator.userAgent.includes('Dreamweaver') || 
+   document.referrer.includes('dreamweaver') ||
+   window.parent !== window);
+
+class SimpleLogger {
   constructor(context = 'APP') {
     this.context = context;
     this.sessionId = this.generateSessionId();
     this.startTime = Date.now();
-    this.logLevel = this.getLogLevel();
     this.logCount = 0;
+    const urlLevel = new URLSearchParams(location.search).get('log');
+    const storedLevel = (typeof localStorage !== 'undefined' && localStorage.getItem('logLevel')) || '';
+    const level = (urlLevel || storedLevel || 'INFO').toUpperCase();
+    this.logLevel = ['DEBUG','INFO','WARN','ERROR','SUCCESS'].includes(level) ? level : 'INFO';
     
-    // Log system initialization
-    this.info('Logger initialized', { 
-      context, 
-      sessionId: this.sessionId,
-      logLevel: this.logLevel,
-      timestamp: new Date().toISOString()
-    });
+    // Startup banner is emitted explicitly by the main app to avoid duplicates
+  }
+
+  setLevel(level) {
+    const up = String(level || '').toUpperCase();
+    if (['DEBUG','INFO','WARN','ERROR','SUCCESS'].includes(up)) {
+      this.logLevel = up;
+      try { localStorage.setItem('logLevel', up); } catch (_) {}
+    }
   }
 
   generateSessionId() {
-    return Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
-  }
-
-  getLogLevel() {
-    // Check for debug mode in localStorage or URL params
-    const urlParams = new URLSearchParams(window.location.search);
-    const debugMode = localStorage.getItem('debug') === 'true' || urlParams.get('debug') === 'true';
-    return debugMode ? 'DEBUG' : 'INFO';
+    return Math.random().toString(36).substr(2, 9);
   }
 
   formatMessage(level, message, data = null) {
@@ -56,25 +72,29 @@ class Logger {
       data: data || undefined
     };
 
-    // Color coding for different log levels
+    // Color coding for different log levels (works in both light and dark mode)
     const colors = {
-      DEBUG: '#6c757d',
-      INFO: '#007bff',
-      WARN: '#ffc107',
-      ERROR: '#dc3545',
-      SUCCESS: '#28a745'
+      DEBUG: '#888888',
+      INFO: '#4A9EFF',
+      WARN: '#FFB800',
+      ERROR: '#FF4444',
+      SUCCESS: '#00AA44'
     };
 
-    const color = colors[level] || '#000000';
+    const color = colors[level] || '#888888';
     
-    // Console output with styling
+    // Console output with styling (dark mode friendly) - simplified
     console.log(
       `%c[${level}] %c[${this.context}] %c${message}`,
       `color: ${color}; font-weight: bold;`,
-      `color: #6c757d; font-style: italic;`,
-      `color: #000;`,
-      data ? data : ''
+      `color: #888888; font-style: italic;`,
+      `color: #ffffff; background: #333333; padding: 2px 4px; border-radius: 3px;`
     );
+    
+    // Only show data for errors and warnings to reduce noise
+    if (data && (level === 'ERROR' || level === 'WARN')) {
+      console.log(data);
+    }
 
     // Store in session storage for debugging
     if (this.logLevel === 'DEBUG') {
@@ -89,9 +109,7 @@ class Logger {
   }
 
   debug(message, data = null) {
-    if (this.logLevel === 'DEBUG') {
-      return this.formatMessage('DEBUG', message, data);
-    }
+    if (this.logLevel === 'DEBUG') return this.formatMessage('DEBUG', message, data);
   }
 
   info(message, data = null) {
@@ -187,11 +205,585 @@ class Logger {
 }
 
 // Create main logger instance
-const logger = new Logger('DASHBOARD');
+const logger = new SimpleLogger('DASHBOARD');
+logger.info('🚀 App Started', 'The football dashboard is starting up...');
+
 
 // =======================
-// COMPREHENSIVE TRANSLATIONS
+// DATA MONITORING & LOGGING
 // =======================
+class DataMonitor {
+  constructor() {
+    this.logger = new SimpleLogger('DATA');
+    this.dataFiles = ['teams.json', 'welsh.json', 'cardiff.json', 'friendlies.json', 'last_updated.json'];
+    this.loadTimes = {};
+    this.fileSizes = {};
+    this.loadCounts = {};
+    this.errors = {};
+    
+    this.init();
+  }
+
+  init() {
+    // this.logger.debug('Data Monitor initialized', { files: this.dataFiles, timestamp: new Date().toISOString() });
+
+    this.monitorDataLoading();
+    this.monitorDataChanges();
+  }
+
+  monitorDataLoading() {
+    // Override fetch to monitor data file loading (errors only)
+    const originalFetch = window.fetch;
+    window.fetch = async (url, options) => {
+      const startTime = Date.now();
+      const fileName = this.extractFileName(url);
+      
+      try {
+        const response = await originalFetch(url, options);
+        const duration = Date.now() - startTime;
+        
+        if (this.dataFiles.includes(fileName)) {
+          this.loadTimes[fileName] = duration;
+          this.loadCounts[fileName] = (this.loadCounts[fileName] || 0) + 1;
+          
+          if (response.ok) {
+            const contentLength = response.headers.get('content-length');
+            if (contentLength) {
+              this.fileSizes[fileName] = parseInt(contentLength);
+            }
+            // Only log successful loads if there were previous errors
+            if (this.errors[fileName] > 0) {
+              this.logger.info('Data file loaded successfully', {
+                fileName: fileName,
+                duration: `${duration}ms`,
+                status: response.status,
+                size: contentLength ? `${contentLength} bytes` : 'unknown',
+                loadCount: this.loadCounts[fileName],
+                timestamp: new Date().toISOString()
+              });
+            }
+          } else {
+            this.errors[fileName] = (this.errors[fileName] || 0) + 1;
+            this.logger.error('Data file load failed', {
+              fileName: fileName,
+              duration: `${duration}ms`,
+              status: response.status,
+              statusText: response.statusText,
+              errorCount: this.errors[fileName],
+              timestamp: new Date().toISOString()
+            });
+          }
+        }
+        
+        return response;
+      } catch (error) {
+        const duration = Date.now() - startTime;
+        
+        if (this.dataFiles.includes(fileName)) {
+          this.errors[fileName] = (this.errors[fileName] || 0) + 1;
+          this.logger.error('Data file fetch error', {
+            fileName: fileName,
+            duration: `${duration}ms`,
+            error: error.message,
+            errorCount: this.errors[fileName],
+            timestamp: new Date().toISOString()
+          });
+        }
+        
+        throw error;
+      }
+    };
+  }
+
+  monitorDataChanges() {
+    // Monitor when data is processed and used
+    const originalLoadData = window.loadData;
+    if (originalLoadData) {
+      window.loadData = async (...args) => {
+        // Reduce noise: do not log start/completion of loadData here
+        
+        const startTime = Date.now();
+        try {
+          const result = await originalLoadData.apply(this, args);
+          const duration = Date.now() - startTime;
+          
+          // Completion log suppressed (main flow already logs success)
+          
+          return result;
+        } catch (error) {
+          const duration = Date.now() - startTime;
+          
+          this.logger.error('Data loading process failed', {
+            duration: `${duration}ms`,
+            error: error.message,
+            timestamp: new Date().toISOString()
+          });
+          
+          throw error;
+        }
+      };
+    }
+  }
+
+  extractFileName(url) {
+    try {
+      const urlObj = new URL(url);
+      const pathname = urlObj.pathname;
+      return pathname.split('/').pop();
+    } catch (e) {
+      return url.split('/').pop();
+    }
+  }
+
+  getDataStats() {
+    return {
+      loadTimes: this.loadTimes,
+      fileSizes: this.fileSizes,
+      loadCounts: this.loadCounts,
+      errors: this.errors,
+      totalFiles: this.dataFiles.length,
+      loadedFiles: Object.keys(this.loadTimes).length,
+      failedFiles: Object.keys(this.errors).length
+    };
+  }
+
+  logDataSummary() {
+    const stats = this.getDataStats();
+    this.logger.info('Data loading summary', {
+      ...stats,
+      averageLoadTime: Object.values(this.loadTimes).reduce((sum, time) => sum + time, 0) / Object.keys(this.loadTimes).length || 0,
+      totalErrors: Object.values(this.errors).reduce((sum, count) => sum + count, 0),
+      timestamp: new Date().toISOString()
+    });
+  }
+}
+
+// Initialize data monitoring
+const dataMonitor = new DataMonitor();
+
+// =======================
+// PWA & MANIFEST MONITORING
+// =======================
+class PWAMonitor {
+  constructor() {
+    this.logger = new SimpleLogger('PWA');
+    this.manifest = null;
+    this.serviceWorker = null;
+    this.installPrompt = null;
+    this.isInstalled = false;
+    
+    this.init();
+  }
+
+  init() {
+    // Reduce noise in development: move to debug
+    // this.logger.debug('PWA Monitor initialized');
+
+    this.monitorManifest();
+    this.monitorServiceWorker();
+    this.monitorInstallPrompt();
+    this.monitorAppState();
+  }
+
+  monitorManifest() {
+    // Check if manifest is loaded
+    const manifestLink = document.querySelector('link[rel="manifest"]');
+    if (manifestLink) {
+      // Skip verbose manifest logging in development
+      if (!manifestLink.href.includes('127.0.0.1') && !manifestLink.href.includes('localhost')) {
+        this.logger.info('Manifest link found', {
+          href: manifestLink.href,
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Skip manifest loading in Dreamweaver Live Preview or local development
+      if (manifestLink.href.includes('127.0.0.1:56819') || 
+          manifestLink.href.includes('dreamweaver') ||
+          manifestLink.href.includes('localhost') ||
+          manifestLink.href.includes('127.0.0.1') ||
+          manifestLink.href.includes('file://')) {
+        // Skip verbose logging in development
+        // this.logger.info('Skipping manifest load in development environment', {
+        //   href: manifestLink.href,
+        //   timestamp: new Date().toISOString()
+        // });
+        return;
+      }
+
+      // Try to load manifest
+      fetch(manifestLink.href)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          return response.text();
+        })
+        .then(text => {
+          try {
+            const manifest = JSON.parse(text);
+            this.manifest = manifest;
+            this.logger.info('Manifest loaded successfully', {
+              name: manifest.name,
+              shortName: manifest.short_name,
+              startUrl: manifest.start_url,
+              display: manifest.display,
+              themeColor: manifest.theme_color,
+              backgroundColor: manifest.background_color,
+              icons: manifest.icons?.length || 0,
+              shortcuts: manifest.shortcuts?.length || 0,
+              timestamp: new Date().toISOString()
+            });
+          } catch (parseError) {
+            throw new Error(`Invalid JSON: ${parseError.message}`);
+          }
+        })
+        .catch(error => {
+          this.logger.warn('Failed to load manifest', {
+            error: error.message,
+            href: manifestLink.href,
+            timestamp: new Date().toISOString()
+          });
+        });
+    } else {
+      this.logger.warn('No manifest link found', {
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
+
+  monitorServiceWorker() {
+    if ('serviceWorker' in navigator) {
+      // Skip verbose SW logging in development
+      if (!window.location.href.includes('127.0.0.1') && !window.location.href.includes('localhost')) {
+        this.logger.info('Service Worker supported', {
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Monitor service worker registration
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        this.logger.info('Service Worker controller changed', {
+          timestamp: new Date().toISOString()
+        });
+      });
+
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        this.logger.info('Service Worker message received', {
+          data: event.data,
+          timestamp: new Date().toISOString()
+        });
+      });
+
+      // Check if already registered
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        // Reduce noise in development: only log in production
+        if (!location.href.includes('127.0.0.1') && !location.href.includes('localhost')) {
+          this.logger.info('Service Worker registrations found', {
+            count: registrations.length
+          });
+        }
+      });
+    } else {
+      this.logger.warn('Service Worker not supported', {
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
+
+  monitorInstallPrompt() {
+    // Monitor beforeinstallprompt event
+    window.addEventListener('beforeinstallprompt', (event) => {
+      this.installPrompt = event;
+      this.logger.info('Install prompt available', {
+        timestamp: new Date().toISOString()
+      });
+    });
+
+    // Monitor appinstalled event
+    window.addEventListener('appinstalled', () => {
+      this.isInstalled = true;
+      this.logger.info('App installed successfully', {
+        timestamp: new Date().toISOString()
+      });
+    });
+
+    // Check if app is already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      this.isInstalled = true;
+      this.logger.info('App running in standalone mode', {
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
+
+  monitorAppState() {
+    // Monitor visibility changes
+    document.addEventListener('visibilitychange', () => {
+      this.logger.info('App visibility changed', {
+        hidden: document.hidden,
+        visibilityState: document.visibilityState,
+        timestamp: new Date().toISOString()
+      });
+    });
+
+    // Monitor online/offline status
+    window.addEventListener('online', () => {
+      this.logger.info('App came online', {
+        timestamp: new Date().toISOString()
+      });
+    });
+
+    window.addEventListener('offline', () => {
+      this.logger.info('App went offline', {
+        timestamp: new Date().toISOString()
+      });
+    });
+
+    // Monitor page lifecycle
+    window.addEventListener('beforeunload', () => {
+      this.logger.info('App is about to unload', {
+        timestamp: new Date().toISOString()
+      });
+    });
+
+    window.addEventListener('pagehide', () => {
+      this.logger.info('App page hidden', {
+        timestamp: new Date().toISOString()
+      });
+    });
+  }
+
+  getPWAStats() {
+    return {
+      hasManifest: !!this.manifest,
+      hasServiceWorker: 'serviceWorker' in navigator,
+      hasInstallPrompt: !!this.installPrompt,
+      isInstalled: this.isInstalled,
+      isStandalone: window.matchMedia('(display-mode: standalone)').matches,
+      isOnline: navigator.onLine,
+      visibilityState: document.visibilityState
+    };
+  }
+
+  logPWASummary() {
+    const stats = this.getPWAStats();
+    this.logger.info('PWA status summary', {
+      ...stats,
+      timestamp: new Date().toISOString()
+    });
+  }
+}
+
+// Initialize PWA monitoring
+const pwaMonitor = new PWAMonitor();
+
+// =======================
+// PERFORMANCE MONITORING & MEMORY MANAGEMENT
+// =======================
+class PerformanceMonitor {
+  constructor() {
+    this.metrics = {
+      renderTimes: [],
+      memoryUsage: [],
+      apiCallTimes: [],
+      userInteractions: 0,
+      errors: 0
+    };
+    this.startTime = performance.now();
+    this.observers = new Map();
+  }
+
+  startTiming(label) {
+    performance.mark(`${label}-start`);
+  }
+
+  endTiming(label) {
+    performance.mark(`${label}-end`);
+    performance.measure(label, `${label}-start`, `${label}-end`);
+    const measure = performance.getEntriesByName(label)[0];
+    this.metrics.renderTimes.push({
+      label,
+      duration: measure.duration,
+      timestamp: Date.now()
+    });
+    performance.clearMarks(`${label}-start`);
+    performance.clearMarks(`${label}-end`);
+    performance.clearMeasures(label);
+  }
+
+  recordMemoryUsage() {
+    if (performance.memory) {
+      this.metrics.memoryUsage.push({
+        used: performance.memory.usedJSHeapSize,
+        total: performance.memory.totalJSHeapSize,
+        limit: performance.memory.jsHeapSizeLimit,
+        timestamp: Date.now()
+      });
+    }
+  }
+
+  recordUserInteraction() {
+    this.metrics.userInteractions++;
+  }
+
+  recordError() {
+    this.metrics.errors++;
+  }
+
+  getPerformanceReport() {
+    const totalTime = performance.now() - this.startTime;
+    return {
+      totalTime,
+      averageRenderTime: this.metrics.renderTimes.reduce((sum, t) => sum + t.duration, 0) / this.metrics.renderTimes.length,
+      userInteractions: this.metrics.userInteractions,
+      errors: this.metrics.errors,
+      memoryUsage: this.metrics.memoryUsage[this.metrics.memoryUsage.length - 1],
+      renderCount: this.metrics.renderTimes.length
+    };
+  }
+
+  cleanup() {
+    this.observers.forEach(observer => observer.disconnect());
+    this.observers.clear();
+  }
+}
+
+// Create performance monitor instance
+const perfMonitor = new PerformanceMonitor();
+
+// =======================
+// MEMORY LEAK PREVENTION
+// =======================
+class MemoryManager {
+  constructor() {
+    this.eventListeners = new Map();
+    this.intervals = new Set();
+    this.timeouts = new Set();
+    this.observers = new Set();
+  }
+
+  addEventListener(element, event, handler, options = {}) {
+    element.addEventListener(event, handler, options);
+    const key = `${element.constructor.name}-${event}`;
+    if (!this.eventListeners.has(key)) {
+      this.eventListeners.set(key, []);
+    }
+    this.eventListeners.get(key).push({ element, event, handler, options });
+  }
+
+  addInterval(callback, delay) {
+    const id = setInterval(callback, delay);
+    this.intervals.add(id);
+    return id;
+  }
+
+  addTimeout(callback, delay) {
+    const id = setTimeout(callback, delay);
+    this.timeouts.add(id);
+    return id;
+  }
+
+  addObserver(observer) {
+    this.observers.add(observer);
+    return observer;
+  }
+
+  cleanup() {
+    // Clear all intervals
+    this.intervals.forEach(id => clearInterval(id));
+    this.intervals.clear();
+
+    // Clear all timeouts
+    this.timeouts.forEach(id => clearTimeout(id));
+    this.timeouts.clear();
+
+    // Disconnect all observers
+    this.observers.forEach(observer => observer.disconnect());
+    this.observers.clear();
+
+    // Remove all event listeners
+    this.eventListeners.forEach((listeners, key) => {
+      listeners.forEach(({ element, event, handler, options }) => {
+        element.removeEventListener(event, handler, options);
+      });
+    });
+    this.eventListeners.clear();
+
+    logger.info('Memory cleanup completed');
+  }
+}
+
+// Create memory manager instance
+const memoryManager = new MemoryManager();
+
+// =======================
+// ENHANCED ERROR HANDLING & RETRY MECHANISMS
+// =======================
+class ErrorHandler {
+  constructor() {
+    this.retryAttempts = new Map();
+    this.maxRetries = 3;
+    this.retryDelay = 1000; // Start with 1 second
+  }
+
+  async withRetry(operation, context = 'operation', maxRetries = this.maxRetries) {
+    let lastError;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        logger.debug(`Trying ${context} (try ${attempt} of ${maxRetries})`);
+        const result = await operation();
+        
+        if (attempt > 1) {
+          logger.success(`${context} worked on try ${attempt}`);
+        }
+        
+        // Reset retry count on success
+        this.retryAttempts.delete(context);
+        return result;
+      } catch (error) {
+        lastError = error;
+        logger.warn(`${context} didn't work on try ${attempt}`, { error: error.message });
+        
+        if (attempt < maxRetries) {
+          const delay = this.retryDelay * Math.pow(2, attempt - 1); // Exponential backoff
+          logger.debug(`Waiting ${delay}ms before trying again`);
+          await this.delay(delay);
+        }
+      }
+    }
+    
+    logger.error(`${context} didn't work after ${maxRetries} tries`, { error: lastError.message });
+    this.retryAttempts.set(context, maxRetries);
+    throw lastError;
+  }
+
+  delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  isRetryable(error) {
+    // Network errors, timeouts, and 5xx server errors are retryable
+    if (error.name === 'TypeError' && error.message.includes('fetch')) return true;
+    if (error.name === 'AbortError') return true;
+    if (error.status >= 500) return true;
+    if (error.status === 429) return true; // Rate limited
+    return false;
+  }
+
+  handleError(error, context = 'Unknown') {
+    perfMonitor.recordError();
+    logger.errorWithStack(`Something went wrong with ${context}`, error);
+    
+    if (this.isRetryable(error)) {
+      logger.info(`We can try ${context} again`);
+    }
+  }
+}
+
+// Create error handler instance
+const errorHandler = new ErrorHandler();
 
 // =======================
 // COMPREHENSIVE TRANSLATIONS
@@ -415,7 +1007,27 @@ const translations = {
     
     // Additional UI Elements
     notes: "Notes",
-    dash: "-"
+    dash: "-",
+    selectTeamAndData: "Please select a team and data type from the dropdowns above to view details",
+    noDataFound: "No data found for",
+
+    // Admin
+    admin: "Admin",
+    adminPageTitle: "Admin - Manage Notes and Friendlies",
+    adminDescription: "Edit team notes or add friendly results.",
+    unlockAdmin: "Unlock Admin",
+    adminPassword: "Password",
+    editNotes: "Edit Notes",
+    saveNotes: "Save Notes",
+    addFriendly: "Add Friendly Result",
+    homeTeam: "Home Team",
+    awayTeam: "Away Team",
+    homeGoals: "Home Goals",
+    awayGoals: "Away Goals",
+    submit: "Submit",
+    exportTeamsJson: "Export teams.json",
+    exportFriendliesJson: "Export friendlies.json",
+    saved: "Saved"
   },
   cy: {
     // Main Navigation & Headers
@@ -635,7 +1247,27 @@ const translations = {
     
     // Additional UI Elements
     notes: "Nodiadau",
-    dash: "-"
+    dash: "-",
+    selectTeamAndData: "Dewiswch dim a math o ddata o'r dropdowns uchod i weld manylion",
+    noDataFound: "Dim data wedi'i ganfod ar gyfer",
+
+    // Admin
+    admin: "Gweinyddol",
+    adminPageTitle: "Gweinyddol - Rheoli Nodiadau a Chyfeillgar",
+    adminDescription: "Golygu nodiadau tim neu ychwanegu canlyniadau cyfeillgar.",
+    unlockAdmin: "Datgloi Gweinyddol",
+    adminPassword: "Cyfrinair",
+    editNotes: "Golygu Nodiadau",
+    saveNotes: "Arbed Nodiadau",
+    addFriendly: "Ychwanegu Canlyniad Cyfeillgar",
+    homeTeam: "Tim Cartref",
+    awayTeam: "Tim Ffwrdd",
+    homeGoals: "Goliau Cartref",
+    awayGoals: "Goliau Ffwrdd",
+    submit: "Cyflwyno",
+    exportTeamsJson: "Allforio teams.json",
+    exportFriendliesJson: "Allforio friendlies.json",
+    saved: "Wedi Arbed"
   }
 };
 
@@ -713,14 +1345,14 @@ function switchLanguage(lang) {
   logger.functionEntry("switchLanguage", { lang });
   
   if (!translations[lang]) {
-    logger.warn(`Language ${lang} not supported`);
+    logger.warn(`Language ${lang} is not available`);
     return;
   }
   
   const oldLang = currentLang;
   currentLang = lang;
   localStorage.setItem("lang", lang);
-  
+
   logger.dataChange("language", oldLang, lang);
   
   // Update document language attribute
@@ -759,18 +1391,18 @@ function switchLanguage(lang) {
   }
   
   // Update language button display
-  logger.debug("Updating language button display");
+  logger.debug("Updating language button");
   updateLanguageButton();
   
   // Re-render all dynamic content
-  logger.debug("Re-rendering all dynamic content");
+  logger.debug("Refreshing page content");
   renderAll();
   
   // Re-translate any dynamically generated content
-  logger.debug("Re-translating dynamically generated content");
+  logger.debug("Translating page text");
   setTimeout(() => {
     const elementsToTranslate = document.querySelectorAll('[data-i18n]');
-    logger.debug(`Found ${elementsToTranslate.length} elements to re-translate`);
+    logger.debug(`Found ${elementsToTranslate.length} text elements to translate`);
     
     elementsToTranslate.forEach(el => {
       const key = el.dataset.i18n;
@@ -789,7 +1421,7 @@ function switchLanguage(lang) {
     });
     
     logger.functionExit("switchLanguage");
-    logger.success(`Language switched to ${lang}`, { 
+    logger.success(`Page language changed to ${lang}`, { 
       elementsTranslated: elementsToTranslate.length 
     });
   }, 100);
@@ -867,40 +1499,55 @@ document.getElementById("lang-cy")?.addEventListener("click", () => {
 // DATA FETCHING + NORMALIZATION (robust to any team schema)
 // ============================================================
 async function fetchJSON(url) {
+  // Check cache first
   if (state.cache[url]) {
-    console.debug("Cache hit:", url);
+    logger.debug("Cache hit", { url });
     return state.cache[url];
   }
   
-  try {
+  // Use retry mechanism for network requests
+  return await errorHandler.withRetry(async () => {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+    const timeoutId = memoryManager.addTimeout(() => controller.abort(), 15000); // 15s timeout
     
-    const res = await fetch(url, { 
-      cache: "no-store",
-      signal: controller.signal,
-      headers: {
-        'Accept': 'application/json',
-        'Cache-Control': 'no-cache'
+    try {
+      logger.debug("Fetching JSON", { url });
+      perfMonitor.startTiming(`fetch-${url}`);
+      
+      const res = await fetch(url, { 
+        cache: "no-store",
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache',
+          'User-Agent': navigator.userAgent
+        }
+      });
+      
+      perfMonitor.endTiming(`fetch-${url}`);
+      
+      if (!res.ok) {
+        const error = new Error(`HTTP ${res.status}: ${res.statusText}`);
+        error.status = res.status;
+        throw error;
       }
-    });
-    
-    clearTimeout(timeoutId);
-    
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      
+  const json = await res.json();
+      
+      // Validate JSON structure
+      if (!json || typeof json !== 'object') {
+        throw new Error('Invalid JSON response');
+      }
+      
+      // Cache the result
+  state.cache[url] = json;
+      logger.debug("JSON cached successfully", { url, size: JSON.stringify(json).length });
+      
+  return json;
+    } finally {
+      clearTimeout(timeoutId);
     }
-    
-    const json = await res.json();
-    state.cache[url] = json;
-    console.debug("Cached:", url);
-    return json;
-  } catch (error) {
-    if (error.name === 'AbortError') {
-      throw new Error(`Request timeout for ${url}`);
-    }
-    throw error;
-  }
+  }, `fetchJSON-${url}`, 3);
 }
 
 // helper: get the first numeric value from a list of possible keys
@@ -961,79 +1608,110 @@ function normalizeTeams(teamsRaw, cups) {
 
 async function loadData() {
   logger.functionEntry("loadData");
+  perfMonitor.startTiming("loadData");
+  
   try {
-    logger.info("Starting data loading process");
+    logger.info("Loading football data");
+    perfMonitor.recordMemoryUsage();
     
-    // Show loading states
-    showLoadingState(elements.leaderboard, "Loading leaderboard...");
-    Object.values(elements.dropdowns).forEach(dropdown => {
-      if (dropdown.display) {
-        showLoadingState(dropdown.display, "Select teams to view data...");
-      }
-    });
+    // Show loading states (with safety checks)
+    if (typeof elements !== 'undefined' && elements.leaderboard) {
+      showLoadingState(elements.leaderboard, "Loading leaderboard...");
+    }
+    if (typeof elements !== 'undefined' && elements.dropdowns) {
+      Object.values(elements.dropdowns).forEach(dropdown => {
+        if (dropdown && dropdown.display) {
+          showLoadingState(dropdown.display, translate("selectTeamsToView"));
+        }
+      });
+    }
 
     // Load the cups first so we can derive teams if needed
-    logger.debug("Fetching cup data files");
-    const [welsh, cardiff, friendlies] = await Promise.all([
+    logger.debug("Loading tournament data");
+    const [welsh, cardiff, friendlies] = await Promise.allSettled([
       fetchJSON("welsh.json"),
       fetchJSON("cardiff.json"),
       fetchJSON("friendlies.json")
-    ]);
+    ]).then(results => results.map(result => 
+      result.status === 'fulfilled' ? result.value : null
+    ));
     
-    logger.info("Cup data loaded", { 
-      welsh: welsh?.rounds?.length || 0, 
-      cardiff: cardiff?.rounds?.length || 0, 
-      friendlies: friendlies?.rounds?.length || 0 
-    });
+    // Defer summary until we also know file list
+    const welshCount = welsh?.rounds?.length || 0;
+    const cardiffCount = cardiff?.rounds?.length || 0;
+    const friendliesCount = friendlies?.rounds?.length || 0;
 
     // Load teams + updated, but both are optional
-    logger.debug("Fetching teams and metadata");
-    const [teamsRaw, updated] = await Promise.all([
-      fetchJSON("teams.json").catch(() => null),
-      fetchJSON("last_updated.json").catch(() => ({ lastUpdated: "Unknown" }))
+    logger.debug("Loading team information");
+    const [teamsRaw, updated] = await Promise.allSettled([
+      fetchJSON("teams.json"),
+      fetchJSON("last_updated.json")
+    ]).then(results => [
+      results[0].status === 'fulfilled' ? results[0].value : null,
+      results[1].status === 'fulfilled' ? results[1].value : { lastUpdated: "Unknown" }
     ]);
 
+    // Summarize all JSON fetches done during this run and emit one combined line
+    try {
+      const files = (typeof jsonLoads !== 'undefined') ? jsonLoads : [];
+      const fileNames = Array.from(new Set(files.map(f => String(f.url).split('/').pop())));
+      if (fileNames.length) {
+        const key = 'lastLoadedFiles';
+        const prev = sessionStorage.getItem(key);
+        const current = JSON.stringify(fileNames.sort());
+        if (prev !== current) {
+          logger.info(`Data loaded (Welsh: ${welshCount}, Cardiff: ${cardiffCount}, Friendlies: ${friendliesCount}) – files: ${fileNames.join(', ')}`);
+          sessionStorage.setItem(key, current);
+        }
+      }
+    } catch (_) {}
+
     // Update state
-    logger.debug("Updating application state");
+    logger.debug("Processing team data");
     state.cups = { Welsh: welsh || {}, Cardiff: cardiff || {}, Friendlies: friendlies || {} };
     state.teams = normalizeTeams(teamsRaw, state.cups);
     state.lastUpdated = updated?.lastUpdated || "Unknown";
 
-    logger.info("Teams processed", {
+    logger.info("Team information processed", {
       count: state.teams.length,
       sample: state.teams.slice(0, 5).map(t => t.name),
       lastUpdated: state.lastUpdated
     });
 
     // Compute current season stats from cup rounds (overrides stale numbers)
-    logger.debug("Calculating team statistics");
+    logger.debug("Calculating team stats");
+    perfMonitor.startTiming("calculateStats");
     calculateStats();
+    perfMonitor.endTiming("calculateStats");
     
-    logger.debug("Rendering all components");
+    logger.debug("Displaying all content");
+    // perfMonitor.startTiming("renderAll");
     renderAll();
+    // perfMonitor.endTiming("renderAll");
 
-    logger.success("Data loading completed", { 
+    perfMonitor.endTiming("loadData");
+    perfMonitor.recordMemoryUsage();
+    
+    logger.success("Football data loaded successfully", { 
       lastUpdated: state.lastUpdated,
       teamsCount: state.teams.length,
-      cupsLoaded: Object.keys(state.cups).length
+      cupsLoaded: Object.keys(state.cups).length,
+      performance: perfMonitor.getPerformanceReport()
     });
     
   } catch (err) {
-    logger.errorWithStack("Error loading data", err);
-    showErrorMessage(
-      translate("errorLoadingData"),
-      () => {
-        logger.info("User retrying data load");
-        loadData();
-      }
-    );
+    perfMonitor.endTiming("loadData");
+    perfMonitor.recordError();
+    
+    // Don't show error messages - just log them silently
+    logger.warn("Data loading had issues, but continuing", { error: err.message });
   }
   
   logger.functionExit("loadData");
 }
 
 function showErrorMessage(message, retryCallback = null) {
-  console.warn("ui: showErrorMessage", { message });
+  logger.warn("Showing error to user", { message, hasRetry: !!retryCallback });
   document
     .querySelectorAll(".dynamic-display, .bracket-container, #leaderboard")
     .forEach(el => {
@@ -1049,6 +1727,20 @@ function showErrorMessage(message, retryCallback = null) {
                 ↻ ${translate("retry")}
               </button>
             ` : ''}
+          </div>`;
+      }
+    });
+}
+
+function showNoDataMessage(message) {
+  logger.debug("Showing no data message to user", { message });
+  document
+    .querySelectorAll(".dynamic-display")
+    .forEach(el => {
+      if (el) {
+        el.innerHTML = `
+          <div class="no-data-message fade-in">
+            <span>${message}</span>
           </div>`;
       }
     });
@@ -1146,13 +1838,13 @@ function initTeamDashboard() {
     const viewType = dataSelect.value;
 
     if (!teamName || !viewType) {
-      display.innerHTML = `<p>Select a team and data type to view details...</p>`;
+      showNoDataMessage(translate("selectTeamAndData"));
       return;
     }
 
     const team = state.teams.find(t => t.name === teamName);
     if (!team) {
-      display.innerHTML = `<p>No data found for ${teamName}.</p>`;
+      showNoDataMessage(translate("noDataFound") + ` ${teamName}.`);
       return;
     }
 
@@ -1253,22 +1945,22 @@ function renderLeaderboard() {
   const htmlContent = `
     <h2 class="fade-in">${translate("leaderboard")}</h2>
     <div class="table-container fade-in">
-      <table>
+    <table>
         <thead>
-          <tr>
-            <th>#</th>
+      <tr>
+        <th>#</th>
             <th>${translate("teamName")}</th>
             <th data-numeric="true">${translate("played")}</th>
             <th data-numeric="true">${translate("wins")}</th>
             <th data-numeric="true">${translate("gf")}</th>
             <th data-numeric="true">${translate("ga")}</th>
             <th data-numeric="true">${translate("gd")}</th>
-          </tr>
+      </tr>
         </thead>
         <tbody>
-          ${sorted
-            .map(
-              (t, i) =>
+      ${sorted
+        .map(
+          (t, i) =>
                 `<tr class="slide-in-left" style="animation-delay: ${i * 0.1}s">
                   <td class="rank">${i + 1}</td>
                   <td class="team-name">${t.name || translate("unknown")}</td>
@@ -1277,9 +1969,9 @@ function renderLeaderboard() {
                   <td data-numeric="true">${t.gf}</td>
                   <td data-numeric="true">${t.ga}</td>
                   <td data-numeric="true" class="${t.gd >= 0 ? 'positive' : 'negative'}">${t.gd >= 0 ? '+' : ''}${t.gd}</td>
-                </tr>`
-            )
-            .join("")}
+            </tr>`
+        )
+        .join("")}
         </tbody>
       </table>
     </div>`;
@@ -1404,7 +2096,7 @@ document.addEventListener("keydown", e => {
 
 startBtn?.addEventListener("click", async () => {
   errorEl.hidden = true;
-  console.info("update: start click");
+  console.info("User clicked update button");
 
   const password = passInput.value.trim();
   if (!password) {
@@ -1436,10 +2128,10 @@ startBtn?.addEventListener("click", async () => {
 
     if (!res.ok || !data?.success) {
       const msg = data?.error || `Request failed (${res.status})`;
-      console.warn("update: worker returned error", { status: res.status, msg });
+      console.warn("Server returned an error", { status: res.status, msg });
       throw new Error(msg);
     }
-    console.info("update: worker accepted", { status: res.status });
+    console.info("Server accepted the request", { status: res.status });
 
     // Fake progress steps (we can’t watch GitHub live from here)
     setStep("dispatch", "done");
@@ -1455,73 +2147,17 @@ startBtn?.addEventListener("click", async () => {
   } catch (err) {
     // Show error
     setStep("dispatch", "done"); // where it likely failed
-    console.error("update: failed", err);
+    console.error("Update failed", err);
     errorEl.textContent = `Warning: ${err.message || "Error contacting server"}`;
     errorEl.hidden = false;
   }
 });
 
-// =======================
-// [LOGGING] Structured console logger (browser, no files)
-// =======================
-(function setupBrowserLogger() {
-  const original = {
-    log: console.log.bind(console),
-    info: console.info.bind(console),
-    warn: console.warn.bind(console),
-    error: console.error.bind(console),
-    debug: console.debug.bind(console)
-  };
+// Simple logging - no complex system needed
 
-  const LEVELS = { debug: 10, info: 20, warn: 30, warning: 30, error: 40, critical: 50 };
-  const qs = new URLSearchParams(location.search);
-  const hintedDebug = qs.has("debug") || qs.get("logLevel") === "debug";
-  const stored = (localStorage.getItem("logLevel") || "").toLowerCase();
-  const envLevel = hintedDebug ? "debug" : stored || "info";
-  const threshold = LEVELS[envLevel] ?? LEVELS.info;
-  const sessionId =
-    (crypto && crypto.randomUUID ? crypto.randomUUID() : `sess-${Math.random().toString(36).slice(2)}`);
-  const moduleName = "frontend";
-
-  function now() {
-    return new Date().toISOString();
-  }
-  function should(level) {
-    return (LEVELS[level] ?? 999) >= threshold;
-  }
-  function asEntry(level, msg, data, err) {
-    const entry = {
-      ts: now(),
-      level: level.toUpperCase(),
-      module: moduleName,
-      sessionId,
-      msg: String(msg)
-    };
-    if (data && typeof data === "object") entry.data = data;
-    if (err) entry.err = { message: String(err.message || err), stack: String(err.stack || "") };
-    return entry;
-  }
-  const emit = (level, msg, data, err) => {
-    if (!should(level)) return;
-    const e = asEntry(level, msg, data, err);
-    const line = `[${e.level}] ${e.module} ${e.msg}`;
-    (original[level] || original.log)(line, e);
-  };
-
-  // Patch console.* (non-intrusive; preserves original output + adds structure)
-  console.log = (...a) => emit("info", a[0], a[1]);
-  console.info = (...a) => emit("info", a[0], a[1]);
-  console.warn = (...a) => emit("warn", a[0], a[1]);
-  console.error = (...a) => {
-    const [msg, maybeErrOrData] = a;
-    if (maybeErrOrData instanceof Error) emit("error", msg, null, maybeErrOrData);
-    else emit("error", msg, maybeErrOrData);
-  };
-  console.debug = (...a) => emit("debug", a[0], a[1]);
-
-// Global error surfaces
-window.addEventListener("error", e => {
-  logger.errorWithStack("Global JavaScript error", {
+  // Global error surfaces
+  window.addEventListener("error", e => {
+  logger.errorWithStack("Something went wrong in the app", {
     filename: e.filename,
     lineno: e.lineno,
     colno: e.colno,
@@ -1529,60 +2165,54 @@ window.addEventListener("error", e => {
     stack: e.error?.stack
   });
   
-  // Show user-friendly error message
-  showErrorMessage(translate("unexpectedError"));
+  // Don't show error messages to users - just log them
+  logger.warn("App error caught and logged", { error: e.error?.message });
 });
 
-window.addEventListener("unhandledrejection", e => {
-  logger.errorWithStack("Unhandled promise rejection", {
+  window.addEventListener("unhandledrejection", e => {
+  logger.errorWithStack("App promise error", {
     reason: e.reason,
     promise: e.promise
   });
   
-  // Show user-friendly error message
-  showErrorMessage(translate("networkError"));
-});
+  // Don't show error messages to users - just log them
+  logger.warn("App promise error caught and logged", { reason: e.reason });
+  });
 
   // Fetch timing wrapper (transparent; returns the same response)
   const _fetch = window.fetch.bind(window);
+  const jsonLoads = [];
   window.fetch = async (...args) => {
     const started = performance.now();
     const url = args[0];
-    logger.debug(`Fetching: ${url}`);
+    logger.debug(`Loading: ${url}`);
     
     try {
       const res = await _fetch(...args);
       const dur = Math.round(performance.now() - started);
+      // Collect JSON file loads for a concise summary later
+      if (typeof url === 'string' && /\.json(\?|$)/.test(url)) {
+        jsonLoads.push({ url, status: res.status, durationMs: dur });
+      } else {
       logger.apiCall("GET", url, res.status, `${dur}ms`);
+      }
       return res;
     } catch (err) {
       const dur = Math.round(performance.now() - started);
-      logger.errorWithStack(`Fetch failed: ${url}`, err);
+      logger.errorWithStack(`Loading failed: ${url}`, err);
       throw err;
     }
   };
 
-  // Lifecycle hints (non-functional)
-  emit("info", "frontend init", { level: envLevel });
-})();
+  // Simple logging - no complex system needed
 
 // ============================================================
 // PERFORMANCE OPTIMIZATIONS
 // ============================================================
 // Preload critical resources
 function preloadCriticalResources() {
-  const criticalImages = [
-    'icons/icon-192.png',
-    'icons/icon-512.png'
-  ];
-  
-  criticalImages.forEach(src => {
-    const link = document.createElement('link');
-    link.rel = 'preload';
-    link.href = src;
-    link.as = 'image';
-    document.head.appendChild(link);
-  });
+  // No critical resources to preload
+  // logger.debug("No important files to preload");
 }
 
 // Optimize scroll performance
@@ -1718,64 +2348,81 @@ function setupKeyboardNavigation() {
 function renderAll() {
   logger.functionEntry("renderAll");
   
-  if (!state.teams?.length) {
-    logger.warn("No teams found — check teams.json");
-    return;
+  // Only start timing if not already started
+  if (!performance.getEntriesByName("renderAll-start").length) {
+  perfMonitor.startTiming("renderAll");
   }
   
-  logger.debug("Starting render all components", { teamsCount: state.teams.length });
-
-  Object.keys(elements.dropdowns).forEach(cupName => {
-    if (elements.dropdowns[cupName]) {
-      logger.debug(`Populating dropdown for ${cupName}`);
-      populateDropdowns(cupName);
+  if (!state.teams?.length) {
+    logger.warn("No teams found — check teams.json file");
+    if (performance.getEntriesByName("renderAll-start").length) {
+    perfMonitor.endTiming("renderAll");
     }
-  });
+    return;
+  }
 
-  logger.debug("Rendering leaderboard");
+  logger.debug("Starting to display all content", { teamsCount: state.teams.length });
+
+  // Render dropdowns (with safety checks)
+  if (typeof elements !== 'undefined' && elements.dropdowns) {
+  Object.keys(elements.dropdowns).forEach(cupName => {
+      if (elements.dropdowns[cupName]) {
+        logger.debug(`Setting up dropdown for ${cupName}`);
+        perfMonitor.startTiming(`dropdown-${cupName}`);
+        populateDropdowns(cupName);
+        perfMonitor.endTiming(`dropdown-${cupName}`);
+      }
+    });
+  }
+
+  // Render main components
+  logger.debug("Displaying leaderboard");
+  perfMonitor.startTiming("renderLeaderboard");
   renderLeaderboard();
+  perfMonitor.endTiming("renderLeaderboard");
   
-  logger.debug("Rendering brackets");
+  logger.debug("Displaying brackets");
+  perfMonitor.startTiming("renderBrackets");
   renderBrackets();
+  perfMonitor.endTiming("renderBrackets");
   
-  logger.debug("Rendering last updated info");
+  logger.debug("Displaying last updated info");
+  perfMonitor.startTiming("renderLastUpdated");
   renderLastUpdated();
+  perfMonitor.endTiming("renderLastUpdated");
 
+  if (performance.getEntriesByName("renderAll-start").length) {
+  perfMonitor.endTiming("renderAll");
+  }
+  perfMonitor.recordMemoryUsage();
+  
   logger.functionExit("renderAll");
-  logger.debug("All components rendered successfully");
+  logger.debug("All content displayed successfully");
 }
 
 // ============================================================
 // SERVICE WORKER REGISTRATION
 // ============================================================
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', async () => {
-    try {
-      const registration = await navigator.serviceWorker.register('/sw.js');
-      console.info('SW registered successfully:', registration);
-      
-      // Handle updates
-      registration.addEventListener('updatefound', () => {
-        const newWorker = registration.installing;
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            // New version available
-            if (confirm('A new version is available. Reload to update?')) {
-              newWorker.postMessage({ type: 'SKIP_WAITING' });
-              window.location.reload();
-            }
-          }
-        });
-      });
-      
-    } catch (error) {
-      console.warn('SW registration failed:', error);
-    }
-  });
-}
+// Service worker registration moved to DOMContentLoaded event to avoid duplication
 
 window.addEventListener("DOMContentLoaded", async () => {
-  logger.info("Application starting", { 
+  // Prevent duplicate initialization using sessionStorage
+  if (isInitialized) {
+    logger.debug("App already initialized – running light init for this page");
+    // Do not return: allow this page to load data and initialize its UI
+  } else {
+    // Mark as initialized in sessionStorage (survives page reloads)
+    sessionStorage.setItem(INIT_KEY, 'true');
+  }
+  
+  // Special handling for Dreamweaver Live Preview
+  if (isDreamweaverPreview) {
+    logger.info("Running in Dreamweaver Live Preview - using enhanced duplicate prevention");
+    // Add extra delay to prevent Dreamweaver's rapid reloads
+    await new Promise(resolve => setTimeout(resolve, 200));
+  }
+  
+  logger.info("Football app starting", { 
     userAgent: navigator.userAgent,
     language: navigator.language,
     platform: navigator.platform,
@@ -1787,57 +2434,177 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
   });
   
-  logger.time("app-initialization");
+  // logger.time("app-initialization");
   
   // Setup performance optimizations
-  logger.debug("Setting up performance optimizations");
+  // logger.debug("Setting up performance features");
   setupIntersectionObserver();
   setupScrollOptimizations();
   preloadCriticalResources();
   
   // Setup accessibility features
-  logger.debug("Setting up accessibility features");
+  // logger.debug("Setting up accessibility features");
   setupKeyboardNavigation();
   
+  // Protect Admin link using the same password check as refresh (Cloudflare Worker)
+  try {
+    const adminLink = document.getElementById('admin-link');
+    if (adminLink) {
+      adminLink.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const pwd = prompt(translate('password'));
+        if (!pwd) return;
+        try {
+          const res = await fetch(workerURL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            mode: 'cors',
+            body: JSON.stringify({ password: pwd })
+          });
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && data?.success) {
+            sessionStorage.setItem('admin_unlocked', 'true');
+            location.href = 'admin.html';
+          } else {
+            alert(data?.error || `Auth failed (${res.status})`);
+          }
+        } catch (err) {
+          alert(err?.message || 'Network error');
+        }
+      });
+    }
+  } catch (_) {}
+
+  // Apply initial translations to any existing elements with data-i18n
+  try {
+    document.querySelectorAll("[data-i18n]").forEach(el => {
+      const key = el.getAttribute("data-i18n");
+      const t = getTranslation(key);
+      if (t) {
+        if (el.tagName === 'INPUT' && (el.type === 'text' || el.type === 'password')) {
+          el.placeholder = t;
+        } else if (el.hasAttribute('aria-label')) {
+          el.setAttribute('aria-label', t);
+        } else if (el.hasAttribute('title')) {
+          el.setAttribute('title', t);
+        } else {
+          el.textContent = t;
+        }
+      }
+    });
+  } catch (_) {}
+  
   // Set initial language button display
-  logger.debug("Initializing language button");
+  // logger.debug("Setting up language button");
   updateLanguageButton();
   
-  // Preload critical resources
-  logger.debug("Preloading critical resources");
-  const criticalResources = ['style.css', 'script.js'];
-  criticalResources.forEach(resource => {
-    const link = document.createElement('link');
-    link.rel = 'preload';
-    link.href = resource;
-    link.as = resource.endsWith('.css') ? 'style' : 'script';
-    document.head.appendChild(link);
-    logger.debug(`Preloaded resource: ${resource}`);
-  });
+  // Preload critical resources (handled by preloadCriticalResources function)
+  // logger.debug("Preloading important files");
+  
+  // Register service worker early to avoid duplication
+  if ('serviceWorker' in navigator) {
+    try {
+      const existingRegistrations = await navigator.serviceWorker.getRegistrations();
+      if (existingRegistrations.length === 0) {
+        const registration = await navigator.serviceWorker.register('./sw.js', {
+          scope: './'
+        });
+        logger.info('App caching enabled successfully', { 
+          scope: registration.scope,
+          state: registration.active?.state || 'installing'
+        });
+        
+        // Handle service worker updates
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          if (newWorker) {
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                logger.info('App update available - will take effect on next page load');
+                console.log('App update available - will take effect on next page load');
+                // Don't auto-reload, let the user continue using the app
+                // The update will take effect on the next page load
+              }
+            });
+          }
+        });
+      } else {
+        logger.debug('Service worker already registered');
+      }
+    } catch (error) {
+      logger.warn('App caching setup failed', { error: error.message });
+    }
+  } else {
+    logger.info('App caching not supported in this browser');
+  }
   
   try {
-    logger.time("data-loading");
-    await loadData();
-    logger.timeEnd("data-loading");
-    logger.success("Data loaded successfully");
+    // logger.time("data-loading");
+  await loadData();
+    // logger.timeEnd("data-loading");
+    // Duplicate overall success removed (already logged in loadData)
   } catch (error) {
-    logger.errorWithStack("Failed to load data", error);
+    logger.errorWithStack("Failed to load football data", error);
   }
   
   setTimeout(() => {
-    logger.time("render-all");
+    // logger.time("render-all");
     renderAll();
-    logger.timeEnd("render-all");
+    // logger.timeEnd("render-all");
     
-    logger.time("team-dashboard-init");
+    // logger.time("team-dashboard-init");
     initTeamDashboard(); // Initialize teamCard.html if present
-    logger.timeEnd("team-dashboard-init");
+    // logger.timeEnd("team-dashboard-init");
     
     // Ensure language button is properly displayed after everything loads
     updateLanguageButton();
-    logger.timeEnd("app-initialization");
-    logger.success("Application fully initialized");
+    // logger.timeEnd("app-initialization");
+    logger.success("Football app fully ready");
+    
+    // Log concise performance summary
+    const perf = perfMonitor.getPerformanceReport() || {};
+    const summary = {
+      fcp: perf.firstContentfulPaintMs,
+      dom: perf.domContentLoadedMs,
+      load: perf.loadEventEndMs
+    };
+    logger.info("Performance", summary);
   }, 300);
+});
+
+// =======================
+// CLEANUP ON PAGE UNLOAD
+// =======================
+window.addEventListener("beforeunload", () => {
+  logger.info("Football app shutting down");
+  perfMonitor.cleanup();
+  memoryManager.cleanup();
+});
+
+// =======================
+// PERFORMANCE MONITORING
+// =======================
+window.addEventListener("load", () => {
+  // Prevent duplicate initialization using sessionStorage
+  if (sessionStorage.getItem(INIT_KEY) === 'true') {
+    // logger.info("App already initialized, skipping load event");
+    return;
+  }
+  
+  // Log performance metrics after page load
+  setTimeout(() => {
+    const perfReport = perfMonitor.getPerformanceReport();
+    logger.info("Page load performance report", perfReport);
+    
+    // Log memory usage if available
+    if (performance.memory) {
+      logger.info("Memory usage", {
+        used: Math.round(performance.memory.usedJSHeapSize / 1024 / 1024) + 'MB',
+        total: Math.round(performance.memory.totalJSHeapSize / 1024 / 1024) + 'MB',
+        limit: Math.round(performance.memory.jsHeapSizeLimit / 1024 / 1024) + 'MB'
+      });
+    }
+  }, 1000);
 });
 
 elements.refresh?.addEventListener("click", async () => {
@@ -1847,13 +2614,13 @@ elements.refresh?.addEventListener("click", async () => {
   const originalText = translate("refresh");
   elements.refresh.textContent = `${originalText}...`;
   
-  logger.info("User triggered data refresh");
+  logger.info("User requested data refresh");
   logger.time("refresh-data");
   
   try {
-    await loadData();
+  await loadData();
     logger.timeEnd("refresh-data");
-    logger.success("Data refresh completed successfully");
+    logger.success("Football data refreshed successfully");
   } catch (error) {
     logger.timeEnd("refresh-data");
     logger.errorWithStack("Data refresh failed", error);

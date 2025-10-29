@@ -46,13 +46,13 @@
 ### Installation
 
 1. **Clone the repository**
-   ```bash
-   git clone https://github.com/Oweekley/year7-football-cups.git
+    ```bash
+    git clone https://github.com/Oweekley/year7-football-cups.git
    cd year7-football-cups
-   ```
+    ```
 
 2. **Open in browser**
-   ```bash
+    ```bash
    # Simply open index.html in your browser
    open index.html
    # or
