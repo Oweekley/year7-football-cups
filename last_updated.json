@@ -1,3 +1,10 @@
 {
-  "lastUpdated": "2025-10-29T15:19:59.488Z"
+  "last_updated": "2025-10-29T20:44:01.485Z",
+  "source": "scraper",
+  "teams": 26,
+  "files": {
+    "welsh": "welsh.json",
+    "cardiff": "cardiff.json",
+    "teams": "teams.json"
+  }
 }
