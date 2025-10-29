@@ -1,6 +1,21 @@
 {
   "cup_name": "Friendlies",
   "season": "2025-26",
-  "rounds": [],
+  "rounds": [
+    {
+      "round_number": 1,
+      "deadlines": {},
+      "games": [
+        {
+          "date": "2025-10-17",
+          "home_team": "Whitchurch",
+          "away_team": "Glantaf",
+          "home_score": 1,
+          "away_score": 4,
+          "notes": ""
+        }
+      ]
+    }
+  ],
   "team_statistics": {}
 }
