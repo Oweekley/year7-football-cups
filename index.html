@@ -158,6 +158,61 @@
 </div>
 		</div>
 
+      <!-- Admin Access Modal -->
+      <div
+        id="admin-access-modal"
+        class="glass-modal"
+        aria-hidden="true"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="admin-access-title"
+      >
+        <div class="glass-modal__card">
+          <button
+            class="glass-modal__close"
+            id="admin-access-close"
+            aria-label="Close"
+            data-i18n="close"
+          >
+            ×
+          </button>
+          <h3 id="admin-access-title" data-i18n="adminAccessTitle">
+            Unlock Admin Dashboard
+          </h3>
+          <p class="update-desc" data-i18n="adminAccessDescription">
+            Enter the admin password to open the admin dashboard.
+          </p>
+          <label for="admin-access-pass" class="update-label" data-i18n="password">
+            Password
+          </label>
+          <input
+            id="admin-access-pass"
+            type="password"
+            autocomplete="off"
+            inputmode="text"
+            placeholder="••••••••"
+            data-i18n="password"
+          />
+          <button
+            id="admin-access-submit"
+            class="cta"
+            type="button"
+            data-i18n="unlockAdmin"
+          >
+            Unlock Admin
+          </button>
+          <p
+            id="admin-access-error"
+            class="update-error"
+            role="alert"
+            hidden
+            data-i18n="invalidPassword"
+          >
+            Incorrect password. Please try again.
+          </p>
+        </div>
+      </div>
+
       <!-- Leaderboard (polite live region so screen readers hear updates) -->
       <div id="leaderboard" class="leaderboard-section" role="region" aria-live="polite" aria-label="Leaderboard" aria-describedby="leaderboard-desc">
         <div id="leaderboard-desc" class="sr-only" data-i18n="currentStandings">Current standings table showing team rankings, games played, wins, goals for, goals against, and goal difference</div>

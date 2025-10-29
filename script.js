@@ -918,6 +918,10 @@ const translations = {
     refreshData: "Refresh Data",
     lastUpdated: "Last Updated:",
     unknown: "Unknown",
+    adminAccessTitle: "Unlock Admin Dashboard",
+    adminAccessDescription:
+      "Enter the admin password to open the admin dashboard.",
+    invalidPassword: "Incorrect password. Please try again.",
 
     // Buttons & Actions
     refresh: "Refresh",
@@ -1172,6 +1176,10 @@ const translations = {
     refreshData: "Adnewyddu Data",
     lastUpdated: "Diweddarwyd Diwethaf:",
     unknown: "Anhysbys",
+    adminAccessTitle: "Datgloi Dangosfwrdd y Gweinyddwr",
+    adminAccessDescription:
+      "Nodwch y cyfrinair gweinyddol i agor y dangosfwrdd gweinyddol.",
+    invalidPassword: "Cyfrinair anghywir. Rhowch gynnig arall arni.",
 
     // Buttons & Actions
     refresh: "Adnewyddu",
@@ -2274,6 +2282,11 @@ const startBtn = document.getElementById("update-start");
 const passInput = document.getElementById("update-pass");
 const stepsList = document.getElementById("update-steps");
 const errorEl = document.getElementById("update-error");
+const adminAccessModal = document.getElementById("admin-access-modal");
+const adminAccessClose = document.getElementById("admin-access-close");
+const adminAccessPass = document.getElementById("admin-access-pass");
+const adminAccessSubmit = document.getElementById("admin-access-submit");
+const adminAccessError = document.getElementById("admin-access-error");
 
 function openModal() {
   modal?.setAttribute("aria-hidden", "false");
@@ -2311,9 +2324,97 @@ closeBtn?.addEventListener("click", closeModal);
 modal?.addEventListener("click", (e) => {
   if (e.target === modal) closeModal(); // click backdrop to close
 });
+
+function openAdminAccessModal() {
+  if (!adminAccessModal) return;
+  adminAccessModal.setAttribute("aria-hidden", "false");
+  if (adminAccessError) adminAccessError.hidden = true;
+  if (adminAccessPass) {
+    const storedPwd = sessionStorage.getItem("admin_password") || "";
+    adminAccessPass.value = storedPwd;
+    setTimeout(() => {
+      try {
+        adminAccessPass.focus({ preventScroll: true });
+        if (storedPwd) adminAccessPass.select();
+      } catch (_) {}
+    }, 0);
+  }
+}
+
+function closeAdminAccessModal() {
+  if (!adminAccessModal) return;
+  adminAccessModal.setAttribute("aria-hidden", "true");
+}
+
+async function handleAdminAccessSubmit(event) {
+  event?.preventDefault?.();
+  if (!adminAccessSubmit || !adminAccessPass) return;
+
+  if (adminAccessError) adminAccessError.hidden = true;
+
+  const password = adminAccessPass.value.trim();
+  if (!password) {
+    if (adminAccessError) {
+      adminAccessError.textContent = translate("pleaseEnterPassword");
+      adminAccessError.hidden = false;
+    }
+    adminAccessPass.focus();
+    return;
+  }
+
+  const originalText = adminAccessSubmit.textContent;
+  adminAccessSubmit.disabled = true;
+  adminAccessSubmit.textContent = `${originalText}...`;
+
+  try {
+    const res = await fetch(workerURL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      mode: "cors",
+      body: JSON.stringify({ password, intent: "verify" }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data?.success) {
+      const msg =
+        res.status === 401
+          ? translate("invalidPassword")
+          : data?.error || `Request failed (${res.status})`;
+      throw new Error(msg);
+    }
+
+    sessionStorage.setItem("admin_unlocked", "true");
+    sessionStorage.setItem("admin_password", password);
+    closeAdminAccessModal();
+    window.location.href = "admin.html";
+  } catch (err) {
+    if (adminAccessError) {
+      adminAccessError.textContent =
+        err?.message || translate("networkError");
+      adminAccessError.hidden = false;
+    }
+    adminAccessPass.focus();
+  } finally {
+    adminAccessSubmit.disabled = false;
+    adminAccessSubmit.textContent = originalText;
+  }
+}
+
+adminAccessClose?.addEventListener("click", closeAdminAccessModal);
+adminAccessModal?.addEventListener("click", (event) => {
+  if (event.target === adminAccessModal) closeAdminAccessModal();
+});
+adminAccessSubmit?.addEventListener("click", handleAdminAccessSubmit);
+adminAccessPass?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") handleAdminAccessSubmit(event);
+});
+adminAccessPass?.addEventListener("input", () => {
+  if (adminAccessError) adminAccessError.hidden = true;
+});
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && modal?.getAttribute("aria-hidden") === "false")
-    closeModal();
+  if (e.key !== "Escape") return;
+  if (modal?.getAttribute("aria-hidden") === "false") closeModal();
+  if (adminAccessModal?.getAttribute("aria-hidden") === "false")
+    closeAdminAccessModal();
 });
 
 startBtn?.addEventListener("click", async () => {
@@ -2683,27 +2784,13 @@ window.addEventListener("DOMContentLoaded", async () => {
   try {
     const adminLink = document.getElementById("admin-link");
     if (adminLink) {
-      adminLink.addEventListener("click", async (e) => {
+      adminLink.addEventListener("click", (e) => {
         e.preventDefault();
-        const pwd = prompt(translate("password"));
-        if (!pwd) return;
-        try {
-          const res = await fetch(workerURL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            mode: "cors",
-            body: JSON.stringify({ password: pwd }),
-          });
-          const data = await res.json().catch(() => ({}));
-          if (res.ok && data?.success) {
-            sessionStorage.setItem("admin_unlocked", "true");
-            location.href = "admin.html";
-          } else {
-            alert(data?.error || `Auth failed (${res.status})`);
-          }
-        } catch (err) {
-          alert(err?.message || "Network error");
+        if (sessionStorage.getItem("admin_unlocked") === "true") {
+          window.location.href = "admin.html";
+          return;
         }
+        openAdminAccessModal();
       });
     }
   } catch (_) {}

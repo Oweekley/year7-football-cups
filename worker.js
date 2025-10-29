@@ -135,7 +135,7 @@ export default {
       );
     }
 
-    const { password } = payload || {};
+    const { password, intent } = payload || {};
     if (!password || password !== env.CF_SECRET_PASSWORD) {
       wEmit("warn", "auth:unauthorized", { hasPassword: Boolean(password) });
       return json(
@@ -146,6 +146,14 @@ export default {
 
     // Route: /run → trigger GitHub workflow
     if (url.pathname === "/run") {
+      if (intent === "verify") {
+        wEmit("info", "auth:verified", { origin });
+        return json(
+          { success: true, message: "Password verified" },
+          { status: 200, origin }
+        );
+      }
+
       const ghUrl = `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/actions/workflows/${env.WORKFLOW_FILE}/dispatches`;
       wEmit("info", "github:dispatch", {
         ghUrl: ghUrl.replace(/token=.*$/, "token=***"),
