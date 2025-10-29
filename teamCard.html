@@ -1,141 +1,185 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <!-- ========= META ========= -->
-  <meta charset="UTF-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-  />
-  <title data-i18n="teamDashboard">Team Dashboard | Year 7 Cups</title>
-  <meta
-    name="description"
-    data-i18n="teamDashboardDescription"
-    content="View detailed stats, match history, and performance for every team in the Year 7 Football Cups."
-  />
-  <meta name="theme-color" content="#0077ff" />
-  <meta name="color-scheme" content="light dark" />
+  <head>
+    <!-- ========= META ========= -->
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title data-i18n="teamDashboard">Team Dashboard | Year 7 Cups</title>
+    <meta
+      name="description"
+      data-i18n="teamDashboardDescription"
+      content="View detailed stats, match history, and performance for every team in the Year 7 Football Cups."
+    />
+    <meta name="theme-color" content="#0077ff" />
+    <meta name="color-scheme" content="light dark" />
 
-  <!-- ========= ICONS / FONTS ========= -->
-  <link rel="icon" href="favicon.png" type="image/png" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    rel="preload"
-    as="style"
-    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
-  />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
-    rel="stylesheet"
-    media="print"
-    onload="this.media='all'"
-  />
-  <noscript>
+    <!-- ========= ICONS / FONTS ========= -->
+    <link rel="icon" href="favicon.png" type="image/png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+    />
     <link
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
     />
-  </noscript>
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
 
-  <!-- ========= STYLES ========= -->
-  <link rel="stylesheet" href="style.css" />
-  <link rel="preload" as="script" href="script.js" />
+    <!-- ========= STYLES ========= -->
+    <link rel="stylesheet" href="style.css" />
+    <link rel="preload" as="script" href="script.js" />
 
-  <!-- Utilities moved to style.css -->
-</head>
+    <!-- Utilities moved to style.css -->
+  </head>
 
-<body class="light">
-  <!-- ================= HEADER ================= -->
-  <header role="banner">
-    <div class="header-top">
-      <h1 data-i18n="dashboardTitle" tabindex="0">Year 7 Cups Dashboard 2025</h1>
+  <body class="light">
+    <!-- ================= HEADER ================= -->
+    <header role="banner">
+      <div class="header-top">
+        <h1 data-i18n="dashboardTitle" tabindex="0">
+          Year 7 Cups Dashboard 2025
+        </h1>
 
-      <div class="lang-theme-controls">
-        <!-- Language Buttons -->
-        <div class="lang-switch" role="group" aria-label="Language switch">
-          <button id="lang-en" type="button" aria-label="Switch to English">EN</button>
-          <button id="lang-cy" type="button" aria-label="Newid i'r Gymraeg">CY</button>
-        </div>
+        <div class="lang-theme-controls">
+          <!-- Language Buttons -->
+          <div class="lang-switch" role="group" aria-label="Language switch">
+            <button id="lang-en" type="button" aria-label="Switch to English">
+              EN
+            </button>
+            <button id="lang-cy" type="button" aria-label="Newid i'r Gymraeg">
+              CY
+            </button>
+          </div>
 
-        <!-- Theme Toggle -->
-        <button
-          id="theme-toggle"
-          class="dark-toggle"
-          type="button"
-          aria-label="Toggle dark mode"
-          title="Toggle dark mode"
-        >☾</button>
-      </div>
-    </div>
-
-    <!-- ===== NAVIGATION ===== -->
-    <nav aria-label="Main navigation" role="navigation">
-      <a href="index.html" data-i18n="dashboard">Dashboard</a>
-      <a href="teamCard.html" class="active" data-i18n="teamDashboard" aria-current="page">Team Dashboard</a>
-      <a href="brackets.html" data-i18n="brackets">Brackets</a>
-      <a href="#" id="admin-link" data-i18n="admin">Admin</a>
-    </nav>
-  </header>
-
-  <!-- ================= MAIN ================= -->
-  <main id="main-content" role="main">
-    <section
-      class="dashboard-overview"
-      aria-labelledby="team-dashboard-title"
-      aria-describedby="team-dashboard-desc"
-      role="region"
-    >
-      <h2 id="team-dashboard-title" data-i18n="teamDashboard">Team Dashboard</h2>
-      <p id="team-dashboard-desc" class="subtitle" data-i18n="exploreCombinedStats">Explore combined stats and match history for each team across all competitions.</p>
-
-      <!-- TEAM SELECT -->
-      <div class="selectors" role="group" aria-label="Team selection">
-        <div>
-          <label for="team-select" data-i18n="selectTeam">Select Team:</label>
-          <select id="team-select" aria-label="Select Team" autocomplete="off">
-            <option value="" data-i18n="chooseTeam">--Choose a Team--</option>
-          </select>
-        </div>
-
-        <div>
-          <label for="data-select" data-i18n="selectData">Select Data:</label>
-          <select id="data-select" aria-label="Select Data Type" autocomplete="off">
-            <option value="" data-i18n="chooseData">--Team Stats / Match History--</option>
-          </select>
+          <!-- Theme Toggle -->
+          <button
+            id="theme-toggle"
+            class="dark-toggle"
+            type="button"
+            aria-label="Toggle dark mode"
+            title="Toggle dark mode"
+          >
+            ☾
+          </button>
         </div>
       </div>
 
-      <!-- TEAM DISPLAY -->
-      <div
-        class="dynamic-display"
-        id="team-display"
-        aria-live="polite"
+      <!-- ===== NAVIGATION ===== -->
+      <nav aria-label="Main navigation" role="navigation">
+        <a href="index.html" data-i18n="dashboard">Dashboard</a>
+        <a
+          href="teamCard.html"
+          class="active"
+          data-i18n="teamDashboard"
+          aria-current="page"
+          >Team Dashboard</a
+        >
+        <a href="brackets.html" data-i18n="brackets">Brackets</a>
+        <a href="#" id="admin-link" data-i18n="admin">Admin</a>
+      </nav>
+    </header>
+
+    <!-- ================= MAIN ================= -->
+    <main id="main-content" role="main">
+      <section
+        class="dashboard-overview"
+        aria-labelledby="team-dashboard-title"
+        aria-describedby="team-dashboard-desc"
         role="region"
-        aria-label="Team details display"
       >
-        <div class="loading-placeholder" id="team-loading" data-i18n="selectTeamAndData">Select a team to view details...</div>
-      </div>
-    </section>
-  </main>
+        <h2 id="team-dashboard-title" data-i18n="teamDashboard">
+          Team Dashboard
+        </h2>
+        <p
+          id="team-dashboard-desc"
+          class="subtitle"
+          data-i18n="exploreCombinedStats"
+        >
+          Explore combined stats and match history for each team across all
+          competitions.
+        </p>
 
-  <!-- ================= FOOTER ================= -->
-  <footer role="contentinfo">
-    <p>
-      © 2025 <span data-i18n="dashboardTitle">Year 7 Cups Dashboard</span> |
-      <span data-i18n="builtWith">Built with</span> <span aria-hidden="true">♥</span><span class="sr-only" data-i18n="love">love</span> <span data-i18n="by">by</span>
-      <strong data-i18n="author">Ollie</strong>
-    </p>
-  </footer>
+        <!-- TEAM SELECT -->
+        <div class="selectors" role="group" aria-label="Team selection">
+          <div>
+            <label for="team-select" data-i18n="selectTeam">Select Team:</label>
+            <select
+              id="team-select"
+              aria-label="Select Team"
+              autocomplete="off"
+            >
+              <option value="" data-i18n="chooseTeam">--Choose a Team--</option>
+            </select>
+          </div>
 
-  <!-- ================= SCRIPTS ================= -->
-  <script src="script.js" defer></script>
+          <div>
+            <label for="data-select" data-i18n="selectData">Select Data:</label>
+            <select
+              id="data-select"
+              aria-label="Select Data Type"
+              autocomplete="off"
+            >
+              <option value="" data-i18n="chooseData">
+                --Team Stats / Match History--
+              </option>
+            </select>
+          </div>
+        </div>
 
-  <!-- Page-specific script moved to script.js -->
+        <!-- TEAM DISPLAY -->
+        <div
+          class="dynamic-display"
+          id="team-display"
+          aria-live="polite"
+          role="region"
+          aria-label="Team details display"
+        >
+          <div
+            class="loading-placeholder"
+            id="team-loading"
+            data-i18n="selectTeamAndData"
+          >
+            Select a team to view details...
+          </div>
+        </div>
+      </section>
+    </main>
 
-  <noscript>
-    <p class="sr-only">JavaScript is required to load team stats and match history.</p>
-  </noscript>
-</body>
+    <!-- ================= FOOTER ================= -->
+    <footer role="contentinfo">
+      <p>
+        © 2025 <span data-i18n="dashboardTitle">Year 7 Cups Dashboard</span> |
+        <span data-i18n="builtWith">Built with</span>
+        <span aria-hidden="true">♥</span
+        ><span class="sr-only" data-i18n="love">love</span>
+        <span data-i18n="by">by</span>
+        <strong data-i18n="author">Ollie</strong>
+      </p>
+    </footer>
+
+    <!-- ================= SCRIPTS ================= -->
+    <script src="script.js" defer></script>
+
+    <!-- Page-specific script moved to script.js -->
+
+    <noscript>
+      <p class="sr-only">
+        JavaScript is required to load team stats and match history.
+      </p>
+    </noscript>
+  </body>
 </html>

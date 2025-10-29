@@ -16,19 +16,19 @@
       "name": "Dashboard",
       "short_name": "Dashboard",
       "description": "View the main dashboard",
-      "url": "index.html",
+      "url": "index.html"
     },
     {
       "name": "Team Stats",
       "short_name": "Teams",
       "description": "View team statistics",
-      "url": "teamCard.html",
+      "url": "teamCard.html"
     },
     {
       "name": "Brackets",
       "short_name": "Brackets",
       "description": "View cup brackets",
-      "url": "brackets.html",
+      "url": "brackets.html"
     }
   ]
 }

@@ -26,13 +26,22 @@ const nodeOriginalConsole = {
   info: console.info.bind(console),
   warn: console.warn.bind(console),
   error: console.error.bind(console),
-  debug: console.debug ? console.debug.bind(console) : console.log.bind(console)
+  debug: console.debug
+    ? console.debug.bind(console)
+    : console.log.bind(console),
 };
-const NODE_LEVELS = { debug: 10, info: 20, warn: 30, warning: 30, error: 40, critical: 50 };
+const NODE_LEVELS = {
+  debug: 10,
+  info: 20,
+  warn: 30,
+  warning: 30,
+  error: 40,
+  critical: 50,
+};
 const nodeLevelName = (process.env.LOG_LEVEL || "info").toLowerCase();
 const nodeThreshold = NODE_LEVELS[nodeLevelName] ?? NODE_LEVELS.info;
 const runId =
-  (typeof crypto !== "undefined" && crypto.randomUUID)
+  typeof crypto !== "undefined" && crypto.randomUUID
     ? crypto.randomUUID()
     : `run-${Math.random().toString(36).slice(2)}`;
 const nodeModule = "scraper";
@@ -51,18 +60,26 @@ function nodeEmit(level, msg, data, err) {
     module: nodeModule,
     runId,
     host: os.hostname(),
-    msg: String(msg)
+    msg: String(msg),
   };
   if (data && typeof data === "object") entry.data = data;
-  if (err) entry.err = { message: String(err.message || err), stack: String(err.stack || "") };
+  if (err)
+    entry.err = {
+      message: String(err.message || err),
+      stack: String(err.stack || ""),
+    };
   const line = `[${entry.level}] ${entry.module} ${entry.msg}`;
   (nodeOriginalConsole[level] || nodeOriginalConsole.log)(line, entry);
 }
 // Global error surfaces
-process.on("unhandledRejection", reason => nodeEmit("error", "unhandledRejection", null, reason));
-process.on("uncaughtException", err => nodeEmit("critical", "uncaughtException", null, err));
+process.on("unhandledRejection", (reason) =>
+  nodeEmit("error", "unhandledRejection", null, reason)
+);
+process.on("uncaughtException", (err) =>
+  nodeEmit("critical", "uncaughtException", null, err)
+);
 // Lightweight timing helper
-const nodeTime = label => {
+const nodeTime = (label) => {
   const start = Date.now();
   return () => ({ ms: Date.now() - start, label });
 };
@@ -84,10 +101,10 @@ const MONTH_MAP = {
   Sept: "September",
   Oct: "October",
   Nov: "November",
-  Dec: "December"
+  Dec: "December",
 };
 
-const delay = ms => new Promise(res => setTimeout(res, ms));
+const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
 // Keep original signature but route through structured logger
 const log = (msg, symbol = "•") => nodeEmit("info", String(msg), { symbol });
@@ -97,7 +114,7 @@ function safeWriteJSON(file, data) {
     fs.writeFileSync(file, JSON.stringify(data, null, 2), "utf8");
     nodeEmit("info", "write json ok", {
       file,
-      items: Object.keys(data.team_statistics || data).length
+      items: Object.keys(data.team_statistics || data).length,
     });
   } catch (err) {
     nodeEmit("error", `write json failed: ${file}`, null, err);
@@ -108,10 +125,14 @@ function writeLastUpdated(meta) {
   const payload = {
     last_updated: new Date().toISOString(),
     source: "scraper",
-    ...(meta || {})
+    ...(meta || {}),
   };
   try {
-    fs.writeFileSync("last_updated.json", JSON.stringify(payload, null, 2), "utf8");
+    fs.writeFileSync(
+      "last_updated.json",
+      JSON.stringify(payload, null, 2),
+      "utf8"
+    );
     nodeEmit("info", "last_updated.json updated", payload);
   } catch (err) {
     nodeEmit("error", "failed to update last_updated.json", null, err);
@@ -119,14 +140,22 @@ function writeLastUpdated(meta) {
 }
 
 function cleanText(str) {
-  return str ? str.replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim() : "";
+  return str
+    ? str
+        .replace(/\u00a0/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+    : "";
 }
 
 function normalizeTeamName(name) {
   if (!name) return null;
   name = cleanText(name);
   if (/^Game\s*\d+\s*winner$/i.test(name)) return name.replace(/\s+/g, " ");
-  return name.replace(/^Game\s*\d+\s*/i, "").replace(/^\d+\s*/, "").trim();
+  return name
+    .replace(/^Game\s*\d+\s*/i, "")
+    .replace(/^\d+\s*/, "")
+    .trim();
 }
 
 function expandDeadline(line) {
@@ -150,7 +179,7 @@ function ensureTeamStats(stats, team) {
       wins: 0,
       goals_for: 0,
       goals_against: 0,
-      goal_difference: 0
+      goal_difference: 0,
     };
   }
 }
@@ -185,14 +214,20 @@ function recordMatch(stats, { home, away, home_score, away_score }) {
 async function fetchParagraphs(page, selectorOrId, label) {
   try {
     await page.waitForSelector(selectorOrId, { timeout: 15000 });
-    const paragraphs = await page.$$eval(`${selectorOrId} p`, ps =>
+    const paragraphs = await page.$$eval(`${selectorOrId} p`, (ps) =>
       ps
-        .map(p =>
-          p.innerText.replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim()
+        .map((p) =>
+          p.innerText
+            .replace(/\u00a0/g, " ")
+            .replace(/\s+/g, " ")
+            .trim()
         )
         .filter(Boolean)
     );
-    nodeEmit("debug", "fetched paragraphs", { label, count: paragraphs.length });
+    nodeEmit("debug", "fetched paragraphs", {
+      label,
+      count: paragraphs.length,
+    });
     // DEBUG: dump first few lines to verify selector mapping
     // nodeEmit("debug", "sample paragraphs", { sample: paragraphs.slice(0, 5) });
     return paragraphs;
@@ -224,12 +259,16 @@ async function scrapeU12Welsh(browser) {
     // DEBUG: capture page title/URL
     // nodeEmit("debug", "page opened", { title: await page.title(), url: page.url() });
 
-    const paragraphs = await page.evaluate(id => {
+    const paragraphs = await page.evaluate((id) => {
       const div = document.querySelector(`[id="${id}"]`);
       if (!div) return [];
-      const norm = s => s.replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim();
+      const norm = (s) =>
+        s
+          .replace(/\u00a0/g, " ")
+          .replace(/\s+/g, " ")
+          .trim();
       return Array.from(div.querySelectorAll("p"))
-        .map(p => norm(p.innerText || ""))
+        .map((p) => norm(p.innerText || ""))
         .filter(Boolean);
     }, TARGET_DIV_ID);
 
@@ -237,12 +276,12 @@ async function scrapeU12Welsh(browser) {
       cup_name: CUP_NAME,
       season: SEASON,
       rounds: [],
-      team_statistics: {}
+      team_statistics: {},
     };
     // DEBUG: verify initial result schema
     // nodeEmit("debug", "result skeleton", result);
 
-    const parseGameLine = line => {
+    const parseGameLine = (line) => {
       line = cleanText(line);
       if (!line || line.length < 3) return null;
 
@@ -254,7 +293,7 @@ async function scrapeU12Welsh(browser) {
           away: "BYE",
           home_score: null,
           away_score: null,
-          winner: normalizeTeamName(bye[1])
+          winner: normalizeTeamName(bye[1]),
         };
       }
 
@@ -290,7 +329,7 @@ async function scrapeU12Welsh(browser) {
             const clean = cleanText(paragraphs[j])
               .replace(/Deadline:|Dyddiad cau:/i, "Deadline:")
               .replace(/\s+/g, " ")
-              .replace(/\b([a-z])/g, c => c.toUpperCase());
+              .replace(/\b([a-z])/g, (c) => c.toUpperCase());
             round.deadlines.english = clean;
             round.deadlines.english_expanded = expanded;
           }
@@ -309,7 +348,7 @@ async function scrapeU12Welsh(browser) {
               away_team: parsed.away,
               away_score: parsed.away_score,
               winner: parsed.winner,
-              date: round.deadlines.english_expanded || null
+              date: round.deadlines.english_expanded || null,
             };
             round.games.push(entry);
             recordMatch(result.team_statistics, parsed);
@@ -360,10 +399,19 @@ async function scrapeYear7Cardiff(browser) {
     // DEBUG: check page
     // nodeEmit("debug", "page opened", { title: await page.title(), url: page.url() });
 
-    const paragraphs = await fetchParagraphs(page, `#${SECTION_ID}`, "Cardiff Cup");
-    const result = { cup_name: CUP_NAME, season: SEASON, rounds: [], team_statistics: {} };
+    const paragraphs = await fetchParagraphs(
+      page,
+      `#${SECTION_ID}`,
+      "Cardiff Cup"
+    );
+    const result = {
+      cup_name: CUP_NAME,
+      season: SEASON,
+      rounds: [],
+      team_statistics: {},
+    };
 
-    const parseScoreLine = line => {
+    const parseScoreLine = (line) => {
       const full = line.match(/^(.+?)\s+(\d+)\s*-\s*(\d+)\s+(.+)$/);
       if (!full) return null;
       const home = cleanText(full[1]);
@@ -377,7 +425,9 @@ async function scrapeYear7Cardiff(browser) {
     let i = 0;
     while (i < paragraphs.length) {
       const text = paragraphs[i];
-      const roundMatch = text.match(/(ROUND\s*\d+|QUARTER FINAL|SEMI FINAL|FINAL)/i);
+      const roundMatch = text.match(
+        /(ROUND\s*\d+|QUARTER FINAL|SEMI FINAL|FINAL)/i
+      );
       if (roundMatch) {
         const label = roundMatch[1].toUpperCase();
         const numMatch = label.match(/ROUND\s*(\d+)/i);
@@ -391,7 +441,7 @@ async function scrapeYear7Cardiff(browser) {
             const expanded = expandDeadline(paragraphs[j]);
             const clean = cleanText(paragraphs[j])
               .replace(/deadline[:\-]?\s*/i, "Deadline: ")
-              .replace(/\b([a-z])/g, c => c.toUpperCase());
+              .replace(/\b([a-z])/g, (c) => c.toUpperCase());
             round.deadlines.english = clean;
             round.deadlines.english_expanded = expanded;
           }
@@ -420,7 +470,7 @@ async function scrapeYear7Cardiff(browser) {
                 away_team: "BYE",
                 away_score: null,
                 winner: team,
-                date: null
+                date: null,
               });
               recordMatch(result.team_statistics, { home: team, away: "BYE" });
               i++;
@@ -436,7 +486,7 @@ async function scrapeYear7Cardiff(browser) {
               away_team: score.away,
               away_score: score.away_score,
               winner: score.winner,
-              date: round.deadlines.english_expanded || null
+              date: round.deadlines.english_expanded || null,
             });
             recordMatch(result.team_statistics, score);
             // DEBUG: first game example
@@ -488,15 +538,17 @@ function mergeTeamStats() {
           wins: data.wins,
           goals_for: data.goals_for,
           goals_against: data.goals_against,
-          goal_difference: data.goal_difference
+          goal_difference: data.goal_difference,
         };
       } else {
-        if (!merged[team].cups.includes(cupName)) merged[team].cups.push(cupName);
+        if (!merged[team].cups.includes(cupName))
+          merged[team].cups.push(cupName);
         merged[team].games_played += data.games_played;
         merged[team].wins += data.wins;
         merged[team].goals_for += data.goals_for;
         merged[team].goals_against += data.goals_against;
-        merged[team].goal_difference = merged[team].goals_for - merged[team].goals_against;
+        merged[team].goal_difference =
+          merged[team].goals_for - merged[team].goals_against;
       }
     }
   }
@@ -518,14 +570,21 @@ function mergeTeamStats() {
 
   const browser = await puppeteer.launch({
     headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"]
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
 
   try {
     await scrapeU12Welsh(browser);
     await scrapeYear7Cardiff(browser);
     const teamsCount = mergeTeamStats();
-    writeLastUpdated({ teams: teamsCount, files: { welsh: "welsh.json", cardiff: "cardiff.json", teams: "teams.json" } });
+    writeLastUpdated({
+      teams: teamsCount,
+      files: {
+        welsh: "welsh.json",
+        cardiff: "cardiff.json",
+        teams: "teams.json",
+      },
+    });
     nodeEmit("info", "all tasks complete");
   } catch (err) {
     nodeEmit("critical", "global scrape error", null, err);
