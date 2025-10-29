@@ -2287,6 +2287,8 @@ const adminAccessClose = document.getElementById("admin-access-close");
 const adminAccessPass = document.getElementById("admin-access-pass");
 const adminAccessSubmit = document.getElementById("admin-access-submit");
 const adminAccessError = document.getElementById("admin-access-error");
+const adminAccessResolvers = [];
+let isAdminAccessOpen = false;
 
 function openModal() {
   modal?.setAttribute("aria-hidden", "false");
@@ -2329,6 +2331,7 @@ function openAdminAccessModal() {
   if (!adminAccessModal) return;
   adminAccessModal.setAttribute("aria-hidden", "false");
   if (adminAccessError) adminAccessError.hidden = true;
+  isAdminAccessOpen = true;
   if (adminAccessPass) {
     const storedPwd = sessionStorage.getItem("admin_password") || "";
     adminAccessPass.value = storedPwd;
@@ -2344,6 +2347,13 @@ function openAdminAccessModal() {
 function closeAdminAccessModal() {
   if (!adminAccessModal) return;
   adminAccessModal.setAttribute("aria-hidden", "true");
+  isAdminAccessOpen = false;
+  if (sessionStorage.getItem("admin_unlocked") !== "true") {
+    while (adminAccessResolvers.length) {
+      const resolver = adminAccessResolvers.shift();
+      resolver(null);
+    }
+  }
 }
 
 async function handleAdminAccessSubmit(event) {
@@ -2385,7 +2395,10 @@ async function handleAdminAccessSubmit(event) {
     sessionStorage.setItem("admin_unlocked", "true");
     sessionStorage.setItem("admin_password", password);
     closeAdminAccessModal();
-    window.location.href = "admin.html";
+    while (adminAccessResolvers.length) {
+      const resolver = adminAccessResolvers.shift();
+      resolver(password);
+    }
   } catch (err) {
     if (adminAccessError) {
       adminAccessError.textContent =
@@ -2416,6 +2429,18 @@ document.addEventListener("keydown", (e) => {
   if (adminAccessModal?.getAttribute("aria-hidden") === "false")
     closeAdminAccessModal();
 });
+
+function requestAdminPassword() {
+  const stored = sessionStorage.getItem("admin_password");
+  if (stored) {
+    sessionStorage.setItem("admin_unlocked", "true");
+    return Promise.resolve(stored);
+  }
+  return new Promise((resolve) => {
+    adminAccessResolvers.push(resolve);
+    if (!isAdminAccessOpen) openAdminAccessModal();
+  });
+}
 
 startBtn?.addEventListener("click", async () => {
   errorEl.hidden = true;
@@ -2786,11 +2811,10 @@ window.addEventListener("DOMContentLoaded", async () => {
     if (adminLink) {
       adminLink.addEventListener("click", (e) => {
         e.preventDefault();
-        if (sessionStorage.getItem("admin_unlocked") === "true") {
+        requestAdminPassword().then((pwd) => {
+          if (!pwd) return;
           window.location.href = "admin.html";
-          return;
-        }
-        openAdminAccessModal();
+        });
       });
     }
   } catch (_) {}
@@ -3150,11 +3174,10 @@ window.addEventListener("DOMContentLoaded", async () => {
                 lastUpdated: new Date().toISOString(),
               };
 
-              // Get cached password or prompt
+              // Get cached password or request via modal
               let pwd = sessionStorage.getItem("admin_password") || "";
               if (!pwd) {
-                pwd = prompt(translate("password")) || "";
-                if (pwd) sessionStorage.setItem("admin_password", pwd);
+                pwd = await requestAdminPassword();
               }
               if (!pwd) return; // user cancelled
 
@@ -3274,7 +3297,9 @@ window.addEventListener("DOMContentLoaded", async () => {
                 rounds: friendlies.rounds || [],
                 team_statistics: {},
               };
-              const password = prompt(translate("password"));
+              const password =
+                sessionStorage.getItem("admin_password") ||
+                (await requestAdminPassword());
               if (!password) return;
               if (!commitURL) return alert("Commit URL not configured.");
               commitBtn.disabled = true;
