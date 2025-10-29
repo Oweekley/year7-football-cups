@@ -6,7 +6,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes"
   />
   <title data-i18n="dashboardTitle">Year 7 Cups Dashboard 2025</title>
   <meta
@@ -16,6 +16,8 @@
   <meta name="theme-color" content="#0077ff" />
   <meta name="color-scheme" content="light dark" />
   <meta name="robots" content="index,follow" />
+  <meta name="author" content="Ollie Weekley" />
+  <meta name="keywords" content="football, soccer, year 7, welsh cup, cardiff cup, school sports, statistics, brackets" />
 
   <!-- Optional PWA bits (harmless if files don’t exist yet) -->
   <link rel="manifest" href="manifest.webmanifest" />
@@ -136,7 +138,8 @@
 		</div>
 
       <!-- Leaderboard (polite live region so screen readers hear updates) -->
-      <div id="leaderboard" class="leaderboard-section" role="region" aria-live="polite" aria-label="Leaderboard">
+      <div id="leaderboard" class="leaderboard-section" role="region" aria-live="polite" aria-label="Leaderboard" aria-describedby="leaderboard-desc">
+        <div id="leaderboard-desc" class="sr-only">Current standings table showing team rankings, games played, wins, goals for, goals against, and goal difference</div>
         <!-- Leaderboard dynamically rendered here -->
       </div>
 	</section>

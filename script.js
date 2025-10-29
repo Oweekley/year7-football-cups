@@ -141,12 +141,40 @@ document.getElementById("lang-cy")?.addEventListener("click", () => switchLangua
 // DATA FETCHING + NORMALIZATION (robust to any team schema)
 // ============================================================
 async function fetchJSON(url) {
-  if (state.cache[url]) return state.cache[url];
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) throw new Error(`Failed to load ${url}: ${res.status}`);
-  const json = await res.json();
-  state.cache[url] = json;
-  return json;
+  if (state.cache[url]) {
+    console.debug("Cache hit:", url);
+    return state.cache[url];
+  }
+  
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+    
+    const res = await fetch(url, { 
+      cache: "no-store",
+      signal: controller.signal,
+      headers: {
+        'Accept': 'application/json',
+        'Cache-Control': 'no-cache'
+      }
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+    }
+    
+    const json = await res.json();
+    state.cache[url] = json;
+    console.debug("Cached:", url);
+    return json;
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new Error(`Request timeout for ${url}`);
+    }
+    throw error;
+  }
 }
 
 // helper: get the first numeric value from a list of possible keys
@@ -208,6 +236,14 @@ function normalizeTeams(teamsRaw, cups) {
 async function loadData() {
   try {
     console.info("Loading: start");
+    
+    // Show loading states
+    showLoadingState(elements.leaderboard, "Loading leaderboard...");
+    Object.values(elements.dropdowns).forEach(dropdown => {
+      if (dropdown.display) {
+        showLoadingState(dropdown.display, "Select teams to view data...");
+      }
+    });
 
     // Load the cups first so we can derive teams if needed
     const [welsh, cardiff, friendlies] = await Promise.all([
@@ -237,22 +273,48 @@ async function loadData() {
       sample: state.teams.slice(0, 5).map(t => t.name)
     });
     console.info("Loading: done", { lastUpdated: state.lastUpdated });
+    
   } catch (err) {
     console.error("Error loading data", err);
-    showErrorMessage("Error loading data. Please check your JSON files or network connection.");
+    showErrorMessage(
+      "Error loading data. Please check your JSON files or network connection.",
+      () => {
+        console.info("Retrying data load...");
+        loadData();
+      }
+    );
   }
 }
 
-function showErrorMessage(message) {
+function showErrorMessage(message, retryCallback = null) {
   console.warn("ui: showErrorMessage", { message });
   document
     .querySelectorAll(".dynamic-display, .bracket-container, #leaderboard")
     .forEach(el => {
       if (el) {
-        el.innerHTML =
-          `<p style="color:crimson;text-align:center;padding:1rem">${message}</p>`;
+        el.innerHTML = `
+          <div class="error-message fade-in">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+              <span style="font-size: 1.2rem;">⚠️</span>
+              <span>${message}</span>
+            </div>
+            ${retryCallback ? `
+              <button onclick="(${retryCallback})()" class="cta" style="margin-top: 0.5rem;">
+                🔄 Try Again
+              </button>
+            ` : ''}
+          </div>`;
       }
     });
+}
+
+function showLoadingState(container, message = "Loading...") {
+  if (!container) return;
+  container.innerHTML = `
+    <div class="loading-placeholder fade-in" style="text-align: center; padding: 2rem;">
+      <div class="loading-spinner"></div>
+      <p style="margin-top: 1rem; color: #666;">${message}</p>
+    </div>`;
 }
 
 // ============================================================
@@ -441,32 +503,38 @@ function renderLeaderboard() {
   );
 
   el.innerHTML = `
-    <h2>${translations[currentLang].leaderboard}</h2>
-    <table>
-      <tr>
-        <th>#</th>
-        <th>Team</th>
-        <th>${translations[currentLang].played}</th>
-        <th>${translations[currentLang].wins}</th>
-        <th>${translations[currentLang].gf}</th>
-        <th>${translations[currentLang].ga}</th>
-        <th>${translations[currentLang].gd}</th>
-      </tr>
-      ${sorted
-        .map(
-          (t, i) =>
-            `<tr>
-              <td>${i + 1}</td>
-              <td>${t.name}</td>
-              <td>${t.played}</td>
-              <td>${t.wins}</td>
-              <td>${t.gf}</td>
-              <td>${t.ga}</td>
-              <td>${t.gd}</td>
-            </tr>`
-        )
-        .join("")}
-    </table>`;
+    <h2 class="fade-in">${translations[currentLang].leaderboard}</h2>
+    <div class="table-container fade-in">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Team</th>
+            <th data-numeric="true">${translations[currentLang].played}</th>
+            <th data-numeric="true">${translations[currentLang].wins}</th>
+            <th data-numeric="true">${translations[currentLang].gf}</th>
+            <th data-numeric="true">${translations[currentLang].ga}</th>
+            <th data-numeric="true">${translations[currentLang].gd}</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${sorted
+            .map(
+              (t, i) =>
+                `<tr class="slide-in-left" style="animation-delay: ${i * 0.1}s">
+                  <td class="rank">${i + 1}</td>
+                  <td class="team-name">${t.name}</td>
+                  <td data-numeric="true">${t.played}</td>
+                  <td data-numeric="true">${t.wins}</td>
+                  <td data-numeric="true">${t.gf}</td>
+                  <td data-numeric="true">${t.ga}</td>
+                  <td data-numeric="true" class="${t.gd >= 0 ? 'positive' : 'negative'}">${t.gd >= 0 ? '+' : ''}${t.gd}</td>
+                </tr>`
+            )
+            .join("")}
+        </tbody>
+      </table>
+    </div>`;
 }
 
 function renderBracket(cupName, data, container) {
@@ -701,18 +769,25 @@ startBtn?.addEventListener("click", async () => {
   };
   console.debug = (...a) => emit("debug", a[0], a[1]);
 
-  // Global error surfaces
-  window.addEventListener("error", e => {
-    emit(
-      "critical",
-      "window.onerror",
-      { filename: e.filename, lineno: e.lineno, colno: e.colno },
-      e.error || e.message
-    );
-  });
-  window.addEventListener("unhandledrejection", e => {
-    emit("error", "unhandledrejection", null, e.reason || "Promise rejection");
-  });
+// Global error surfaces
+window.addEventListener("error", e => {
+  emit(
+    "critical",
+    "window.onerror",
+    { filename: e.filename, lineno: e.lineno, colno: e.colno },
+    e.error || e.message
+  );
+  
+  // Show user-friendly error message
+  showErrorMessage("An unexpected error occurred. Please refresh the page.");
+});
+
+window.addEventListener("unhandledrejection", e => {
+  emit("error", "unhandledrejection", null, e.reason || "Promise rejection");
+  
+  // Show user-friendly error message
+  showErrorMessage("A network error occurred. Please check your connection and try again.");
+});
 
   // Fetch timing wrapper (transparent; returns the same response)
   const _fetch = window.fetch.bind(window);
@@ -736,6 +811,152 @@ startBtn?.addEventListener("click", async () => {
 })();
 
 // ============================================================
+// PERFORMANCE OPTIMIZATIONS
+// ============================================================
+// Preload critical resources
+function preloadCriticalResources() {
+  const criticalImages = [
+    'icons/icon-192.png',
+    'icons/icon-512.png'
+  ];
+  
+  criticalImages.forEach(src => {
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.href = src;
+    link.as = 'image';
+    document.head.appendChild(link);
+  });
+}
+
+// Optimize scroll performance
+function setupScrollOptimizations() {
+  let ticking = false;
+  
+  function updateScrollElements() {
+    // Add any scroll-based optimizations here
+    ticking = false;
+  }
+  
+  function requestTick() {
+    if (!ticking) {
+      requestAnimationFrame(updateScrollElements);
+      ticking = true;
+    }
+  }
+  
+  window.addEventListener('scroll', requestTick, { passive: true });
+}
+function setupIntersectionObserver() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('fade-in');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, {
+    threshold: 0.1,
+    rootMargin: '50px'
+  });
+
+  // Observe all sections for lazy loading
+  document.querySelectorAll('.dashboard-overview, .cup-section, .bracket-container').forEach(el => {
+    observer.observe(el);
+  });
+}
+
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+// Throttle function for scroll events
+function throttle(func, limit) {
+  let inThrottle;
+  return function() {
+    const args = arguments;
+    const context = this;
+    if (!inThrottle) {
+      func.apply(context, args);
+      inThrottle = true;
+      setTimeout(() => inThrottle = false, limit);
+    }
+  };
+}
+
+// ============================================================
+// KEYBOARD NAVIGATION & ACCESSIBILITY
+// ============================================================
+function setupKeyboardNavigation() {
+  // Add keyboard support for theme toggle
+  document.getElementById('theme-toggle')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      document.getElementById('theme-toggle')?.click();
+    }
+  });
+
+  // Add keyboard support for language buttons
+  document.querySelectorAll('.lang-switch button').forEach(btn => {
+    btn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        btn.click();
+      }
+    });
+  });
+
+  // Add keyboard support for navigation
+  document.querySelectorAll('nav a').forEach(link => {
+    link.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        link.click();
+      }
+    });
+  });
+
+  // Add keyboard support for buttons
+  document.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        btn.click();
+      }
+    });
+  });
+
+  // Add keyboard support for selects
+  document.querySelectorAll('select').forEach(select => {
+    select.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        const options = Array.from(select.options);
+        const currentIndex = options.findIndex(opt => opt.selected);
+        let newIndex = currentIndex;
+        
+        if (e.key === 'ArrowUp') {
+          newIndex = currentIndex > 0 ? currentIndex - 1 : options.length - 1;
+        } else {
+          newIndex = currentIndex < options.length - 1 ? currentIndex + 1 : 0;
+        }
+        
+        select.selectedIndex = newIndex;
+        select.dispatchEvent(new Event('change'));
+      }
+    });
+  });
+}
+
+// ============================================================
 // GLOBAL RENDER + REFRESH HANDLERS
 // ============================================================
 function renderAll() {
@@ -756,8 +977,56 @@ function renderAll() {
   console.debug("renderAll: done");
 }
 
+// ============================================================
+// SERVICE WORKER REGISTRATION
+// ============================================================
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try {
+      const registration = await navigator.serviceWorker.register('/sw.js');
+      console.info('SW registered successfully:', registration);
+      
+      // Handle updates
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            // New version available
+            if (confirm('A new version is available. Reload to update?')) {
+              newWorker.postMessage({ type: 'SKIP_WAITING' });
+              window.location.reload();
+            }
+          }
+        });
+      });
+      
+    } catch (error) {
+      console.warn('SW registration failed:', error);
+    }
+  });
+}
+
 window.addEventListener("DOMContentLoaded", async () => {
   console.info("app: DOMContentLoaded");
+  
+  // Setup performance optimizations
+  setupIntersectionObserver();
+  setupScrollOptimizations();
+  preloadCriticalResources();
+  
+  // Setup accessibility features
+  setupKeyboardNavigation();
+  
+  // Preload critical resources
+  const criticalResources = ['style.css', 'script.js'];
+  criticalResources.forEach(resource => {
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.href = resource;
+    link.as = resource.endsWith('.css') ? 'style' : 'script';
+    document.head.appendChild(link);
+  });
+  
   await loadData();
   setTimeout(() => {
     console.debug("app: post-load renderAll+initTeamDashboard");
