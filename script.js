@@ -1732,18 +1732,21 @@ function showErrorMessage(message, retryCallback = null) {
     });
 }
 
-function showNoDataMessage(message) {
-  logger.debug("Showing no data message to user", { message });
-  document
-    .querySelectorAll(".dynamic-display")
-    .forEach(el => {
-      if (el) {
-        el.innerHTML = `
-          <div class="no-data-message fade-in">
-            <span>${message}</span>
-          </div>`;
-      }
-    });
+function showNoDataMessage(message, container = null) {
+  logger.debug("Showing no data message", { message, scoped: !!container });
+  const render = (el) => {
+    if (!el) return;
+    el.innerHTML = `
+      <div class="no-data-message fade-in">
+        <span>${message}</span>
+      </div>`;
+    el.classList.add('loaded');
+  };
+  if (container) {
+    render(container);
+  } else {
+    document.querySelectorAll('.dynamic-display').forEach(render);
+  }
 }
 
 function showLoadingState(container, message = null) {
@@ -1788,22 +1791,58 @@ function calculateStats() {
 // DROPDOWN POPULATION + DASHBOARD DISPLAYS
 // ============================================================
 function populateDropdowns(cupName) {
-  const { team, data } = elements.dropdowns[cupName];
+  // Re-resolve elements to avoid stale references
+  const teamElId = cupName === 'Welsh' ? 'welsh-team' : cupName === 'Cardiff' ? 'cardiff-team' : 'friendlies-team';
+  const displayElId = cupName === 'Welsh' ? 'welsh-display' : cupName === 'Cardiff' ? 'cardiff-display' : 'friendlies-display';
+  const team = document.getElementById(teamElId) || elements.dropdowns[cupName]?.team;
+  const data = elements.dropdowns[cupName]?.data || null;
+  const display = document.getElementById(displayElId) || elements.dropdowns[cupName]?.display;
   if (!team) return;
 
-  team.innerHTML = `<option value="">--${translate("chooseTeam")}--</option>`;
-  state.teams.forEach(t => (team.innerHTML += `<option value="${t.name}">${t.name}</option>`));
+  // Ensure teams list available (fallback derive from cups)
+  let teamsList = Array.isArray(state.teams) && state.teams.length ? state.teams : deriveTeamsFromCups(state.cups);
+
+  // Build options
+  const placeholder = document.createElement('option');
+  placeholder.value = "";
+  placeholder.textContent = `--${translate("chooseTeam") || 'Choose a Team'}--`;
+  placeholder.selected = true;
+  placeholder.disabled = false;
+  team.innerHTML = "";
+  team.appendChild(placeholder);
+  teamsList.forEach(t => {
+    if (!t?.name) return;
+    const opt = document.createElement('option');
+    opt.value = t.name;
+    opt.textContent = t.name;
+    team.appendChild(opt);
+  });
 
   if (data) data.style.display = "none";
-  team.onchange = () => updateCupDisplay(cupName);
+  // Bind change with addEventListener to avoid accidental overrides
+  team.onchange = null;
+  team.addEventListener('change', () => updateCupDisplay(cupName));
+
+  // Reset display area to prompt
+  if (display) {
+    showNoDataMessage(translate("selectTeamsToView"), display);
+  }
 }
 
 function updateCupDisplay(cupName) {
-  const { team, display } = elements.dropdowns[cupName];
-  const teamName = team.value;
-  if (!teamName) return (display.innerHTML = "");
+  // Re-fetch to avoid stale nodes
+  const team = document.getElementById(cupName === 'Welsh' ? 'welsh-team' : cupName === 'Cardiff' ? 'cardiff-team' : 'friendlies-team') || elements.dropdowns[cupName]?.team;
+  const display = document.getElementById(cupName === 'Welsh' ? 'welsh-display' : cupName === 'Cardiff' ? 'cardiff-display' : 'friendlies-display') || elements.dropdowns[cupName]?.display;
+  const teamName = team?.value || '';
+  if (!teamName) {
+    if (display) showNoDataMessage(translate("selectTeamsToView"), display);
+    return;
+  }
   const cupData = state.cups[cupName];
-  display.innerHTML = renderMatchHistory(teamName, cupName, cupData);
+  if (display) {
+    display.innerHTML = renderMatchHistory(teamName, cupName, cupData);
+    display.classList.add('loaded');
+  }
 }
 
 // ============================================================
@@ -2706,7 +2745,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         [frHome, frAway].forEach(el => el && el.addEventListener('change', updateFriendlyValidity));
 
         if (frSubmit) {
-          frSubmit.addEventListener('click', () => {
+          frSubmit.addEventListener('click', async () => {
             if (!frDate || !frHome || !frAway) return;
             const date = frDate.value; const home = frHome.value; const away = frAway.value;
             const hs = frHomeGoals ? frHomeGoals.value : '';
@@ -2727,6 +2766,49 @@ window.addEventListener("DOMContentLoaded", async () => {
             if (frAwayGoals) frAwayGoals.value = '';
             if (frNotes) frNotes.value = '';
             updateFriendlyValidity();
+
+            // Auto-commit to GitHub via Worker so data persists
+            try {
+              if (!commitURL) throw new Error('Commit URL not configured.');
+              // Build friendlies payload
+              const friendlies = state.cups.Friendlies || { rounds: [] };
+              const friendliesPayload = {
+                cup_name: 'Friendlies',
+                season: state?.currentSeason || translate('currentSeason') || '',
+                rounds: friendlies.rounds || [],
+                team_statistics: {}
+              };
+              const lastUpdatedPayload = { lastUpdated: new Date().toISOString() };
+
+              // Get cached password or prompt
+              let pwd = sessionStorage.getItem('admin_password') || '';
+              if (!pwd) {
+                pwd = prompt(translate('password')) || '';
+                if (pwd) sessionStorage.setItem('admin_password', pwd);
+              }
+              if (!pwd) return; // user cancelled
+
+              const res = await fetch(commitURL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                mode: 'cors',
+                body: JSON.stringify({
+                  password: pwd,
+                  message: 'Auto-commit friendlies update from Admin UI',
+                  files: [
+                    { path: 'friendlies.json', content: JSON.stringify(friendliesPayload, null, 2) },
+                    { path: 'last_updated.json', content: JSON.stringify(lastUpdatedPayload, null, 2) }
+                  ]
+                })
+              });
+              const data = await res.json().catch(() => ({}));
+              if (!res.ok || !data?.success) throw new Error(data?.error || 'Commit failed');
+              logger?.success?.('Committed friendlies.json to GitHub');
+              // Refresh local data so dashboard reflects latest
+              try { await loadData(); renderAll(); } catch (_) {}
+            } catch (err) {
+              logger?.warn?.('Auto-commit failed', { error: err?.message });
+            }
           });
         }
 
