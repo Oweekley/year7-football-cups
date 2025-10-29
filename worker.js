@@ -34,7 +34,8 @@ function wEmit(level, msg, ctx, err) {
 }
 
 const PROD_ORIGINS = new Set([
-  "https://oweekley.github.io" // GitHub Pages origin (no trailing slash)
+  "https://oweekley.github.io",              // GitHub Pages
+  "https://year7-football-cups.vercel.app"   // Vercel deployment
 ]);
 
 function isLocalOrigin(origin) {
@@ -83,8 +84,8 @@ export default {
       return new Response(null, { status: 204, headers: corsHeaders(origin) });
     }
 
-    // Only allow POST to /run
-    if (url.pathname !== "/run") {
+    // Allow POST to /run (dispatch) and /commit (commit content)
+    if (url.pathname !== "/run" && url.pathname !== "/commit") {
       wEmit("warn", "request:wrong-path", { path: url.pathname });
       return new Response("Method Not Allowed", {
         status: 405,
@@ -115,34 +116,102 @@ export default {
       return json({ success: false, error: "Unauthorized" }, { status: 401, origin });
     }
 
-    // Trigger GitHub workflow
-    const ghUrl = `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/actions/workflows/${env.WORKFLOW_FILE}/dispatches`;
-    wEmit("info", "github:dispatch", { ghUrl: ghUrl.replace(/token=.*$/, "token=***") });
+    // Route: /run → trigger GitHub workflow
+    if (url.pathname === "/run") {
+      const ghUrl = `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/actions/workflows/${env.WORKFLOW_FILE}/dispatches`;
+      wEmit("info", "github:dispatch", { ghUrl: ghUrl.replace(/token=.*$/, "token=***") });
 
-    const ghResp = await fetch(ghUrl, {
-      method: "POST",
-      headers: {
-        Accept: "application/vnd.github+json",
-        Authorization: `Bearer ${env.GITHUB_PAT}`,
-        "User-Agent": "year7-fixtures-dispatch", // required by GitHub
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ ref: "main" })
-    });
-
-    if (!ghResp.ok) {
-      const text = await ghResp.text();
-      wEmit("error", "github:dispatch-failed", {
-        status: ghResp.status,
-        text: text && text.slice(0, 200)
+      const ghResp = await fetch(ghUrl, {
+        method: "POST",
+        headers: {
+          Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${env.GITHUB_PAT}`,
+          "User-Agent": "year7-fixtures-dispatch",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ ref: "main" })
       });
-      return json(
-        { success: false, error: text.trim() || `GitHub error ${ghResp.status}` },
-        { status: 502, origin }
-      );
+
+      if (!ghResp.ok) {
+        const text = await ghResp.text();
+        wEmit("error", "github:dispatch-failed", {
+          status: ghResp.status,
+          text: text && text.slice(0, 200)
+        });
+        return json(
+          { success: false, error: text.trim() || `GitHub error ${ghResp.status}` },
+          { status: 502, origin }
+        );
+      }
+
+      wEmit("info", "github:dispatch-ok");
+      return json({ success: true, message: "Scraper started!" }, { status: 200, origin });
     }
 
-    wEmit("info", "github:dispatch-ok");
-    return json({ success: true, message: "Scraper started!" }, { status: 200, origin });
+    // Route: /commit → commit provided JSON files to repo
+    const { files, message } = payload || {};
+    if (!Array.isArray(files) || files.length === 0) {
+      return json({ success: false, error: "No files provided" }, { status: 400, origin });
+    }
+
+    async function getFileSha(path) {
+      const url = `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${encodeURIComponent(path)}`;
+      const res = await fetch(url, {
+        headers: {
+          Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${env.GITHUB_PAT}`,
+          "User-Agent": "year7-fixtures-commit"
+        }
+      });
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error(`Get SHA failed ${res.status}`);
+      const data = await res.json();
+      return data.sha || null;
+    }
+
+    async function putFile(path, content, msg) {
+      const sha = await getFileSha(path).catch(() => null);
+      const url = `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${encodeURIComponent(path)}`;
+      const body = {
+        message: msg || `Update ${path}`,
+        content: btoa(unescape(encodeURIComponent(content))),
+        branch: "main",
+        sha: sha || undefined
+      };
+      const res = await fetch(url, {
+        method: "PUT",
+        headers: {
+          Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${env.GITHUB_PAT}`,
+          "User-Agent": "year7-fixtures-commit",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `Commit failed ${res.status}`);
+      }
+      return res.json();
+    }
+
+    const results = [];
+    for (const f of files) {
+      if (!f || !f.path || typeof f.content !== "string") continue;
+      try {
+        const r = await putFile(f.path, f.content, message || f.message);
+        results.push({ path: f.path, ok: true, sha: r.content?.sha });
+      } catch (err) {
+        results.push({ path: f.path, ok: false, error: String(err.message || err) });
+      }
+    }
+
+    const anyFail = results.some(r => !r.ok);
+    if (anyFail) {
+      wEmit("warn", "github:commit-partial", { results });
+      return json({ success: false, results }, { status: 207, origin });
+    }
+    wEmit("info", "github:commit-ok", { count: results.length });
+    return json({ success: true, results }, { status: 200, origin });
   }
 };
