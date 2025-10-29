@@ -11,7 +11,7 @@
 //  - Use Application > Service Workers in DevTools to inspect state
 // ============================================================
 
-const CACHE_VERSION = "2.0.0";
+const CACHE_VERSION = "2.0.1";
 const CACHE_NAME = `year7-cups-${CACHE_VERSION}`;
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DATA_CACHE = `data-${CACHE_VERSION}`;
