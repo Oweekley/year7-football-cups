@@ -6,77 +6,665 @@
 //  - Error handling & data caching for smoother UX
 //  - Fully supports teamCard.html dropdowns
 //  - Keeps 100% compatibility with existing HTML + JSON
+//  - Comprehensive logging system for debugging and monitoring
 // ============================================================
 
 // =======================
-// TRANSLATIONS
+// COMPREHENSIVE LOGGING SYSTEM
+// =======================
+class Logger {
+  constructor(context = 'APP') {
+    this.context = context;
+    this.sessionId = this.generateSessionId();
+    this.startTime = Date.now();
+    this.logLevel = this.getLogLevel();
+    this.logCount = 0;
+    
+    // Log system initialization
+    this.info('Logger initialized', { 
+      context, 
+      sessionId: this.sessionId,
+      logLevel: this.logLevel,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  generateSessionId() {
+    return Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+  }
+
+  getLogLevel() {
+    // Check for debug mode in localStorage or URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const debugMode = localStorage.getItem('debug') === 'true' || urlParams.get('debug') === 'true';
+    return debugMode ? 'DEBUG' : 'INFO';
+  }
+
+  formatMessage(level, message, data = null) {
+    const timestamp = new Date().toISOString();
+    const elapsed = Date.now() - this.startTime;
+    this.logCount++;
+    
+    const logEntry = {
+      level,
+      message,
+      context: this.context,
+      sessionId: this.sessionId,
+      timestamp,
+      elapsed: `${elapsed}ms`,
+      count: this.logCount,
+      data: data || undefined
+    };
+
+    // Color coding for different log levels
+    const colors = {
+      DEBUG: '#6c757d',
+      INFO: '#007bff',
+      WARN: '#ffc107',
+      ERROR: '#dc3545',
+      SUCCESS: '#28a745'
+    };
+
+    const color = colors[level] || '#000000';
+    
+    // Console output with styling
+    console.log(
+      `%c[${level}] %c[${this.context}] %c${message}`,
+      `color: ${color}; font-weight: bold;`,
+      `color: #6c757d; font-style: italic;`,
+      `color: #000;`,
+      data ? data : ''
+    );
+
+    // Store in session storage for debugging
+    if (this.logLevel === 'DEBUG') {
+      const logs = JSON.parse(sessionStorage.getItem('appLogs') || '[]');
+      logs.push(logEntry);
+      // Keep only last 100 logs
+      if (logs.length > 100) logs.splice(0, logs.length - 100);
+      sessionStorage.setItem('appLogs', JSON.stringify(logs));
+    }
+
+    return logEntry;
+  }
+
+  debug(message, data = null) {
+    if (this.logLevel === 'DEBUG') {
+      return this.formatMessage('DEBUG', message, data);
+    }
+  }
+
+  info(message, data = null) {
+    return this.formatMessage('INFO', message, data);
+  }
+
+  warn(message, data = null) {
+    return this.formatMessage('WARN', message, data);
+  }
+
+  error(message, data = null) {
+    return this.formatMessage('ERROR', message, data);
+  }
+
+  success(message, data = null) {
+    return this.formatMessage('SUCCESS', message, data);
+  }
+
+  // Performance logging
+  time(label) {
+    console.time(`[${this.context}] ${label}`);
+    return label;
+  }
+
+  timeEnd(label) {
+    console.timeEnd(`[${this.context}] ${label}`);
+  }
+
+  // Group logging for related operations
+  group(label) {
+    console.group(`[${this.context}] ${label}`);
+  }
+
+  groupEnd() {
+    console.groupEnd();
+  }
+
+  // Log function entry/exit
+  functionEntry(functionName, params = {}) {
+    this.debug(`Entering ${functionName}`, { params });
+  }
+
+  functionExit(functionName, result = null) {
+    this.debug(`Exiting ${functionName}`, { result });
+  }
+
+  // Log data changes
+  dataChange(type, oldValue, newValue) {
+    this.info(`Data changed: ${type}`, { 
+      oldValue, 
+      newValue,
+      changed: oldValue !== newValue
+    });
+  }
+
+  // Log user interactions
+  userAction(action, details = {}) {
+    this.info(`User action: ${action}`, details);
+  }
+
+  // Log API calls
+  apiCall(method, url, status, duration = null) {
+    const level = status >= 400 ? 'ERROR' : status >= 300 ? 'WARN' : 'INFO';
+    this[level.toLowerCase()](`API ${method} ${url}`, { status, duration });
+  }
+
+  // Log errors with stack trace
+  errorWithStack(message, error) {
+    this.error(message, {
+      error: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+  }
+
+  // Export logs for debugging
+  exportLogs() {
+    const logs = JSON.parse(sessionStorage.getItem('appLogs') || '[]');
+    const blob = new Blob([JSON.stringify(logs, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `app-logs-${this.sessionId}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // Clear logs
+  clearLogs() {
+    sessionStorage.removeItem('appLogs');
+    this.info('Logs cleared');
+  }
+}
+
+// Create main logger instance
+const logger = new Logger('DASHBOARD');
+
+// =======================
+// COMPREHENSIVE TRANSLATIONS
+// =======================
+
+// =======================
+// COMPREHENSIVE TRANSLATIONS
 // =======================
 const translations = {
   en: {
+    // Main Navigation & Headers
     dashboardTitle: "Year 7 Cups Dashboard 2025",
     dashboard: "Dashboard",
     teamDashboard: "Team Dashboard",
     brackets: "Brackets",
+    
+    // Page Titles & Descriptions
     welshCupOverview: "Welsh Cup Overview",
-    selectTeam: "Select Team:",
-    selectData: "Select Data:",
     cardiffCupOverview: "Cardiff Cup Overview",
     friendliesOverview: "Friendlies Overview",
+    leaderboard: "Leaderboard",
+    teamStats: "Team Statistics",
+    matchHistory: "Match History",
+    
+    // Form Labels & Controls
+    selectTeam: "Select Team:",
+    selectData: "Select Data:",
+    selectCompetition: "Select Competition:",
+    chooseTeam: "--Choose a Team--",
+    chooseData: "--Team Stats / Match History--",
+    chooseCompetition: "--Select Competition--",
+    
+    // Data Headers & Labels
     stats: "Stats",
+    statistics: "Statistics",
     played: "Played",
+    games: "Games",
     wins: "Wins",
+    losses: "Losses",
+    draws: "Draws",
     gf: "GF",
+    goalsFor: "Goals For",
     ga: "GA",
+    goalsAgainst: "Goals Against",
     gd: "GD",
-    notes: "Notes:",
-    welshMatches: "Welsh Matches",
+    goalDifference: "Goal Difference",
+    points: "Points",
+    position: "Position",
+    rank: "Rank",
+    team: "Team",
+    teams: "Teams",
+    
+    // Match Information
+    welshMatches: "Welsh Cup Matches",
+    cardiffMatches: "Cardiff Cup Matches",
+    friendliesMatches: "Friendlies Matches",
     round: "Round",
+    rounds: "Rounds",
     deadline: "Deadline",
     home: "Home",
+    away: "Away",
     hScore: "H Score",
     aScore: "A Score",
-    away: "Away",
+    homeScore: "Home Score",
+    awayScore: "Away Score",
     winner: "Winner",
     date: "Date",
     matchNotes: "Match History",
-    leaderboard: "Leaderboard",
-    refresh: "Refresh Data",
-    lastUpdated: "Last Updated:"
+    game: "Game",
+    games: "Games",
+    match: "Match",
+    matches: "Matches",
+    
+    // Status & Messages
+    loading: "Loading...",
+    loadingData: "Loading data...",
+    loadingLeaderboard: "Loading leaderboard...",
+    loadingBrackets: "Loading brackets...",
+    selectTeamsToView: "Select teams to view data...",
+    noDataAvailable: "No data available",
+    noMatchData: "No match data available",
+    noBracketData: "No bracket data available",
+    errorLoadingData: "Error loading data. Please check your JSON files or network connection.",
+    unexpectedError: "An unexpected error occurred. Please refresh the page.",
+    networkError: "A network error occurred. Please check your connection and try again.",
+    dataLoadedSuccessfully: "Data loaded successfully!",
+    teamsFound: "teams found",
+    refreshData: "Refresh Data",
+    lastUpdated: "Last Updated:",
+    unknown: "Unknown",
+    
+    // Buttons & Actions
+    refresh: "Refresh",
+    update: "Update",
+    retry: "Try Again",
+    close: "Close",
+    cancel: "Cancel",
+    confirm: "Confirm",
+    save: "Save",
+    edit: "Edit",
+    delete: "Delete",
+    add: "Add",
+    remove: "Remove",
+    search: "Search",
+    filter: "Filter",
+    sort: "Sort",
+    view: "View",
+    show: "Show",
+    hide: "Hide",
+    
+    // Language & Theme
+    language: "Language",
+    theme: "Theme",
+    lightMode: "Light Mode",
+    darkMode: "Dark Mode",
+    english: "English",
+    welsh: "Welsh",
+    switchToEnglish: "Switch to English",
+    switchToWelsh: "Newid i'r Gymraeg",
+    toggleDarkMode: "Toggle dark mode",
+    
+    // Accessibility
+    skipToMainContent: "Skip to main content",
+    mainNavigation: "Main navigation",
+    languageSwitch: "Language switch",
+    selectTeamLabel: "Select Team",
+    selectDataLabel: "Select Data Type",
+    selectCompetitionLabel: "Select competition to display",
+    teamDetailsDisplay: "Team details display",
+    welshCupBracket: "Welsh Cup Bracket",
+    cardiffCupBracket: "Cardiff Cup Bracket",
+    currentStandings: "Current standings table showing team rankings, games played, wins, goals for, goals against, and goal difference",
+    selectTeamAndData: "Select a team and data type to view stats or match history for the Welsh Cup",
+    selectTeamAndDataCardiff: "Select a team and data type to view stats or match history for the Cardiff Cup",
+    selectTeamAndDataFriendlies: "Select a team and data type to view friendlies stats or match history",
+    exploreCombinedStats: "Explore combined stats and match history for each team across all competitions",
+    viewKnockoutRounds: "View the knockout rounds, results, and progression for each cup",
+    
+    // Footer & Credits
+    copyright: "© 2025",
+    builtWith: "Built with",
+    love: "love",
+    by: "by",
+    author: "Ollie",
+    
+    // Update Modal
+    updateFixtures: "Update Fixtures",
+    runScraper: "Run scraper and refresh data",
+    enterSecret: "Enter the secret to trigger the scraper and refresh the JSON files.",
+    password: "Password",
+    runUpdate: "Run Update",
+    authenticating: "Authenticating…",
+    dispatching: "Dispatching GitHub Action…",
+    running: "Scraper running on GitHub…",
+    committing: "Committing JSON…",
+    done: "All done — refresh to see changes.",
+    pleaseEnterPassword: "Please enter the admin password.",
+    
+    // Table Headers
+    position: "Pos",
+    teamName: "Team",
+    gamesPlayed: "P",
+    wins: "W",
+    losses: "L",
+    draws: "D",
+    goalsFor: "F",
+    goalsAgainst: "A",
+    goalDifference: "GD",
+    points: "Pts",
+    
+    // Competition Names
+    welshCup: "Welsh Cup",
+    cardiffCup: "Cardiff Cup",
+    friendlies: "Friendlies",
+    welshCupFull: "U12 Boys Welsh Cup - Cardiff & Vale",
+    cardiffCupFull: "Year 7 Boys Cardiff & Vale Cup",
+    friendliesFull: "Friendlies",
+    
+    // Season & Dates
+    season: "Season",
+    currentSeason: "2025-26",
+    lastUpdated: "Last Updated",
+    
+    // Special Values
+    bye: "BYE",
+    tbd: "TBD",
+    tba: "TBA",
+    na: "N/A",
+    dash: "-",
+    
+    // Success/Error Messages
+    success: "Success",
+    error: "Error",
+    warning: "Warning",
+    info: "Information",
+    successMessage: "Operation completed successfully",
+    errorMessage: "An error occurred",
+    warningMessage: "Please note",
+    infoMessage: "Information",
+    
+    // Print & Export
+    print: "Print",
+    export: "Export",
+    download: "Download",
+    share: "Share",
+    
+    // Time & Dates
+    today: "Today",
+    yesterday: "Yesterday",
+    tomorrow: "Tomorrow",
+    thisWeek: "This Week",
+    lastWeek: "Last Week",
+    nextWeek: "Next Week",
+    thisMonth: "This Month",
+    lastMonth: "Last Month",
+    nextMonth: "Next Month",
+    thisYear: "This Year",
+    lastYear: "Last Year",
+    nextYear: "Next Year",
+    
+    // Meta & SEO
+    metaDescription: "Interactive bilingual dashboard for the Year 7 Football Cups — Welsh Cup, Cardiff Cup, and Friendlies. Auto-updating stats, live tables, and knockout brackets.",
+    teamDashboardDescription: "View detailed stats, match history, and performance for every team in the Year 7 Football Cups.",
+    bracketsDescription: "View knockout rounds, results, and progression for each cup competition.",
+    
+    // Additional UI Elements
+    notes: "Notes",
+    dash: "-"
   },
   cy: {
+    // Main Navigation & Headers
     dashboardTitle: "Dangosfwrdd Cwpanau Blwyddyn 7 2025",
     dashboard: "Dangosfwrdd",
     teamDashboard: "Dangosfwrdd Tim",
     brackets: "Bracetiau",
+    
+    // Page Titles & Descriptions
     welshCupOverview: "Trosolwg Cwpan Cymru",
-    selectTeam: "Dewiswch Tim:",
-    selectData: "Dewiswch Ddata:",
     cardiffCupOverview: "Trosolwg Cwpan Caerdydd",
     friendliesOverview: "Trosolwg Gemau Cyfeillgar",
+    leaderboard: "Tabl Cynghrair",
+    teamStats: "Ystadegau Tim",
+    matchHistory: "Hanes Gemau",
+    
+    // Form Labels & Controls
+    selectTeam: "Dewiswch Tim:",
+    selectData: "Dewiswch Ddata:",
+    selectCompetition: "Dewiswch Gystadleuaeth:",
+    chooseTeam: "--Dewiswch Dim--",
+    chooseData: "--Ystadegau Tim / Hanes Gemau--",
+    chooseCompetition: "--Dewiswch Gystadleuaeth--",
+    
+    // Data Headers & Labels
     stats: "Ystadegau",
-    played: "Gemau",
+    statistics: "Ystadegau",
+    played: "Chwaraeodd",
+    games: "Gemau",
     wins: "Enillodd",
+    losses: "Collodd",
+    draws: "Gêm Gyfartal",
     gf: "Gol I",
+    goalsFor: "Goliau I",
     ga: "Gol Yn Erbyn",
+    goalsAgainst: "Goliau Yn Erbyn",
     gd: "Gwahaniaeth Gol",
-    notes: "Nodiadau:",
-    welshMatches: "Gemau Cymru",
+    goalDifference: "Gwahaniaeth Goliau",
+    points: "Pwyntiau",
+    position: "Safle",
+    rank: "Rheng",
+    team: "Tim",
+    teams: "Timau",
+    
+    // Match Information
+    welshMatches: "Gemau Cwpan Cymru",
+    cardiffMatches: "Gemau Cwpan Caerdydd",
+    friendliesMatches: "Gemau Cyfeillgar",
     round: "Rownd",
+    rounds: "Rhodau",
     deadline: "Dyddiad Cau",
     home: "Cartref",
+    away: "Ffwrdd",
     hScore: "SG Cartref",
     aScore: "SG Ffwrdd",
-    away: "Ffwrdd",
+    homeScore: "Sgôr Cartref",
+    awayScore: "Sgôr Ffwrdd",
     winner: "Enillydd",
     date: "Dyddiad",
     matchNotes: "Hanes Gemau",
-    leaderboard: "Tabl Cynghrair",
-    refresh: "Adnewyddu Data",
-    lastUpdated: "Diweddarwyd Diwethaf:"
+    game: "Gêm",
+    games: "Gemau",
+    match: "Gêm",
+    matches: "Gemau",
+    
+    // Status & Messages
+    loading: "Yn Llwytho...",
+    loadingData: "Yn llwytho data...",
+    loadingLeaderboard: "Yn llwytho tabl cynghrair...",
+    loadingBrackets: "Yn llwytho bracetiau...",
+    selectTeamsToView: "Dewiswch dimau i weld data...",
+    noDataAvailable: "Dim data ar gael",
+    noMatchData: "Dim data gêm ar gael",
+    noBracketData: "Dim data bracet ar gael",
+    errorLoadingData: "Gwall wrth lwytho data. Gwiriwch eich ffeiliau JSON neu gysylltiad rhwydwaith.",
+    unexpectedError: "Digwyddodd gwall annisgwyl. Adnewyddwch y dudalen os gwelwch yn dda.",
+    networkError: "Digwyddodd gwall rhwydwaith. Gwiriwch eich cysylltiad a rhoi cynnig arall arni.",
+    dataLoadedSuccessfully: "Llwythwyd data yn llwyddiannus!",
+    teamsFound: "dimau wedi'u darganfod",
+    refreshData: "Adnewyddu Data",
+    lastUpdated: "Diweddarwyd Diwethaf:",
+    unknown: "Anhysbys",
+    
+    // Buttons & Actions
+    refresh: "Adnewyddu",
+    update: "Diweddaru",
+    retry: "Rhoi Cynnig Arall",
+    close: "Cau",
+    cancel: "Canslo",
+    confirm: "Cadarnhau",
+    save: "Arbed",
+    edit: "Golygu",
+    delete: "Dileu",
+    add: "Ychwanegu",
+    remove: "Tynnu",
+    search: "Chwilio",
+    filter: "Hidlo",
+    sort: "Trefnu",
+    view: "Gweld",
+    show: "Dangos",
+    hide: "Cuddio",
+    
+    // Language & Theme
+    language: "Iaith",
+    theme: "Thema",
+    lightMode: "Modd Golau",
+    darkMode: "Modd Tywyll",
+    english: "Saesneg",
+    welsh: "Cymraeg",
+    switchToEnglish: "Newid i'r Saesneg",
+    switchToWelsh: "Newid i'r Gymraeg",
+    toggleDarkMode: "Toglo modd tywyll",
+    
+    // Accessibility
+    skipToMainContent: "Neidio i'r prif gynnwys",
+    mainNavigation: "Prif lwybr",
+    languageSwitch: "Newid iaith",
+    selectTeamLabel: "Dewis Tim",
+    selectDataLabel: "Dewis Math o Ddata",
+    selectCompetitionLabel: "Dewis cystadleuaeth i'w harddangos",
+    teamDetailsDisplay: "Arddangos manylion tim",
+    welshCupBracket: "Bracet Cwpan Cymru",
+    cardiffCupBracket: "Bracet Cwpan Caerdydd",
+    currentStandings: "Tabl safleoedd cyfredol yn dangos rheng timau, gemau a chwaraeodd, buddugoliaethau, goliau i, goliau yn erbyn, a gwahaniaeth goliau",
+    selectTeamAndData: "Dewiswch dim a math o ddata i weld ystadegau neu hanes gemau ar gyfer Cwpan Cymru",
+    selectTeamAndDataCardiff: "Dewiswch dim a math o ddata i weld ystadegau neu hanes gemau ar gyfer Cwpan Caerdydd",
+    selectTeamAndDataFriendlies: "Dewiswch dim a math o ddata i weld ystadegau cyfeillgar neu hanes gemau",
+    exploreCombinedStats: "Archwiliwch ystadegau cyfuno a hanes gemau ar gyfer pob tim ar draws pob cystadleuaeth",
+    viewKnockoutRounds: "Gweld y rhodau knockout, canlyniadau, a datblygiad ar gyfer pob cwpan",
+    
+    // Footer & Credits
+    copyright: "© 2025",
+    builtWith: "Adeiladwyd gyda",
+    love: "cariad",
+    by: "gan",
+    author: "Ollie",
+    
+    // Update Modal
+    updateFixtures: "Diweddaru Ffixtures",
+    runScraper: "Rhedeg scraper ac adnewyddu data",
+    enterSecret: "Rhowch y gyfrinach i sbarduno'r scraper ac adnewyddu'r ffeiliau JSON.",
+    password: "Cyfrinair",
+    runUpdate: "Rhedeg Diweddariad",
+    authenticating: "Yn dilysu...",
+    dispatching: "Yn anfon GitHub Action...",
+    running: "Scraper yn rhedeg ar GitHub...",
+    committing: "Yn cyflwyno JSON...",
+    done: "Popeth wedi'i wneud — adnewyddwch i weld newidiadau.",
+    pleaseEnterPassword: "Rhowch gyfrinair y gweinyddwr os gwelwch yn dda.",
+    
+    // Table Headers
+    position: "Safle",
+    teamName: "Tim",
+    gamesPlayed: "Chwaraeodd",
+    wins: "Enillodd",
+    losses: "Collodd",
+    draws: "Gêm Gyfartal",
+    goalsFor: "Goliau I",
+    goalsAgainst: "Goliau Yn Erbyn",
+    goalDifference: "Gwahaniaeth Goliau",
+    points: "Pwyntiau",
+    
+    // Competition Names
+    welshCup: "Cwpan Cymru",
+    cardiffCup: "Cwpan Caerdydd",
+    friendlies: "Cyfeillgar",
+    welshCupFull: "Cwpan Cymru Bechgyn U12 - Caerdydd a'r Fro",
+    cardiffCupFull: "Cwpan Bechgyn Blwyddyn 7 Caerdydd a'r Fro",
+    friendliesFull: "Cyfeillgar",
+    
+    // Season & Dates
+    season: "Tymor",
+    currentSeason: "2025-26",
+    lastUpdated: "Diweddarwyd Diwethaf",
+    
+    // Special Values
+    bye: "BYE",
+    tbd: "I'w Benderfynu",
+    tba: "I'w Gyhoeddi",
+    na: "N/A",
+    dash: "-",
+    
+    // Success/Error Messages
+    success: "Llwyddiant",
+    error: "Gwall",
+    warning: "Rhybudd",
+    info: "Gwybodaeth",
+    successMessage: "Cwblhawyd y weithred yn llwyddiannus",
+    errorMessage: "Digwyddodd gwall",
+    warningMessage: "Sylwch os gwelwch yn dda",
+    infoMessage: "Gwybodaeth",
+    
+    // Print & Export
+    print: "Argraffu",
+    export: "Allforio",
+    download: "Lawrlwytho",
+    share: "Rhannu",
+    
+    // Time & Dates
+    today: "Heddiw",
+    yesterday: "Ddoe",
+    tomorrow: "Yfory",
+    thisWeek: "Yr Wythnos Hon",
+    lastWeek: "Wythnos Diwethaf",
+    nextWeek: "Wythnos Nesaf",
+    thisMonth: "Y Mis Hwn",
+    lastMonth: "Mis Diwethaf",
+    nextMonth: "Mis Nesaf",
+    thisYear: "Eleni",
+    lastYear: "Llynedd",
+    nextYear: "Blwyddyn Nesaf",
+    
+    // Meta & SEO
+    metaDescription: "Dangosfwrdd dwyieithog rhyngweithiol ar gyfer Cwpanau Pêl-droed Blwyddyn 7 — Cwpan Cymru, Cwpan Caerdydd, a Chyfeillgar. Ystadegau sy'n adnewyddu'n awtomatig, tablau byw, a bracetiau knockout.",
+    teamDashboardDescription: "Gweld ystadegau manwl, hanes gemau, a pherfformiad pob tim yn Cwpanau Pêl-droed Blwyddyn 7.",
+    bracketsDescription: "Gweld rhodau knockout, canlyniadau, a datblygiad ar gyfer pob cystadleuaeth cwpan.",
+    
+    // Additional UI Elements
+    notes: "Nodiadau",
+    dash: "-"
   }
 };
 
 let currentLang = localStorage.getItem("lang") || "en";
+
+// ============================================================
+// LANGUAGE BUTTON MANAGEMENT
+// ============================================================
+function updateLanguageButton() {
+  const enButton = document.getElementById("lang-en");
+  const cyButton = document.getElementById("lang-cy");
+  
+  if (!enButton || !cyButton) return;
+  
+  // Hide both buttons first
+  enButton.style.display = "none";
+  cyButton.style.display = "none";
+  
+  // Show the button for the OTHER language (the one you can switch TO)
+  if (currentLang === "en") {
+    cyButton.style.display = "block";
+    cyButton.textContent = "CY";
+    cyButton.setAttribute("aria-label", "Switch to Welsh");
+  } else {
+    enButton.style.display = "block";
+    enButton.textContent = "EN";
+    enButton.setAttribute("aria-label", "Switch to English");
+  }
+}
 
 // =======================
 // GLOBAL STATE
@@ -119,23 +707,161 @@ const elements = {
 };
 
 // ============================================================
-// LANGUAGE SWITCHER
+// COMPREHENSIVE TRANSLATION SYSTEM
 // ============================================================
 function switchLanguage(lang) {
-  if (!translations[lang]) return;
+  logger.functionEntry("switchLanguage", { lang });
+  
+  if (!translations[lang]) {
+    logger.warn(`Language ${lang} not supported`);
+    return;
+  }
+  
+  const oldLang = currentLang;
   currentLang = lang;
   localStorage.setItem("lang", lang);
-
+  
+  logger.dataChange("language", oldLang, lang);
+  
+  // Update document language attribute
+  document.documentElement.lang = lang;
+  
+  // Translate all elements with data-i18n attributes
   document.querySelectorAll("[data-i18n]").forEach(el => {
     const key = el.dataset.i18n;
-    if (translations[lang][key]) el.textContent = translations[lang][key];
+    const translation = getTranslation(key, lang);
+    if (translation) {
+      if (el.tagName === 'INPUT' && (el.type === 'text' || el.type === 'password')) {
+        el.placeholder = translation;
+      } else if (el.hasAttribute('aria-label')) {
+        el.setAttribute('aria-label', translation);
+      } else if (el.hasAttribute('title')) {
+        el.setAttribute('title', translation);
+      } else {
+        el.textContent = translation;
+      }
+    }
   });
-
+  
+  // Update page title
+  const titleKey = document.querySelector('title')?.dataset.i18n;
+  if (titleKey) {
+    document.title = getTranslation(titleKey, lang) || document.title;
+  }
+  
+  // Update meta description
+  const metaDesc = document.querySelector('meta[name="description"]');
+  if (metaDesc) {
+    const descKey = metaDesc.dataset.i18n;
+    if (descKey) {
+      metaDesc.content = getTranslation(descKey, lang) || metaDesc.content;
+    }
+  }
+  
+  // Update language button display
+  logger.debug("Updating language button display");
+  updateLanguageButton();
+  
+  // Re-render all dynamic content
+  logger.debug("Re-rendering all dynamic content");
   renderAll();
+  
+  // Re-translate any dynamically generated content
+  logger.debug("Re-translating dynamically generated content");
+  setTimeout(() => {
+    const elementsToTranslate = document.querySelectorAll('[data-i18n]');
+    logger.debug(`Found ${elementsToTranslate.length} elements to re-translate`);
+    
+    elementsToTranslate.forEach(el => {
+      const key = el.dataset.i18n;
+      const translation = getTranslation(key, lang);
+      if (translation) {
+        if (el.tagName === 'INPUT' && (el.type === 'text' || el.type === 'password')) {
+          el.placeholder = translation;
+        } else if (el.hasAttribute('aria-label')) {
+          el.setAttribute('aria-label', translation);
+        } else if (el.hasAttribute('title')) {
+          el.setAttribute('title', translation);
+        } else {
+          el.textContent = translation;
+        }
+      }
+    });
+    
+    logger.functionExit("switchLanguage");
+    logger.success(`Language switched to ${lang}`, { 
+      elementsTranslated: elementsToTranslate.length 
+    });
+  }, 100);
 }
 
-document.getElementById("lang-en")?.addEventListener("click", () => switchLanguage("en"));
-document.getElementById("lang-cy")?.addEventListener("click", () => switchLanguage("cy"));
+function getTranslation(key, lang = currentLang) {
+  if (!key) return null;
+  
+  // Handle nested keys (e.g., "cup.welsh.name")
+  const keys = key.split('.');
+  let translation = translations[lang];
+  
+  for (const k of keys) {
+    if (translation && typeof translation === 'object' && k in translation) {
+      translation = translation[k];
+    } else {
+      return null;
+    }
+  }
+  
+  return typeof translation === 'string' ? translation : null;
+}
+
+function translate(key, ...args) {
+  const translation = getTranslation(key);
+  if (!translation) {
+    console.warn(`Translation missing for key: ${key}`);
+    return key;
+  }
+  
+  // Handle string interpolation
+  if (args.length > 0) {
+    return translation.replace(/\{(\d+)\}/g, (match, index) => {
+      return args[parseInt(index)] || match;
+    });
+  }
+  
+  return translation;
+}
+
+// Enhanced translation for dynamic content
+function translateDynamicContent(container, contentKey, data = {}) {
+  if (!container) return;
+  
+  const template = getTranslation(contentKey);
+  if (!template) {
+    console.warn(`Translation template missing for: ${contentKey}`);
+    return;
+  }
+  
+  // Replace placeholders with data
+  let content = template;
+  Object.keys(data).forEach(key => {
+    const placeholder = `{${key}}`;
+    content = content.replace(new RegExp(placeholder, 'g'), data[key] || '');
+  });
+  
+  container.innerHTML = content;
+}
+
+// Language toggle event listeners
+document.getElementById("lang-en")?.addEventListener("click", () => {
+  if (currentLang === "cy") {
+    switchLanguage("en");
+  }
+});
+
+document.getElementById("lang-cy")?.addEventListener("click", () => {
+  if (currentLang === "en") {
+    switchLanguage("cy");
+  }
+});
 
 // ============================================================
 // DATA FETCHING + NORMALIZATION (robust to any team schema)
@@ -234,8 +960,9 @@ function normalizeTeams(teamsRaw, cups) {
 }
 
 async function loadData() {
+  logger.functionEntry("loadData");
   try {
-    console.info("Loading: start");
+    logger.info("Starting data loading process");
     
     // Show loading states
     showLoadingState(elements.leaderboard, "Loading leaderboard...");
@@ -246,44 +973,63 @@ async function loadData() {
     });
 
     // Load the cups first so we can derive teams if needed
+    logger.debug("Fetching cup data files");
     const [welsh, cardiff, friendlies] = await Promise.all([
       fetchJSON("welsh.json"),
       fetchJSON("cardiff.json"),
       fetchJSON("friendlies.json")
     ]);
+    
+    logger.info("Cup data loaded", { 
+      welsh: welsh?.rounds?.length || 0, 
+      cardiff: cardiff?.rounds?.length || 0, 
+      friendlies: friendlies?.rounds?.length || 0 
+    });
 
     // Load teams + updated, but both are optional
+    logger.debug("Fetching teams and metadata");
     const [teamsRaw, updated] = await Promise.all([
       fetchJSON("teams.json").catch(() => null),
       fetchJSON("last_updated.json").catch(() => ({ lastUpdated: "Unknown" }))
     ]);
 
     // Update state
+    logger.debug("Updating application state");
     state.cups = { Welsh: welsh || {}, Cardiff: cardiff || {}, Friendlies: friendlies || {} };
     state.teams = normalizeTeams(teamsRaw, state.cups);
     state.lastUpdated = updated?.lastUpdated || "Unknown";
 
+    logger.info("Teams processed", {
+      count: state.teams.length,
+      sample: state.teams.slice(0, 5).map(t => t.name),
+      lastUpdated: state.lastUpdated
+    });
+
     // Compute current season stats from cup rounds (overrides stale numbers)
+    logger.debug("Calculating team statistics");
     calculateStats();
+    
+    logger.debug("Rendering all components");
     renderAll();
 
-    // [LOGGING]
-    console.debug("teams ready", {
-      count: state.teams.length,
-      sample: state.teams.slice(0, 5).map(t => t.name)
+    logger.success("Data loading completed", { 
+      lastUpdated: state.lastUpdated,
+      teamsCount: state.teams.length,
+      cupsLoaded: Object.keys(state.cups).length
     });
-    console.info("Loading: done", { lastUpdated: state.lastUpdated });
     
   } catch (err) {
-    console.error("Error loading data", err);
+    logger.errorWithStack("Error loading data", err);
     showErrorMessage(
-      "Error loading data. Please check your JSON files or network connection.",
+      translate("errorLoadingData"),
       () => {
-        console.info("Retrying data load...");
+        logger.info("User retrying data load");
         loadData();
       }
     );
   }
+  
+  logger.functionExit("loadData");
 }
 
 function showErrorMessage(message, retryCallback = null) {
@@ -295,12 +1041,12 @@ function showErrorMessage(message, retryCallback = null) {
         el.innerHTML = `
           <div class="error-message fade-in">
             <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
-              <span style="font-size: 1.2rem;">⚠️</span>
+              <span style="font-size: 1.2rem;">⚠</span>
               <span>${message}</span>
             </div>
             ${retryCallback ? `
               <button onclick="(${retryCallback})()" class="cta" style="margin-top: 0.5rem;">
-                🔄 Try Again
+                ↻ ${translate("retry")}
               </button>
             ` : ''}
           </div>`;
@@ -308,12 +1054,13 @@ function showErrorMessage(message, retryCallback = null) {
     });
 }
 
-function showLoadingState(container, message = "Loading...") {
+function showLoadingState(container, message = null) {
   if (!container) return;
+  const loadingMessage = message || translate("loading");
   container.innerHTML = `
     <div class="loading-placeholder fade-in" style="text-align: center; padding: 2rem;">
       <div class="loading-spinner"></div>
-      <p style="margin-top: 1rem; color: #666;">${message}</p>
+      <p style="margin-top: 1rem; color: #666;">${loadingMessage}</p>
     </div>`;
 }
 
@@ -352,7 +1099,7 @@ function populateDropdowns(cupName) {
   const { team, data } = elements.dropdowns[cupName];
   if (!team) return;
 
-  team.innerHTML = `<option value="">--${translations[currentLang].selectTeam.replace(":", "")}--</option>`;
+  team.innerHTML = `<option value="">--${translate("chooseTeam")}--</option>`;
   state.teams.forEach(t => (team.innerHTML += `<option value="${t.name}">${t.name}</option>`));
 
   if (data) data.style.display = "none";
@@ -379,7 +1126,7 @@ function initTeamDashboard() {
 
   // Populate dropdowns
   teamSelect.innerHTML =
-    `<option value="">--${translations[currentLang].selectTeam.replace(":", "")}--</option>`;
+    `<option value="">--${translate("chooseTeam")}--</option>`;
   state.teams.forEach(t => {
     const opt = document.createElement("option");
     opt.value = t.name;
@@ -388,9 +1135,9 @@ function initTeamDashboard() {
   });
 
   dataSelect.innerHTML = `
-    <option value="">--${translations[currentLang].selectData.replace(":", "")}--</option>
-    <option value="stats">${translations[currentLang].stats}</option>
-    <option value="history">${translations[currentLang].matchNotes || "Match History"}</option>
+    <option value="">--${translate("chooseData")}--</option>
+    <option value="stats">${translate("stats")}</option>
+    <option value="history">${translate("matchHistory")}</option>
   `;
 
   // Handle dropdown changes
@@ -434,14 +1181,14 @@ function initTeamDashboard() {
 // ============================================================
 function renderTeamStats(team) {
   return `
-    <h3>${team.name} - ${translations[currentLang].stats}</h3>
+    <h3>${team.name} - ${translate("stats")}</h3>
     <table>
       <tr>
-        <th>${translations[currentLang].played}</th>
-        <th>${translations[currentLang].wins}</th>
-        <th>${translations[currentLang].gf}</th>
-        <th>${translations[currentLang].ga}</th>
-        <th>${translations[currentLang].gd}</th>
+        <th>${translate("played")}</th>
+        <th>${translate("wins")}</th>
+        <th>${translate("gf")}</th>
+        <th>${translate("ga")}</th>
+        <th>${translate("gd")}</th>
       </tr>
       <tr>
         <td>${team.played}</td>
@@ -451,28 +1198,28 @@ function renderTeamStats(team) {
         <td>${team.gd}</td>
       </tr>
     </table>
-    <p>${translations[currentLang].notes} ${team.notes || "-"}</p>
+    <p>${translate("notes")} ${team.notes || translate("dash")}</p>
   `;
 }
 
 function renderMatchHistory(teamName, cupName, data) {
   const rounds = data.rounds || [];
-  if (!rounds.length) return `<p>No match data available.</p>`;
+  if (!rounds.length) return `<p>${translate("noMatchData")}</p>`;
 
   return `
-    <h3>${translations[currentLang][cupName.toLowerCase() + "Matches"] || cupName + " Matches"}</h3>
+    <h3>${translate(cupName.toLowerCase() + "Matches")}</h3>
     ${rounds
       .map(
         r => `
-        <h4>${translations[currentLang].round} ${r.round_number || ""} - ${translations[currentLang].deadline}: ${r.deadlines?.english || "-"}</h4>
+        <h4>${translate("round")} ${r.round_number || ""} - ${translate("deadline")}: ${r.deadlines?.english || translate("dash")}</h4>
         <table>
           <tr>
-            <th>${translations[currentLang].home}</th>
-            <th>${translations[currentLang].hScore}</th>
-            <th>${translations[currentLang].aScore}</th>
-            <th>${translations[currentLang].away}</th>
-            <th>${translations[currentLang].winner}</th>
-            <th>${translations[currentLang].date}</th>
+            <th>${translate("home")}</th>
+            <th>${translate("hScore")}</th>
+            <th>${translate("aScore")}</th>
+            <th>${translate("away")}</th>
+            <th>${translate("winner")}</th>
+            <th>${translate("date")}</th>
           </tr>
           ${r.games
             ?.filter(g => g.home_team === teamName || g.away_team === teamName)
@@ -502,19 +1249,20 @@ function renderLeaderboard() {
     (a, b) => b.wins - a.wins || b.gd - a.gd || b.gf - a.gf
   );
 
-  el.innerHTML = `
-    <h2 class="fade-in">${translations[currentLang].leaderboard}</h2>
+  // Debug: Check what translate function returns
+  const htmlContent = `
+    <h2 class="fade-in">${translate("leaderboard")}</h2>
     <div class="table-container fade-in">
       <table>
         <thead>
           <tr>
             <th>#</th>
-            <th>Team</th>
-            <th data-numeric="true">${translations[currentLang].played}</th>
-            <th data-numeric="true">${translations[currentLang].wins}</th>
-            <th data-numeric="true">${translations[currentLang].gf}</th>
-            <th data-numeric="true">${translations[currentLang].ga}</th>
-            <th data-numeric="true">${translations[currentLang].gd}</th>
+            <th>${translate("teamName")}</th>
+            <th data-numeric="true">${translate("played")}</th>
+            <th data-numeric="true">${translate("wins")}</th>
+            <th data-numeric="true">${translate("gf")}</th>
+            <th data-numeric="true">${translate("ga")}</th>
+            <th data-numeric="true">${translate("gd")}</th>
           </tr>
         </thead>
         <tbody>
@@ -523,7 +1271,7 @@ function renderLeaderboard() {
               (t, i) =>
                 `<tr class="slide-in-left" style="animation-delay: ${i * 0.1}s">
                   <td class="rank">${i + 1}</td>
-                  <td class="team-name">${t.name}</td>
+                  <td class="team-name">${t.name || translate("unknown")}</td>
                   <td data-numeric="true">${t.played}</td>
                   <td data-numeric="true">${t.wins}</td>
                   <td data-numeric="true">${t.gf}</td>
@@ -535,26 +1283,28 @@ function renderLeaderboard() {
         </tbody>
       </table>
     </div>`;
+  
+  el.innerHTML = htmlContent;
 }
 
 function renderBracket(cupName, data, container) {
   if (!container) return;
   const rounds = data.rounds || [];
-  if (!rounds.length) return (container.innerHTML = `<p>No bracket data available.</p>`);
+  if (!rounds.length) return (container.innerHTML = `<p>${translate("noBracketData")}</p>`);
 
   container.innerHTML = rounds
     .map(
       r => `
       <div class="round">
-        <h3>${translations[currentLang].round} ${r.round_number || ""} - ${translations[currentLang].deadline}: ${r.deadlines?.english || "-"}</h3>
+        <h3>${translate("round")} ${r.round_number || ""} - ${translate("deadline")}: ${r.deadlines?.english || translate("dash")}</h3>
         <div class="games">
           ${r.games
             ?.map(
               g => `
             <div class="game" title="${g.notes || ""}">
               <span class="team ${g.winner === g.home_team ? "winner" : ""}">${g.home_team}</span>
-              <span class="score">${g.home_score ?? "-"}</span> -
-              <span class="score">${g.away_score ?? "-"}</span>
+              <span class="score">${g.home_score ?? translate("dash")}</span> -
+              <span class="score">${g.away_score ?? translate("dash")}</span>
               <span class="team ${g.winner === g.away_team ? "winner" : ""}">${g.away_team}</span>
             </div>`
             )
@@ -573,7 +1323,7 @@ function renderBrackets() {
 function renderLastUpdated() {
   if (elements.lastUpdated) {
     elements.lastUpdated.textContent =
-      `${translations[currentLang].lastUpdated} ${state.lastUpdated}`;
+      `${translate("lastUpdated")} ${state.lastUpdated}`;
   }
 }
 
@@ -586,15 +1336,15 @@ const savedTheme = localStorage.getItem("theme");
 
 if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
   document.body.classList.add("dark");
-  themeToggle.textContent = "🌙";
+  themeToggle.textContent = "☾";
 } else {
-  themeToggle.textContent = "🌞";
+  themeToggle.textContent = "☀";
 }
 
 themeToggle?.addEventListener("click", () => {
   document.body.classList.toggle("dark");
   const isDark = document.body.classList.contains("dark");
-  themeToggle.textContent = isDark ? "🌙" : "🌞";
+  themeToggle.textContent = isDark ? "☾" : "☀";
   localStorage.setItem("theme", isDark ? "dark" : "light");
 });
 
@@ -771,22 +1521,26 @@ startBtn?.addEventListener("click", async () => {
 
 // Global error surfaces
 window.addEventListener("error", e => {
-  emit(
-    "critical",
-    "window.onerror",
-    { filename: e.filename, lineno: e.lineno, colno: e.colno },
-    e.error || e.message
-  );
+  logger.errorWithStack("Global JavaScript error", {
+    filename: e.filename,
+    lineno: e.lineno,
+    colno: e.colno,
+    error: e.error?.message,
+    stack: e.error?.stack
+  });
   
   // Show user-friendly error message
-  showErrorMessage("An unexpected error occurred. Please refresh the page.");
+  showErrorMessage(translate("unexpectedError"));
 });
 
 window.addEventListener("unhandledrejection", e => {
-  emit("error", "unhandledrejection", null, e.reason || "Promise rejection");
+  logger.errorWithStack("Unhandled promise rejection", {
+    reason: e.reason,
+    promise: e.promise
+  });
   
   // Show user-friendly error message
-  showErrorMessage("A network error occurred. Please check your connection and try again.");
+  showErrorMessage(translate("networkError"));
 });
 
   // Fetch timing wrapper (transparent; returns the same response)
@@ -794,14 +1548,16 @@ window.addEventListener("unhandledrejection", e => {
   window.fetch = async (...args) => {
     const started = performance.now();
     const url = args[0];
+    logger.debug(`Fetching: ${url}`);
+    
     try {
       const res = await _fetch(...args);
       const dur = Math.round(performance.now() - started);
-      emit("debug", "fetch", { url, status: res.status, ms: dur });
+      logger.apiCall("GET", url, res.status, `${dur}ms`);
       return res;
     } catch (err) {
       const dur = Math.round(performance.now() - started);
-      emit("error", "fetch error", { url, ms: dur }, err);
+      logger.errorWithStack(`Fetch failed: ${url}`, err);
       throw err;
     }
   };
@@ -960,21 +1716,33 @@ function setupKeyboardNavigation() {
 // GLOBAL RENDER + REFRESH HANDLERS
 // ============================================================
 function renderAll() {
+  logger.functionEntry("renderAll");
+  
   if (!state.teams?.length) {
-    console.warn("No teams found — check teams.json");
+    logger.warn("No teams found — check teams.json");
     return;
   }
-  console.debug("renderAll: start");
+  
+  logger.debug("Starting render all components", { teamsCount: state.teams.length });
 
   Object.keys(elements.dropdowns).forEach(cupName => {
-    if (elements.dropdowns[cupName]) populateDropdowns(cupName);
+    if (elements.dropdowns[cupName]) {
+      logger.debug(`Populating dropdown for ${cupName}`);
+      populateDropdowns(cupName);
+    }
   });
 
+  logger.debug("Rendering leaderboard");
   renderLeaderboard();
+  
+  logger.debug("Rendering brackets");
   renderBrackets();
+  
+  logger.debug("Rendering last updated info");
   renderLastUpdated();
 
-  console.debug("renderAll: done");
+  logger.functionExit("renderAll");
+  logger.debug("All components rendered successfully");
 }
 
 // ============================================================
@@ -1007,17 +1775,36 @@ if ('serviceWorker' in navigator) {
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
-  console.info("app: DOMContentLoaded");
+  logger.info("Application starting", { 
+    userAgent: navigator.userAgent,
+    language: navigator.language,
+    platform: navigator.platform,
+    cookieEnabled: navigator.cookieEnabled,
+    onLine: navigator.onLine,
+    viewport: {
+      width: window.innerWidth,
+      height: window.innerHeight
+    }
+  });
+  
+  logger.time("app-initialization");
   
   // Setup performance optimizations
+  logger.debug("Setting up performance optimizations");
   setupIntersectionObserver();
   setupScrollOptimizations();
   preloadCriticalResources();
   
   // Setup accessibility features
+  logger.debug("Setting up accessibility features");
   setupKeyboardNavigation();
   
+  // Set initial language button display
+  logger.debug("Initializing language button");
+  updateLanguageButton();
+  
   // Preload critical resources
+  logger.debug("Preloading critical resources");
   const criticalResources = ['style.css', 'script.js'];
   criticalResources.forEach(resource => {
     const link = document.createElement('link');
@@ -1025,21 +1812,53 @@ window.addEventListener("DOMContentLoaded", async () => {
     link.href = resource;
     link.as = resource.endsWith('.css') ? 'style' : 'script';
     document.head.appendChild(link);
+    logger.debug(`Preloaded resource: ${resource}`);
   });
   
-  await loadData();
+  try {
+    logger.time("data-loading");
+    await loadData();
+    logger.timeEnd("data-loading");
+    logger.success("Data loaded successfully");
+  } catch (error) {
+    logger.errorWithStack("Failed to load data", error);
+  }
+  
   setTimeout(() => {
-    console.debug("app: post-load renderAll+initTeamDashboard");
+    logger.time("render-all");
     renderAll();
+    logger.timeEnd("render-all");
+    
+    logger.time("team-dashboard-init");
     initTeamDashboard(); // Initialize teamCard.html if present
+    logger.timeEnd("team-dashboard-init");
+    
+    // Ensure language button is properly displayed after everything loads
+    updateLanguageButton();
+    logger.timeEnd("app-initialization");
+    logger.success("Application fully initialized");
   }, 300);
 });
 
 elements.refresh?.addEventListener("click", async () => {
+  logger.userAction("refresh-button-clicked");
+  
   elements.refresh.disabled = true;
-  const originalText = translations[currentLang].refresh;
+  const originalText = translate("refresh");
   elements.refresh.textContent = `${originalText}...`;
-  await loadData();
+  
+  logger.info("User triggered data refresh");
+  logger.time("refresh-data");
+  
+  try {
+    await loadData();
+    logger.timeEnd("refresh-data");
+    logger.success("Data refresh completed successfully");
+  } catch (error) {
+    logger.timeEnd("refresh-data");
+    logger.errorWithStack("Data refresh failed", error);
+  }
+  
   elements.refresh.textContent = originalText;
   elements.refresh.disabled = false;
 });

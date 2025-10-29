@@ -11,6 +11,7 @@
   <title data-i18n="dashboardTitle">Year 7 Cups Dashboard 2025</title>
   <meta
     name="description"
+    data-i18n="metaDescription"
     content="Interactive bilingual dashboard for the Year 7 Football Cups — Welsh Cup, Cardiff Cup, and Friendlies. Auto-updating stats, live tables, and knockout brackets."
   />
   <meta name="theme-color" content="#0077ff" />
@@ -66,7 +67,7 @@
 
 <body class="light">
   <!-- Skip link for keyboard users -->
-  <a href="#main-content" class="sr-only">Skip to main content</a>
+  <a href="#main-content" class="sr-only" data-i18n="skipToMainContent">Skip to main content</a>
 
   <!-- ============== HEADER ============== -->
   <header role="banner">
@@ -77,7 +78,7 @@
         <!-- Language Buttons -->
         <div class="lang-switch" role="group" aria-label="Language switch">
           <button id="lang-en" type="button" aria-label="Switch to English">EN</button>
-          <button id="lang-cy" type="button" aria-label="Newid i'r Gymraeg">CY</button>
+          <button id="lang-cy" type="button" aria-label="Switch to Welsh">CY</button>
         </div>
 
         <!-- Theme Toggle -->
@@ -87,7 +88,8 @@
           type="button"
           aria-label="Toggle dark mode"
           title="Toggle dark mode"
-        >🌙</button>
+          data-i18n="toggleDarkMode"
+        >☾</button>
       </div>
     </div>
 
@@ -106,40 +108,40 @@
       <div class="overview-header">
         <h2 id="overview-title" data-i18n="dashboardTitle">Year 7 Cups Dashboard 2025</h2>
 
-        <div class=	"data-controls">
+        <div class="data-controls">
 			<!-- Update Fixtures (glass) -->
-<button id="update-fixtures-btn" class="pill glass" type="button" title="Run scraper and refresh data">
-  🔄 Update Fixtures
+<button id="update-fixtures-btn" class="pill glass" type="button" title="Run scraper and refresh data" data-i18n="runScraper">
+  ↻ <span data-i18n="updateFixtures">Update Fixtures</span>
 </button>
 
 <!-- Glass Modal -->
 <div id="update-modal" class="glass-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="update-title">
   <div class="glass-modal__card">
-    <button class="glass-modal__close" id="update-close" aria-label="Close">✕</button>
-    <h3 id="update-title">Update Fixtures</h3>
+    <button class="glass-modal__close" id="update-close" aria-label="Close" data-i18n="close">×</button>
+    <h3 id="update-title" data-i18n="updateFixtures">Update Fixtures</h3>
 
-    <p class="update-desc">Enter the secret to trigger the scraper and refresh the JSON files.</p>
+    <p class="update-desc" data-i18n="enterSecret">Enter the secret to trigger the scraper and refresh the JSON files.</p>
 
-    <label for="update-pass" class="update-label">Password</label>
-    <input id="update-pass" type="password" autocomplete="off" inputmode="text" placeholder="••••••••" />
-    <button id="update-start" class="cta">Run Update</button>
+    <label for="update-pass" class="update-label" data-i18n="password">Password</label>
+    <input id="update-pass" type="password" autocomplete="off" inputmode="text" placeholder="••••••••" data-i18n="password" />
+    <button id="update-start" class="cta" data-i18n="runUpdate">Run Update</button>
 
     <ol id="update-steps" class="update-steps" aria-live="polite">
-      <li data-step="auth">Authenticating…</li>
-      <li data-step="dispatch">Dispatching GitHub Action…</li>
-      <li data-step="run">Scraper running on GitHub…</li>
-      <li data-step="commit">Committing JSON…</li>
-      <li data-step="done">All done — refresh to see changes.</li>
+      <li data-step="auth" data-i18n="authenticating">Authenticating…</li>
+      <li data-step="dispatch" data-i18n="dispatching">Dispatching GitHub Action…</li>
+      <li data-step="run" data-i18n="running">Scraper running on GitHub…</li>
+      <li data-step="commit" data-i18n="committing">Committing JSON…</li>
+      <li data-step="done" data-i18n="done">All done — refresh to see changes.</li>
     </ol>
 
-    <p id="update-error" class="update-error" role="alert" hidden></p>
+    <p id="update-error" class="update-error" role="alert" hidden data-i18n="pleaseEnterPassword">Please enter the admin password.</p>
   </div>
 </div>
 		</div>
 
       <!-- Leaderboard (polite live region so screen readers hear updates) -->
       <div id="leaderboard" class="leaderboard-section" role="region" aria-live="polite" aria-label="Leaderboard" aria-describedby="leaderboard-desc">
-        <div id="leaderboard-desc" class="sr-only">Current standings table showing team rankings, games played, wins, goals for, goals against, and goal difference</div>
+        <div id="leaderboard-desc" class="sr-only" data-i18n="currentStandings">Current standings table showing team rankings, games played, wins, goals for, goals against, and goal difference</div>
         <!-- Leaderboard dynamically rendered here -->
       </div>
 	</section>
@@ -147,13 +149,13 @@
     <!-- ====== WELSH CUP ====== -->
     <section class="cup-section" id="welsh-cup" aria-labelledby="welsh-title" role="region" aria-describedby="welsh-help">
       <h2 id="welsh-title" data-i18n="welshCupOverview">Welsh Cup Overview</h2>
-      <p id="welsh-help" class="sr-only">Select a team and data type to view stats or match history for the Welsh Cup.</p>
+      <p id="welsh-help" class="sr-only" data-i18n="selectTeamAndData">Select a team and data type to view stats or match history for the Welsh Cup.</p>
 
       <div class="selectors" role="group" aria-label="Welsh Cup selectors">
         <div>
           <label for="welsh-team" data-i18n="selectTeam">Select Team:</label>
           <select id="welsh-team" aria-label="Select Welsh Cup team" autocomplete="off">
-            <option value="">--Choose a Team--</option>
+            <option value="" data-i18n="chooseTeam">--Choose a Team--</option>
           </select>
         </div>
       </div>
@@ -166,13 +168,13 @@
     <!-- ====== CARDIFF CUP ====== -->
     <section class="cup-section" id="cardiff-cup" aria-labelledby="cardiff-title" role="region" aria-describedby="cardiff-help">
       <h2 id="cardiff-title" data-i18n="cardiffCupOverview">Cardiff Cup Overview</h2>
-      <p id="cardiff-help" class="sr-only">Select a team and data type to view stats or match history for the Cardiff Cup.</p>
+      <p id="cardiff-help" class="sr-only" data-i18n="selectTeamAndDataCardiff">Select a team and data type to view stats or match history for the Cardiff Cup.</p>
 
       <div class="selectors" role="group" aria-label="Cardiff Cup selectors">
         <div>
           <label for="cardiff-team" data-i18n="selectTeam">Select Team:</label>
           <select id="cardiff-team" aria-label="Select Cardiff Cup team" autocomplete="off">
-            <option value="">--Choose a Team--</option>
+            <option value="" data-i18n="chooseTeam">--Choose a Team--</option>
           </select>
         </div>
       </div>
@@ -185,13 +187,13 @@
     <!-- ====== FRIENDLIES ====== -->
     <section class="cup-section" id="friendlies" aria-labelledby="friendlies-title" role="region" aria-describedby="friendlies-help">
       <h2 id="friendlies-title" data-i18n="friendliesOverview">Friendlies Overview</h2>
-      <p id="friendlies-help" class="sr-only">Select a team and data type to view friendlies stats or match history.</p>
+      <p id="friendlies-help" class="sr-only" data-i18n="selectTeamAndDataFriendlies">Select a team and data type to view friendlies stats or match history.</p>
 
       <div class="selectors" role="group" aria-label="Friendlies selectors">
         <div>
           <label for="friendlies-team" data-i18n="selectTeam">Select Team:</label>
           <select id="friendlies-team" aria-label="Select Friendlies team" autocomplete="off">
-            <option value="">--Choose a Team--</option>
+            <option value="" data-i18n="chooseTeam">--Choose a Team--</option>
           </select>
         </div>
       </div>
@@ -205,9 +207,9 @@
   <!-- ============== FOOTER ============== -->
   <footer role="contentinfo">
     <p>
-      © 2025 <span data-i18n="dashboardTitle">Year 7 Cups Dashboard</span> |
-      Built with <span aria-hidden="true">❤️</span><span class="sr-only">love</span> by
-      <strong>Ollie</strong>
+      <span data-i18n="copyright">© 2025</span> <span data-i18n="dashboardTitle">Year 7 Cups Dashboard</span> |
+      <span data-i18n="builtWith">Built with</span> <span aria-hidden="true">♥</span><span class="sr-only" data-i18n="love">love</span> <span data-i18n="by">by</span>
+      <strong data-i18n="author">Ollie</strong>
     </p>
   </footer>
 

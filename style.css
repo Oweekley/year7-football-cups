@@ -235,6 +235,8 @@ nav a.active {
   border-radius: 999px;
 }
 
+/* Language buttons are managed by JavaScript */
+
 .lang-switch button:hover,
 .lang-switch button:focus-visible {
   background: var(--pill-hover);
@@ -505,7 +507,7 @@ tr:last-child td:last-child {
 /* Enhanced table styling for better readability */
 td:first-child {
   font-weight: 600;
-  color: #1a1a1a;
+  color: inherit;
 }
 
 td:not(:first-child) {

@@ -316,7 +316,7 @@ async function scrapeYear7Cardiff(browser) {
   const CUP_NAME = "Year 7 Boys Cardiff & Vale Cup";
   const SEASON = "2025-26";
 
-  log("\n🧩 Starting Cardiff & Vale scrape...");
+  log("\nStarting Cardiff & Vale scrape...");
 
   const page = await browser.newPage();
   page.setDefaultNavigationTimeout(60000);
