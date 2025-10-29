@@ -2632,8 +2632,9 @@ window.addEventListener("DOMContentLoaded", async () => {
     if (competitionSelect && welshBracket && cardiffBracket) {
       const updateVisibility = () => {
         const value = competitionSelect.value;
-        welshBracket.style.display = value === 'Welsh' ? 'block' : 'none';
-        cardiffBracket.style.display = value === 'Cardiff' ? 'block' : 'none';
+        // Hide the selected bracket, show the other one
+        welshBracket.style.display = value === 'Welsh' ? 'none' : 'block';
+        cardiffBracket.style.display = value === 'Cardiff' ? 'none' : 'block';
       };
       updateVisibility();
       competitionSelect.addEventListener('change', updateVisibility);
