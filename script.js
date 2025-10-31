@@ -18,7 +18,7 @@
 // ============================================================
 
 // =======================
-// SIMPLE LOGGING SYSTEM
+// LIGHTWEIGHT UTILITIES
 // =======================
 // Prevent duplicate initialization using sessionStorage (survives page reloads)
 const INIT_KEY = "football_app_initialized";
@@ -31,365 +31,58 @@ const isDreamweaverPreview =
     document.referrer.includes("dreamweaver") ||
     window.parent !== window);
 
-class SimpleLogger {
-  constructor(context = "APP") {
-    this.context = context;
-    this.sessionId = this.generateSessionId();
-    this.startTime = Date.now();
-    this.logCount = 0;
-    const urlLevel = new URLSearchParams(location.search).get("log");
-    const storedLevel =
-      (typeof localStorage !== "undefined" &&
-        localStorage.getItem("logLevel")) ||
-      "";
-    const level = (urlLevel || storedLevel || "INFO").toUpperCase();
-    this.logLevel = ["DEBUG", "INFO", "WARN", "ERROR", "SUCCESS"].includes(
-      level
-    )
-      ? level
-      : "INFO";
+const debugEnabled =
+  new URLSearchParams(location.search).get("debug") === "true" ||
+  localStorage.getItem("logLevel") === "DEBUG";
 
-    // Startup banner is emitted explicitly by the main app to avoid duplicates
-  }
-
-  setLevel(level) {
-    const up = String(level || "").toUpperCase();
-    if (["DEBUG", "INFO", "WARN", "ERROR", "SUCCESS"].includes(up)) {
-      this.logLevel = up;
-      try {
-        localStorage.setItem("logLevel", up);
-      } catch (_) {}
-    }
-  }
-
-  generateSessionId() {
-    return Math.random().toString(36).substr(2, 9);
-  }
-
-  formatMessage(level, message, data = null) {
-    const timestamp = new Date().toISOString();
-    const elapsed = Date.now() - this.startTime;
-    this.logCount++;
-
-    const logEntry = {
-      level,
-      message,
-      context: this.context,
-      sessionId: this.sessionId,
-      timestamp,
-      elapsed: `${elapsed}ms`,
-      count: this.logCount,
-      data: data || undefined,
-    };
-
-    // Color coding for different log levels (works in both light and dark mode)
-    const colors = {
-      DEBUG: "#888888",
-      INFO: "#4A9EFF",
-      WARN: "#FFB800",
-      ERROR: "#FF4444",
-      SUCCESS: "#00AA44",
-    };
-
-    const color = colors[level] || "#888888";
-
-    // Console output with styling (dark mode friendly) - simplified
-    console.log(
-      `%c[${level}] %c[${this.context}] %c${message}`,
-      `color: ${color}; font-weight: bold;`,
-      `color: #888888; font-style: italic;`,
-      `color: #ffffff; background: #333333; padding: 2px 4px; border-radius: 3px;`
-    );
-
-    // Only show data for errors and warnings to reduce noise
-    if (data && (level === "ERROR" || level === "WARN")) {
-      console.log(data);
-    }
-
-    // Store in session storage for debugging
-    if (this.logLevel === "DEBUG") {
-      const logs = JSON.parse(sessionStorage.getItem("appLogs") || "[]");
-      logs.push(logEntry);
-      // Keep only last 100 logs
-      if (logs.length > 100) logs.splice(0, logs.length - 100);
-      sessionStorage.setItem("appLogs", JSON.stringify(logs));
-    }
-
-    return logEntry;
-  }
-
-  debug(message, data = null) {
-    if (this.logLevel === "DEBUG")
-      return this.formatMessage("DEBUG", message, data);
-  }
-
-  info(message, data = null) {
-    return this.formatMessage("INFO", message, data);
-  }
-
-  warn(message, data = null) {
-    return this.formatMessage("WARN", message, data);
-  }
-
-  error(message, data = null) {
-    return this.formatMessage("ERROR", message, data);
-  }
-
-  success(message, data = null) {
-    return this.formatMessage("SUCCESS", message, data);
-  }
-
-  // Performance logging
-  time(label) {
-    console.time(`[${this.context}] ${label}`);
-    return label;
-  }
-
-  timeEnd(label) {
-    console.timeEnd(`[${this.context}] ${label}`);
-  }
-
-  // Group logging for related operations
-  group(label) {
-    console.group(`[${this.context}] ${label}`);
-  }
-
-  groupEnd() {
-    console.groupEnd();
-  }
-
-  // Log function entry/exit
-  functionEntry(functionName, params = {}) {
-    this.debug(`Entering ${functionName}`, { params });
-  }
-
-  functionExit(functionName, result = null) {
-    this.debug(`Exiting ${functionName}`, { result });
-  }
-
-  // Log data changes
+const logger = {
+  debug(message, data) {
+    if (debugEnabled) console.debug("[DEBUG]", message, data ?? "");
+  },
+  info(message, data) {
+    console.info("[INFO]", message, data ?? "");
+  },
+  warn(message, data) {
+    console.warn("[WARN]", message, data ?? "");
+  },
+  error(message, data) {
+    console.error("[ERROR]", message, data ?? "");
+  },
+  success(message, data) {
+    console.info("[SUCCESS]", message, data ?? "");
+  },
+  errorWithStack(message, err) {
+    console.error("[ERROR]", message, err);
+  },
+  functionEntry(name, params) {
+    this.debug(`→ ${name}`, params);
+  },
+  functionExit(name, result) {
+    this.debug(`← ${name}`, result);
+  },
   dataChange(type, oldValue, newValue) {
-    this.info(`Data changed: ${type}`, {
-      oldValue,
-      newValue,
-      changed: oldValue !== newValue,
-    });
-  }
+    this.debug(`change:${type}`, { oldValue, newValue });
+  },
+  userAction(action, details) {
+    this.info(`action:${action}`, details);
+  },
+  time(label) {
+    if (debugEnabled) console.time(label);
+  },
+  timeEnd(label) {
+    if (debugEnabled) console.timeEnd(label);
+  },
+};
 
-  // Log user interactions
-  userAction(action, details = {}) {
-    this.info(`User action: ${action}`, details);
-  }
-
-  // Log API calls
-  apiCall(method, url, status, duration = null) {
-    const level = status >= 400 ? "ERROR" : status >= 300 ? "WARN" : "INFO";
-    this[level.toLowerCase()](`API ${method} ${url}`, { status, duration });
-  }
-
-  // Log errors with stack trace
-  errorWithStack(message, error) {
-    this.error(message, {
-      error: error.message,
-      stack: error.stack,
-      name: error.name,
-    });
-  }
-
-  // Export logs for debugging
-  exportLogs() {
-    const logs = JSON.parse(sessionStorage.getItem("appLogs") || "[]");
-    const blob = new Blob([JSON.stringify(logs, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `app-logs-${this.sessionId}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  // Clear logs
-  clearLogs() {
-    sessionStorage.removeItem("appLogs");
-    this.info("Logs cleared");
-  }
-}
-
-// Create main logger instance
-const logger = new SimpleLogger("DASHBOARD");
-logger.info("🚀 App Started", "The football dashboard is starting up...");
-
-// =======================
-// DATA MONITORING & LOGGING
-// =======================
-class DataMonitor {
-  constructor() {
-    this.logger = new SimpleLogger("DATA");
-    this.dataFiles = [
-      "teams.json",
-      "welsh.json",
-      "cardiff.json",
-      "friendlies.json",
-      "last_updated.json",
-    ];
-    this.loadTimes = {};
-    this.fileSizes = {};
-    this.loadCounts = {};
-    this.errors = {};
-
-    this.init();
-  }
-
-  init() {
-    // this.logger.debug('Data Monitor initialized', { files: this.dataFiles, timestamp: new Date().toISOString() });
-
-    this.monitorDataLoading();
-    this.monitorDataChanges();
-  }
-
-  monitorDataLoading() {
-    // Override fetch to monitor data file loading (errors only)
-    const originalFetch = window.fetch;
-    window.fetch = async (url, options) => {
-      const startTime = Date.now();
-      const fileName = this.extractFileName(url);
-
-      try {
-        const response = await originalFetch(url, options);
-        const duration = Date.now() - startTime;
-
-        if (this.dataFiles.includes(fileName)) {
-          this.loadTimes[fileName] = duration;
-          this.loadCounts[fileName] = (this.loadCounts[fileName] || 0) + 1;
-
-          if (response.ok) {
-            const contentLength = response.headers.get("content-length");
-            if (contentLength) {
-              this.fileSizes[fileName] = parseInt(contentLength);
-            }
-            // Only log successful loads if there were previous errors
-            if (this.errors[fileName] > 0) {
-              this.logger.info("Data file loaded successfully", {
-                fileName: fileName,
-                duration: `${duration}ms`,
-                status: response.status,
-                size: contentLength ? `${contentLength} bytes` : "unknown",
-                loadCount: this.loadCounts[fileName],
-                timestamp: new Date().toISOString(),
-              });
-            }
-          } else {
-            this.errors[fileName] = (this.errors[fileName] || 0) + 1;
-            this.logger.error("Data file load failed", {
-              fileName: fileName,
-              duration: `${duration}ms`,
-              status: response.status,
-              statusText: response.statusText,
-              errorCount: this.errors[fileName],
-              timestamp: new Date().toISOString(),
-            });
-          }
-        }
-
-        return response;
-      } catch (error) {
-        const duration = Date.now() - startTime;
-
-        if (this.dataFiles.includes(fileName)) {
-          this.errors[fileName] = (this.errors[fileName] || 0) + 1;
-          this.logger.error("Data file fetch error", {
-            fileName: fileName,
-            duration: `${duration}ms`,
-            error: error.message,
-            errorCount: this.errors[fileName],
-            timestamp: new Date().toISOString(),
-          });
-        }
-
-        throw error;
-      }
-    };
-  }
-
-  monitorDataChanges() {
-    // Monitor when data is processed and used
-    const originalLoadData = window.loadData;
-    if (originalLoadData) {
-      window.loadData = async (...args) => {
-        // Reduce noise: do not log start/completion of loadData here
-
-        const startTime = Date.now();
-        try {
-          const result = await originalLoadData.apply(this, args);
-          const duration = Date.now() - startTime;
-
-          // Completion log suppressed (main flow already logs success)
-
-          return result;
-        } catch (error) {
-          const duration = Date.now() - startTime;
-
-          this.logger.error("Data loading process failed", {
-            duration: `${duration}ms`,
-            error: error.message,
-            timestamp: new Date().toISOString(),
-          });
-
-          throw error;
-        }
-      };
-    }
-  }
-
-  extractFileName(url) {
-    try {
-      const urlObj = new URL(url);
-      const pathname = urlObj.pathname;
-      return pathname.split("/").pop();
-    } catch (e) {
-      return url.split("/").pop();
-    }
-  }
-
-  getDataStats() {
-    return {
-      loadTimes: this.loadTimes,
-      fileSizes: this.fileSizes,
-      loadCounts: this.loadCounts,
-      errors: this.errors,
-      totalFiles: this.dataFiles.length,
-      loadedFiles: Object.keys(this.loadTimes).length,
-      failedFiles: Object.keys(this.errors).length,
-    };
-  }
-
-  logDataSummary() {
-    const stats = this.getDataStats();
-    this.logger.info("Data loading summary", {
-      ...stats,
-      averageLoadTime:
-        Object.values(this.loadTimes).reduce((sum, time) => sum + time, 0) /
-          Object.keys(this.loadTimes).length || 0,
-      totalErrors: Object.values(this.errors).reduce(
-        (sum, count) => sum + count,
-        0
-      ),
-      timestamp: new Date().toISOString(),
-    });
-  }
-}
-
-// Initialize data monitoring
-const dataMonitor = new DataMonitor();
+// Initialize basic console logging
+logger.info("Football dashboard starting…");
 
 // =======================
 // PWA & MANIFEST MONITORING
 // =======================
 class PWAMonitor {
   constructor() {
-    this.logger = new SimpleLogger("PWA");
+    this.logger = logger;
     this.manifest = null;
     this.serviceWorker = null;
     this.installPrompt = null;
@@ -615,743 +308,50 @@ const pwaMonitor = new PWAMonitor();
 // =======================
 // PERFORMANCE MONITORING & MEMORY MANAGEMENT
 // =======================
-class PerformanceMonitor {
-  constructor() {
-    this.metrics = {
-      renderTimes: [],
-      memoryUsage: [],
-      apiCallTimes: [],
-      userInteractions: 0,
-      errors: 0,
-    };
-    this.startTime = performance.now();
-    this.observers = new Map();
-  }
-
-  startTiming(label) {
-    performance.mark(`${label}-start`);
-  }
-
-  endTiming(label) {
-    performance.mark(`${label}-end`);
-    performance.measure(label, `${label}-start`, `${label}-end`);
-    const measure = performance.getEntriesByName(label)[0];
-    this.metrics.renderTimes.push({
-      label,
-      duration: measure.duration,
-      timestamp: Date.now(),
-    });
-    performance.clearMarks(`${label}-start`);
-    performance.clearMarks(`${label}-end`);
-    performance.clearMeasures(label);
-  }
-
-  recordMemoryUsage() {
-    if (performance.memory) {
-      this.metrics.memoryUsage.push({
-        used: performance.memory.usedJSHeapSize,
-        total: performance.memory.totalJSHeapSize,
-        limit: performance.memory.jsHeapSizeLimit,
-        timestamp: Date.now(),
-      });
-    }
-  }
-
-  recordUserInteraction() {
-    this.metrics.userInteractions++;
-  }
-
-  recordError() {
-    this.metrics.errors++;
-  }
-
+const perfMonitor = {
+  startTiming() {},
+  endTiming() {},
+  recordMemoryUsage() {},
+  recordUserInteraction() {},
+  recordError() {},
   getPerformanceReport() {
-    const totalTime = performance.now() - this.startTime;
-    return {
-      totalTime,
-      averageRenderTime:
-        this.metrics.renderTimes.reduce((sum, t) => sum + t.duration, 0) /
-        this.metrics.renderTimes.length,
-      userInteractions: this.metrics.userInteractions,
-      errors: this.metrics.errors,
-      memoryUsage:
-        this.metrics.memoryUsage[this.metrics.memoryUsage.length - 1],
-      renderCount: this.metrics.renderTimes.length,
-    };
-  }
+    return {};
+  },
+  cleanup() {},
+};
 
-  cleanup() {
-    this.observers.forEach((observer) => observer.disconnect());
-    this.observers.clear();
-  }
+const pendingTimeouts = new Set();
+const delay = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
+function trackTimeout(callback, ms) {
+  const id = window.setTimeout(() => {
+    pendingTimeouts.delete(id);
+    callback();
+  }, ms);
+  pendingTimeouts.add(id);
+  return id;
 }
 
-// Create performance monitor instance
-const perfMonitor = new PerformanceMonitor();
-
-// =======================
-// MEMORY LEAK PREVENTION
-// =======================
-class MemoryManager {
-  constructor() {
-    this.eventListeners = new Map();
-    this.intervals = new Set();
-    this.timeouts = new Set();
-    this.observers = new Set();
-  }
-
-  addEventListener(element, event, handler, options = {}) {
-    element.addEventListener(event, handler, options);
-    const key = `${element.constructor.name}-${event}`;
-    if (!this.eventListeners.has(key)) {
-      this.eventListeners.set(key, []);
-    }
-    this.eventListeners.get(key).push({ element, event, handler, options });
-  }
-
-  addInterval(callback, delay) {
-    const id = setInterval(callback, delay);
-    this.intervals.add(id);
-    return id;
-  }
-
-  addTimeout(callback, delay) {
-    const id = setTimeout(callback, delay);
-    this.timeouts.add(id);
-    return id;
-  }
-
-  addObserver(observer) {
-    this.observers.add(observer);
-    return observer;
-  }
-
-  cleanup() {
-    // Clear all intervals
-    this.intervals.forEach((id) => clearInterval(id));
-    this.intervals.clear();
-
-    // Clear all timeouts
-    this.timeouts.forEach((id) => clearTimeout(id));
-    this.timeouts.clear();
-
-    // Disconnect all observers
-    this.observers.forEach((observer) => observer.disconnect());
-    this.observers.clear();
-
-    // Remove all event listeners
-    this.eventListeners.forEach((listeners, key) => {
-      listeners.forEach(({ element, event, handler, options }) => {
-        element.removeEventListener(event, handler, options);
-      });
-    });
-    this.eventListeners.clear();
-
-    logger.info("Memory cleanup completed");
-  }
+function clearTrackedTimeout(id) {
+  if (!id) return;
+  pendingTimeouts.delete(id);
+  window.clearTimeout(id);
 }
 
-// Create memory manager instance
-const memoryManager = new MemoryManager();
-
-// =======================
-// ENHANCED ERROR HANDLING & RETRY MECHANISMS
-// =======================
-class ErrorHandler {
-  constructor() {
-    this.retryAttempts = new Map();
-    this.maxRetries = 3;
-    this.retryDelay = 1000; // Start with 1 second
-  }
-
-  async withRetry(
-    operation,
-    context = "operation",
-    maxRetries = this.maxRetries
-  ) {
-    let lastError;
-
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        logger.debug(`Trying ${context} (try ${attempt} of ${maxRetries})`);
-        const result = await operation();
-
-        if (attempt > 1) {
-          logger.success(`${context} worked on try ${attempt}`);
-        }
-
-        // Reset retry count on success
-        this.retryAttempts.delete(context);
-        return result;
-      } catch (error) {
-        lastError = error;
-        logger.warn(`${context} didn't work on try ${attempt}`, {
-          error: error.message,
-        });
-
-        if (attempt < maxRetries) {
-          const delay = this.retryDelay * Math.pow(2, attempt - 1); // Exponential backoff
-          logger.debug(`Waiting ${delay}ms before trying again`);
-          await this.delay(delay);
-        }
-      }
-    }
-
-    logger.error(`${context} didn't work after ${maxRetries} tries`, {
-      error: lastError.message,
-    });
-    this.retryAttempts.set(context, maxRetries);
-    throw lastError;
-  }
-
-  delay(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  isRetryable(error) {
-    // Network errors, timeouts, and 5xx server errors are retryable
-    if (error.name === "TypeError" && error.message.includes("fetch"))
-      return true;
-    if (error.name === "AbortError") return true;
-    if (error.status >= 500) return true;
-    if (error.status === 429) return true; // Rate limited
-    return false;
-  }
-
-  handleError(error, context = "Unknown") {
-    perfMonitor.recordError();
-    logger.errorWithStack(`Something went wrong with ${context}`, error);
-
-    if (this.isRetryable(error)) {
-      logger.info(`We can try ${context} again`);
-    }
-  }
+function cleanupPendingTimeouts() {
+  pendingTimeouts.forEach((id) => window.clearTimeout(id));
+  pendingTimeouts.clear();
 }
-
-// Create error handler instance
-const errorHandler = new ErrorHandler();
 
 // =======================
 // COMPREHENSIVE TRANSLATIONS
 // =======================
-const translations = {
-  en: {
-    // Main Navigation & Headers
-    dashboardTitle: "Year 7 Cups Dashboard 2025",
-    dashboard: "Dashboard",
-    teamDashboard: "Team Dashboard",
-    brackets: "Brackets",
-
-    // Page Titles & Descriptions
-    welshCupOverview: "Welsh Cup Overview",
-    cardiffCupOverview: "Cardiff Cup Overview",
-    friendliesOverview: "Friendlies Overview",
-    leaderboard: "Leaderboard",
-    teamStats: "Team Statistics",
-    matchHistory: "Match History",
-
-    // Form Labels & Controls
-    selectTeam: "Select Team:",
-    selectData: "Select Data:",
-    selectCompetition: "Select Competition:",
-    chooseTeam: "--Choose a Team--",
-    chooseData: "--Team Stats / Match History--",
-    chooseCompetition: "--Select Competition--",
-
-    // Data Headers & Labels
-    stats: "Stats",
-    statistics: "Statistics",
-    played: "Played",
-    games: "Games",
-    wins: "Wins",
-    losses: "Losses",
-    draws: "Draws",
-    gf: "GF",
-    goalsFor: "Goals For",
-    ga: "GA",
-    goalsAgainst: "Goals Against",
-    gd: "GD",
-    goalDifference: "Goal Difference",
-    points: "Points",
-    position: "Position",
-    rank: "Rank",
-    team: "Team",
-    teams: "Teams",
-
-    // Match Information
-    welshMatches: "Welsh Cup Matches",
-    cardiffMatches: "Cardiff Cup Matches",
-    friendliesMatches: "Friendlies Matches",
-    round: "Round",
-    rounds: "Rounds",
-    deadline: "Deadline",
-    home: "Home",
-    away: "Away",
-    hScore: "H Score",
-    aScore: "A Score",
-    homeScore: "Home Score",
-    awayScore: "Away Score",
-    winner: "Winner",
-    date: "Date",
-    matchNotes: "Match History",
-    game: "Game",
-    games: "Games",
-    match: "Match",
-    matches: "Matches",
-
-    // Status & Messages
-    loading: "Loading...",
-    loadingData: "Loading data...",
-    loadingLeaderboard: "Loading leaderboard...",
-    loadingBrackets: "Loading brackets...",
-    selectTeamsToView: "Select teams to view data...",
-    noDataAvailable: "No data available",
-    noMatchData: "No match data available",
-    noBracketData: "No bracket data available",
-    errorLoadingData:
-      "Error loading data. Please check your JSON files or network connection.",
-    unexpectedError: "An unexpected error occurred. Please refresh the page.",
-    networkError:
-      "A network error occurred. Please check your connection and try again.",
-    dataLoadedSuccessfully: "Data loaded successfully!",
-    teamsFound: "teams found",
-    refreshData: "Refresh Data",
-    lastUpdated: "Last Updated:",
-    unknown: "Unknown",
-    adminAccessTitle: "Unlock Admin Dashboard",
-    adminAccessDescription:
-      "Enter the admin password to open the admin dashboard.",
-    invalidPassword: "Incorrect password. Please try again.",
-
-    // Buttons & Actions
-    refresh: "Refresh",
-    update: "Update",
-    retry: "Try Again",
-    close: "Close",
-    cancel: "Cancel",
-    confirm: "Confirm",
-    save: "Save",
-    edit: "Edit",
-    delete: "Delete",
-    add: "Add",
-    remove: "Remove",
-    search: "Search",
-    filter: "Filter",
-    sort: "Sort",
-    view: "View",
-    show: "Show",
-    hide: "Hide",
-
-    // Language & Theme
-    language: "Language",
-    theme: "Theme",
-    lightMode: "Light Mode",
-    darkMode: "Dark Mode",
-    english: "English",
-    welsh: "Welsh",
-    switchToEnglish: "Switch to English",
-    switchToWelsh: "Newid i'r Gymraeg",
-    toggleDarkMode: "Toggle dark mode",
-
-    // Accessibility
-    skipToMainContent: "Skip to main content",
-    mainNavigation: "Main navigation",
-    languageSwitch: "Language switch",
-    selectTeamLabel: "Select Team",
-    selectDataLabel: "Select Data Type",
-    selectCompetitionLabel: "Select competition to display",
-    teamDetailsDisplay: "Team details display",
-    welshCupBracket: "Welsh Cup Bracket",
-    cardiffCupBracket: "Cardiff Cup Bracket",
-    currentStandings:
-      "Current standings table showing team rankings, games played, wins, goals for, goals against, and goal difference",
-    selectTeamAndData:
-      "Select a team and data type to view stats or match history for the Welsh Cup",
-    selectTeamAndDataCardiff:
-      "Select a team and data type to view stats or match history for the Cardiff Cup",
-    selectTeamAndDataFriendlies:
-      "Select a team and data type to view friendlies stats or match history",
-    exploreCombinedStats:
-      "Explore combined stats and match history for each team across all competitions",
-    viewKnockoutRounds:
-      "View the knockout rounds, results, and progression for each cup",
-
-    // Footer & Credits
-    copyright: "© 2025",
-    builtWith: "Built with",
-    love: "love",
-    by: "by",
-    author: "Ollie",
-
-    // Update Modal
-    updateFixtures: "Update Fixtures",
-    runScraper: "Run scraper and refresh data",
-    enterSecret:
-      "Enter the secret to trigger the scraper and refresh the JSON files.",
-    password: "Password",
-    runUpdate: "Run Update",
-    authenticating: "Authenticating…",
-    dispatching: "Dispatching GitHub Action…",
-    running: "Scraper running on GitHub…",
-    committing: "Committing JSON…",
-    done: "All done — refresh to see changes.",
-    pleaseEnterPassword: "Please enter the admin password.",
-
-    // Table Headers
-    position: "Pos",
-    teamName: "Team",
-    gamesPlayed: "P",
-    wins: "W",
-    losses: "L",
-    draws: "D",
-    goalsFor: "F",
-    goalsAgainst: "A",
-    goalDifference: "GD",
-    points: "Pts",
-
-    // Competition Names
-    welshCup: "Welsh Cup",
-    cardiffCup: "Cardiff Cup",
-    friendlies: "Friendlies",
-    welshCupFull: "U12 Boys Welsh Cup - Cardiff & Vale",
-    cardiffCupFull: "Year 7 Boys Cardiff & Vale Cup",
-    friendliesFull: "Friendlies",
-
-    // Season & Dates
-    season: "Season",
-    currentSeason: "2025-26",
-    lastUpdated: "Last Updated",
-
-    // Special Values
-    bye: "BYE",
-    tbd: "TBD",
-    tba: "TBA",
-    na: "N/A",
-    dash: "-",
-
-    // Success/Error Messages
-    success: "Success",
-    error: "Error",
-    warning: "Warning",
-    info: "Information",
-    successMessage: "Operation completed successfully",
-    errorMessage: "An error occurred",
-    warningMessage: "Please note",
-    infoMessage: "Information",
-
-    // Print & Export
-    print: "Print",
-    export: "Export",
-    download: "Download",
-    share: "Share",
-
-    // Time & Dates
-    today: "Today",
-    yesterday: "Yesterday",
-    tomorrow: "Tomorrow",
-    thisWeek: "This Week",
-    lastWeek: "Last Week",
-    nextWeek: "Next Week",
-    thisMonth: "This Month",
-    lastMonth: "Last Month",
-    nextMonth: "Next Month",
-    thisYear: "This Year",
-    lastYear: "Last Year",
-    nextYear: "Next Year",
-
-    // Meta & SEO
-    metaDescription:
-      "Interactive bilingual dashboard for the Year 7 Football Cups — Welsh Cup, Cardiff Cup, and Friendlies. Auto-updating stats, live tables, and knockout brackets.",
-    teamDashboardDescription:
-      "View detailed stats, match history, and performance for every team in the Year 7 Football Cups.",
-    bracketsDescription:
-      "View knockout rounds, results, and progression for each cup competition.",
-
-    // Additional UI Elements
-    notes: "Notes",
-    dash: "-",
-    selectTeamAndData:
-      "Please select a team and data type from the dropdowns above to view details",
-    noDataFound: "No data found for",
-
-    // Admin
-    admin: "Admin",
-    adminPageTitle: "Admin - Manage Notes and Friendlies",
-    adminDescription: "Edit team notes or add friendly results.",
-    unlockAdmin: "Unlock Admin",
-    adminPassword: "Password",
-    editNotes: "Edit Notes",
-    saveNotes: "Save Notes",
-    addFriendly: "Add Friendly Result",
-    homeTeam: "Home Team",
-    awayTeam: "Away Team",
-    homeGoals: "Home Goals",
-    awayGoals: "Away Goals",
-    submit: "Submit",
-    exportTeamsJson: "Export teams.json",
-    exportFriendliesJson: "Export friendlies.json",
-    saved: "Saved",
-  },
-  cy: {
-    // Main Navigation & Headers
-    dashboardTitle: "Dangosfwrdd Cwpanau Blwyddyn 7 2025",
-    dashboard: "Dangosfwrdd",
-    teamDashboard: "Dangosfwrdd Tim",
-    brackets: "Bracetiau",
-
-    // Page Titles & Descriptions
-    welshCupOverview: "Trosolwg Cwpan Cymru",
-    cardiffCupOverview: "Trosolwg Cwpan Caerdydd",
-    friendliesOverview: "Trosolwg Gemau Cyfeillgar",
-    leaderboard: "Tabl Cynghrair",
-    teamStats: "Ystadegau Tim",
-    matchHistory: "Hanes Gemau",
-
-    // Form Labels & Controls
-    selectTeam: "Dewiswch Tim:",
-    selectData: "Dewiswch Ddata:",
-    selectCompetition: "Dewiswch Gystadleuaeth:",
-    chooseTeam: "--Dewiswch Dim--",
-    chooseData: "--Ystadegau Tim / Hanes Gemau--",
-    chooseCompetition: "--Dewiswch Gystadleuaeth--",
-
-    // Data Headers & Labels
-    stats: "Ystadegau",
-    statistics: "Ystadegau",
-    played: "Chwaraeodd",
-    games: "Gemau",
-    wins: "Enillodd",
-    losses: "Collodd",
-    draws: "Gêm Gyfartal",
-    gf: "Gol I",
-    goalsFor: "Goliau I",
-    ga: "Gol Yn Erbyn",
-    goalsAgainst: "Goliau Yn Erbyn",
-    gd: "Gwahaniaeth Gol",
-    goalDifference: "Gwahaniaeth Goliau",
-    points: "Pwyntiau",
-    position: "Safle",
-    rank: "Rheng",
-    team: "Tim",
-    teams: "Timau",
-
-    // Match Information
-    welshMatches: "Gemau Cwpan Cymru",
-    cardiffMatches: "Gemau Cwpan Caerdydd",
-    friendliesMatches: "Gemau Cyfeillgar",
-    round: "Rownd",
-    rounds: "Rhodau",
-    deadline: "Dyddiad Cau",
-    home: "Cartref",
-    away: "Ffwrdd",
-    hScore: "SG Cartref",
-    aScore: "SG Ffwrdd",
-    homeScore: "Sgôr Cartref",
-    awayScore: "Sgôr Ffwrdd",
-    winner: "Enillydd",
-    date: "Dyddiad",
-    matchNotes: "Hanes Gemau",
-    game: "Gêm",
-    games: "Gemau",
-    match: "Gêm",
-    matches: "Gemau",
-
-    // Status & Messages
-    loading: "Yn Llwytho...",
-    loadingData: "Yn llwytho data...",
-    loadingLeaderboard: "Yn llwytho tabl cynghrair...",
-    loadingBrackets: "Yn llwytho bracetiau...",
-    selectTeamsToView: "Dewiswch dimau i weld data...",
-    noDataAvailable: "Dim data ar gael",
-    noMatchData: "Dim data gêm ar gael",
-    noBracketData: "Dim data bracet ar gael",
-    errorLoadingData:
-      "Gwall wrth lwytho data. Gwiriwch eich ffeiliau JSON neu gysylltiad rhwydwaith.",
-    unexpectedError:
-      "Digwyddodd gwall annisgwyl. Adnewyddwch y dudalen os gwelwch yn dda.",
-    networkError:
-      "Digwyddodd gwall rhwydwaith. Gwiriwch eich cysylltiad a rhoi cynnig arall arni.",
-    dataLoadedSuccessfully: "Llwythwyd data yn llwyddiannus!",
-    teamsFound: "dimau wedi'u darganfod",
-    refreshData: "Adnewyddu Data",
-    lastUpdated: "Diweddarwyd Diwethaf:",
-    unknown: "Anhysbys",
-    adminAccessTitle: "Datgloi Dangosfwrdd y Gweinyddwr",
-    adminAccessDescription:
-      "Nodwch y cyfrinair gweinyddol i agor y dangosfwrdd gweinyddol.",
-    invalidPassword: "Cyfrinair anghywir. Rhowch gynnig arall arni.",
-
-    // Buttons & Actions
-    refresh: "Adnewyddu",
-    update: "Diweddaru",
-    retry: "Rhoi Cynnig Arall",
-    close: "Cau",
-    cancel: "Canslo",
-    confirm: "Cadarnhau",
-    save: "Arbed",
-    edit: "Golygu",
-    delete: "Dileu",
-    add: "Ychwanegu",
-    remove: "Tynnu",
-    search: "Chwilio",
-    filter: "Hidlo",
-    sort: "Trefnu",
-    view: "Gweld",
-    show: "Dangos",
-    hide: "Cuddio",
-
-    // Language & Theme
-    language: "Iaith",
-    theme: "Thema",
-    lightMode: "Modd Golau",
-    darkMode: "Modd Tywyll",
-    english: "Saesneg",
-    welsh: "Cymraeg",
-    switchToEnglish: "Newid i'r Saesneg",
-    switchToWelsh: "Newid i'r Gymraeg",
-    toggleDarkMode: "Toglo modd tywyll",
-
-    // Accessibility
-    skipToMainContent: "Neidio i'r prif gynnwys",
-    mainNavigation: "Prif lwybr",
-    languageSwitch: "Newid iaith",
-    selectTeamLabel: "Dewis Tim",
-    selectDataLabel: "Dewis Math o Ddata",
-    selectCompetitionLabel: "Dewis cystadleuaeth i'w harddangos",
-    teamDetailsDisplay: "Arddangos manylion tim",
-    welshCupBracket: "Bracet Cwpan Cymru",
-    cardiffCupBracket: "Bracet Cwpan Caerdydd",
-    currentStandings:
-      "Tabl safleoedd cyfredol yn dangos rheng timau, gemau a chwaraeodd, buddugoliaethau, goliau i, goliau yn erbyn, a gwahaniaeth goliau",
-    selectTeamAndData:
-      "Dewiswch dim a math o ddata i weld ystadegau neu hanes gemau ar gyfer Cwpan Cymru",
-    selectTeamAndDataCardiff:
-      "Dewiswch dim a math o ddata i weld ystadegau neu hanes gemau ar gyfer Cwpan Caerdydd",
-    selectTeamAndDataFriendlies:
-      "Dewiswch dim a math o ddata i weld ystadegau cyfeillgar neu hanes gemau",
-    exploreCombinedStats:
-      "Archwiliwch ystadegau cyfuno a hanes gemau ar gyfer pob tim ar draws pob cystadleuaeth",
-    viewKnockoutRounds:
-      "Gweld y rhodau knockout, canlyniadau, a datblygiad ar gyfer pob cwpan",
-
-    // Footer & Credits
-    copyright: "© 2025",
-    builtWith: "Adeiladwyd gyda",
-    love: "cariad",
-    by: "gan",
-    author: "Ollie",
-
-    // Update Modal
-    updateFixtures: "Diweddaru Ffixtures",
-    runScraper: "Rhedeg scraper ac adnewyddu data",
-    enterSecret:
-      "Rhowch y gyfrinach i sbarduno'r scraper ac adnewyddu'r ffeiliau JSON.",
-    password: "Cyfrinair",
-    runUpdate: "Rhedeg Diweddariad",
-    authenticating: "Yn dilysu...",
-    dispatching: "Yn anfon GitHub Action...",
-    running: "Scraper yn rhedeg ar GitHub...",
-    committing: "Yn cyflwyno JSON...",
-    done: "Popeth wedi'i wneud — adnewyddwch i weld newidiadau.",
-    pleaseEnterPassword: "Rhowch gyfrinair y gweinyddwr os gwelwch yn dda.",
-
-    // Table Headers
-    position: "Safle",
-    teamName: "Tim",
-    gamesPlayed: "Chwaraeodd",
-    wins: "Enillodd",
-    losses: "Collodd",
-    draws: "Gêm Gyfartal",
-    goalsFor: "Goliau I",
-    goalsAgainst: "Goliau Yn Erbyn",
-    goalDifference: "Gwahaniaeth Goliau",
-    points: "Pwyntiau",
-
-    // Competition Names
-    welshCup: "Cwpan Cymru",
-    cardiffCup: "Cwpan Caerdydd",
-    friendlies: "Cyfeillgar",
-    welshCupFull: "Cwpan Cymru Bechgyn U12 - Caerdydd a'r Fro",
-    cardiffCupFull: "Cwpan Bechgyn Blwyddyn 7 Caerdydd a'r Fro",
-    friendliesFull: "Cyfeillgar",
-
-    // Season & Dates
-    season: "Tymor",
-    currentSeason: "2025-26",
-    lastUpdated: "Diweddarwyd Diwethaf",
-
-    // Special Values
-    bye: "BYE",
-    tbd: "I'w Benderfynu",
-    tba: "I'w Gyhoeddi",
-    na: "N/A",
-    dash: "-",
-
-    // Success/Error Messages
-    success: "Llwyddiant",
-    error: "Gwall",
-    warning: "Rhybudd",
-    info: "Gwybodaeth",
-    successMessage: "Cwblhawyd y weithred yn llwyddiannus",
-    errorMessage: "Digwyddodd gwall",
-    warningMessage: "Sylwch os gwelwch yn dda",
-    infoMessage: "Gwybodaeth",
-
-    // Print & Export
-    print: "Argraffu",
-    export: "Allforio",
-    download: "Lawrlwytho",
-    share: "Rhannu",
-
-    // Time & Dates
-    today: "Heddiw",
-    yesterday: "Ddoe",
-    tomorrow: "Yfory",
-    thisWeek: "Yr Wythnos Hon",
-    lastWeek: "Wythnos Diwethaf",
-    nextWeek: "Wythnos Nesaf",
-    thisMonth: "Y Mis Hwn",
-    lastMonth: "Mis Diwethaf",
-    nextMonth: "Mis Nesaf",
-    thisYear: "Eleni",
-    lastYear: "Llynedd",
-    nextYear: "Blwyddyn Nesaf",
-
-    // Meta & SEO
-    metaDescription:
-      "Dangosfwrdd dwyieithog rhyngweithiol ar gyfer Cwpanau Pêl-droed Blwyddyn 7 — Cwpan Cymru, Cwpan Caerdydd, a Chyfeillgar. Ystadegau sy'n adnewyddu'n awtomatig, tablau byw, a bracetiau knockout.",
-    teamDashboardDescription:
-      "Gweld ystadegau manwl, hanes gemau, a pherfformiad pob tim yn Cwpanau Pêl-droed Blwyddyn 7.",
-    bracketsDescription:
-      "Gweld rhodau knockout, canlyniadau, a datblygiad ar gyfer pob cystadleuaeth cwpan.",
-
-    // Additional UI Elements
-    notes: "Nodiadau",
-    dash: "-",
-    selectTeamAndData:
-      "Dewiswch dim a math o ddata o'r dropdowns uchod i weld manylion",
-    noDataFound: "Dim data wedi'i ganfod ar gyfer",
-
-    // Admin
-    admin: "Gweinyddol",
-    adminPageTitle: "Gweinyddol - Rheoli Nodiadau a Chyfeillgar",
-    adminDescription:
-      "Golygu nodiadau tim neu ychwanegu canlyniadau cyfeillgar.",
-    unlockAdmin: "Datgloi Gweinyddol",
-    adminPassword: "Cyfrinair",
-    editNotes: "Golygu Nodiadau",
-    saveNotes: "Arbed Nodiadau",
-    addFriendly: "Ychwanegu Canlyniad Cyfeillgar",
-    homeTeam: "Tim Cartref",
-    awayTeam: "Tim Ffwrdd",
-    homeGoals: "Goliau Cartref",
-    awayGoals: "Goliau Ffwrdd",
-    submit: "Cyflwyno",
-    exportTeamsJson: "Allforio teams.json",
-    exportFriendliesJson: "Allforio friendlies.json",
-    saved: "Wedi Arbed",
-  },
-};
+const translations = window.translations || {};
+if (!window.translations) {
+  logger.warn(
+    "translations.js not loaded — using translation keys as fallback text"
+  );
+}
 
 let currentLang = localStorage.getItem("lang") || "en";
 
@@ -1589,66 +589,66 @@ document.getElementById("lang-cy")?.addEventListener("click", () => {
 // ============================================================
 // DATA FETCHING + NORMALIZATION (robust to any team schema)
 // ============================================================
+async function fetchWithRetry(
+  url,
+  { retries = 2, timeout = 10000, fetchOptions = {} } = {}
+) {
+  let lastError;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const controller = new AbortController();
+    const timerId = trackTimeout(() => controller.abort(), timeout);
+    try {
+      const response = await fetch(url, {
+        cache: "no-store",
+        ...fetchOptions,
+        signal: controller.signal,
+        headers: {
+          Accept: "application/json",
+          ...(fetchOptions.headers || {}),
+        },
+      });
+      clearTrackedTimeout(timerId);
+
+      if (!response.ok) {
+        const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
+        error.status = response.status;
+        throw error;
+      }
+
+      return response;
+    } catch (error) {
+      clearTrackedTimeout(timerId);
+      lastError = error;
+      const retryable =
+        error.name === "AbortError" ||
+        error.name === "TypeError" ||
+        error.status === 429 ||
+        (typeof error.status === "number" && error.status >= 500);
+      if (attempt === retries || !retryable) {
+        throw error;
+      }
+      await delay(500 * (attempt + 1));
+    }
+  }
+  throw lastError;
+}
+
 async function fetchJSON(url) {
-  // Check cache first
   if (state.cache[url]) {
     logger.debug("Cache hit", { url });
     return state.cache[url];
   }
 
-  // Use retry mechanism for network requests
-  return await errorHandler.withRetry(
-    async () => {
-      const controller = new AbortController();
-      const timeoutId = memoryManager.addTimeout(
-        () => controller.abort(),
-        15000
-      ); // 15s timeout
+  logger.debug("Fetching JSON", { url });
+  const response = await fetchWithRetry(url);
+  const json = await response.json();
 
-      try {
-        logger.debug("Fetching JSON", { url });
-        perfMonitor.startTiming(`fetch-${url}`);
+  if (!json || typeof json !== "object") {
+    throw new Error("Invalid JSON response");
+  }
 
-        const res = await fetch(url, {
-          cache: "no-store",
-          signal: controller.signal,
-          headers: {
-            Accept: "application/json",
-            "Cache-Control": "no-cache",
-            "User-Agent": navigator.userAgent,
-          },
-        });
-
-        perfMonitor.endTiming(`fetch-${url}`);
-
-        if (!res.ok) {
-          const error = new Error(`HTTP ${res.status}: ${res.statusText}`);
-          error.status = res.status;
-          throw error;
-        }
-
-        const json = await res.json();
-
-        // Validate JSON structure
-        if (!json || typeof json !== "object") {
-          throw new Error("Invalid JSON response");
-        }
-
-        // Cache the result
-        state.cache[url] = json;
-        logger.debug("JSON cached successfully", {
-          url,
-          size: JSON.stringify(json).length,
-        });
-
-        return json;
-      } finally {
-        clearTimeout(timeoutId);
-      }
-    },
-    `fetchJSON-${url}`,
-    3
-  );
+  state.cache[url] = json;
+  return json;
 }
 
 // helper: get the first numeric value from a list of possible keys
@@ -2282,13 +1282,6 @@ const startBtn = document.getElementById("update-start");
 const passInput = document.getElementById("update-pass");
 const stepsList = document.getElementById("update-steps");
 const errorEl = document.getElementById("update-error");
-const adminAccessModal = document.getElementById("admin-access-modal");
-const adminAccessClose = document.getElementById("admin-access-close");
-const adminAccessPass = document.getElementById("admin-access-pass");
-const adminAccessSubmit = document.getElementById("admin-access-submit");
-const adminAccessError = document.getElementById("admin-access-error");
-const adminAccessResolvers = [];
-let isAdminAccessOpen = false;
 
 function openModal() {
   modal?.setAttribute("aria-hidden", "false");
@@ -2327,120 +1320,10 @@ modal?.addEventListener("click", (e) => {
   if (e.target === modal) closeModal(); // click backdrop to close
 });
 
-function openAdminAccessModal() {
-  if (!adminAccessModal) return;
-  adminAccessModal.setAttribute("aria-hidden", "false");
-  if (adminAccessError) adminAccessError.hidden = true;
-  isAdminAccessOpen = true;
-  if (adminAccessPass) {
-    const storedPwd = sessionStorage.getItem("admin_password") || "";
-    adminAccessPass.value = storedPwd;
-    setTimeout(() => {
-      try {
-        adminAccessPass.focus({ preventScroll: true });
-        if (storedPwd) adminAccessPass.select();
-      } catch (_) {}
-    }, 0);
-  }
-}
-
-function closeAdminAccessModal() {
-  if (!adminAccessModal) return;
-  adminAccessModal.setAttribute("aria-hidden", "true");
-  isAdminAccessOpen = false;
-  if (sessionStorage.getItem("admin_unlocked") !== "true") {
-    while (adminAccessResolvers.length) {
-      const resolver = adminAccessResolvers.shift();
-      resolver(null);
-    }
-  }
-}
-
-async function handleAdminAccessSubmit(event) {
-  event?.preventDefault?.();
-  if (!adminAccessSubmit || !adminAccessPass) return;
-
-  if (adminAccessError) adminAccessError.hidden = true;
-
-  const password = adminAccessPass.value.trim();
-  if (!password) {
-    if (adminAccessError) {
-      adminAccessError.textContent = translate("pleaseEnterPassword");
-      adminAccessError.hidden = false;
-    }
-    adminAccessPass.focus();
-    return;
-  }
-
-  const originalText = adminAccessSubmit.textContent;
-  adminAccessSubmit.disabled = true;
-  adminAccessSubmit.textContent = `${originalText}...`;
-
-  try {
-    const res = await fetch(workerURL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      mode: "cors",
-      body: JSON.stringify({ password, intent: "verify" }),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data?.success) {
-      const msg =
-        res.status === 401
-          ? translate("invalidPassword")
-          : data?.error || `Request failed (${res.status})`;
-      throw new Error(msg);
-    }
-
-    sessionStorage.setItem("admin_unlocked", "true");
-    sessionStorage.setItem("admin_password", password);
-    closeAdminAccessModal();
-    while (adminAccessResolvers.length) {
-      const resolver = adminAccessResolvers.shift();
-      resolver(password);
-    }
-  } catch (err) {
-    if (adminAccessError) {
-      adminAccessError.textContent =
-        err?.message || translate("networkError");
-      adminAccessError.hidden = false;
-    }
-    adminAccessPass.focus();
-  } finally {
-    adminAccessSubmit.disabled = false;
-    adminAccessSubmit.textContent = originalText;
-  }
-}
-
-adminAccessClose?.addEventListener("click", closeAdminAccessModal);
-adminAccessModal?.addEventListener("click", (event) => {
-  if (event.target === adminAccessModal) closeAdminAccessModal();
-});
-adminAccessSubmit?.addEventListener("click", handleAdminAccessSubmit);
-adminAccessPass?.addEventListener("keydown", (event) => {
-  if (event.key === "Enter") handleAdminAccessSubmit(event);
-});
-adminAccessPass?.addEventListener("input", () => {
-  if (adminAccessError) adminAccessError.hidden = true;
-});
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
   if (modal?.getAttribute("aria-hidden") === "false") closeModal();
-  if (adminAccessModal?.getAttribute("aria-hidden") === "false")
-    closeAdminAccessModal();
 });
-
-function requestAdminPassword() {
-  const stored = sessionStorage.getItem("admin_password");
-  if (stored) {
-    sessionStorage.setItem("admin_unlocked", "true");
-    return Promise.resolve(stored);
-  }
-  return new Promise((resolve) => {
-    adminAccessResolvers.push(resolve);
-    if (!isAdminAccessOpen) openAdminAccessModal();
-  });
-}
 
 startBtn?.addEventListener("click", async () => {
   errorEl.hidden = true;
@@ -2757,6 +1640,16 @@ function renderAll() {
   logger.debug("All content displayed successfully");
 }
 
+// Expose core utilities for auxiliary modules (e.g., admin.js)
+window.App = {
+  workerURL,
+  translate,
+  logger,
+  loadData,
+  renderAll,
+  state,
+};
+
 // ============================================================
 // SERVICE WORKER REGISTRATION
 // ============================================================
@@ -2807,16 +1700,6 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   // Protect Admin link using the same password check as refresh (Cloudflare Worker)
   try {
-    const adminLink = document.getElementById("admin-link");
-    if (adminLink) {
-      adminLink.addEventListener("click", (e) => {
-        e.preventDefault();
-        requestAdminPassword().then((pwd) => {
-          if (!pwd) return;
-          window.location.href = "admin.html";
-        });
-      });
-    }
   } catch (_) {}
 
   // Apply initial translations to any existing elements with data-i18n
@@ -2996,372 +1879,9 @@ window.addEventListener("DOMContentLoaded", async () => {
         );
     }
 
-    // Admin page logic (moved from inline script in admin.html)
-    const adminLocked = document.getElementById("admin-locked");
-    const adminBody = document.getElementById("admin-body");
-    if (adminLocked || adminBody) {
-      const $ = (sel) => document.querySelector(sel);
-      const notesTeam = $("#notes-team");
-      const notesTextarea = $("#notes-text");
-      const notesSaveBtn = $("#notes-save");
-      const notesSaved = $("#notes-saved");
-      const frDate = $("#fr-date");
-      const frHome = $("#fr-home");
-      const frAway = $("#fr-away");
-      const frHomeGoals = $("#fr-home-goals");
-      const frAwayGoals = $("#fr-away-goals");
-      const frNotes = $("#fr-notes");
-      const frSubmit = $("#fr-submit");
-      const exportTeamsBtn = $("#export-teams");
-      const exportFriendliesBtn = $("#export-friendlies");
-      const unlockBtn = $("#admin-unlock");
-      const passInput = $("#admin-pass");
-
-      async function ensureDataLoaded() {
-        try {
-          if (!Array.isArray(state.teams) || state.teams.length === 0) {
-            if (typeof window.loadData === "function") {
-              await window.loadData();
-            }
-          }
-        } catch (e) {
-          console.warn("[ADMIN] ensureDataLoaded failed", e);
-        }
-      }
-
-      function initAdmin() {
-        // Populate selects
-        const initTeams = () => {
-          if (!Array.isArray(state.teams) || state.teams.length === 0) {
-            setTimeout(initTeams, 200);
-            return;
-          }
-          const sorted = [...state.teams].sort((a, b) =>
-            a.name.localeCompare(b.name)
-          );
-          if (notesTeam)
-            notesTeam.innerHTML = `<option value="">--${translate(
-              "chooseTeam"
-            )}--</option>`;
-          if (frHome)
-            frHome.innerHTML = `<option value="">--${translate(
-              "chooseTeam"
-            )}--</option>`;
-          if (frAway)
-            frAway.innerHTML = `<option value="">--${translate(
-              "chooseTeam"
-            )}--</option>`;
-          sorted.forEach((t) => {
-            if (notesTeam) {
-              const opt = document.createElement("option");
-              opt.value = t.name;
-              opt.textContent = t.name;
-              notesTeam.appendChild(opt);
-            }
-            if (frHome) {
-              const opt = document.createElement("option");
-              opt.value = t.name;
-              opt.textContent = t.name;
-              frHome.appendChild(opt);
-            }
-            if (frAway) {
-              const opt = document.createElement("option");
-              opt.value = t.name;
-              opt.textContent = t.name;
-              frAway.appendChild(opt);
-            }
-          });
-          if (notesTeam) notesTeam.removeAttribute("disabled");
-          if (frHome) frHome.removeAttribute("disabled");
-          if (frAway) frAway.removeAttribute("disabled");
-
-          if (notesTeam && notesTextarea && notesSaved) {
-            notesTeam.addEventListener("change", () => {
-              const team = state.teams.find((t) => t.name === notesTeam.value);
-              notesTextarea.value = team?.notes || "";
-              notesSaved.textContent = "";
-            });
-          }
-        };
-        initTeams();
-
-        // Save notes
-        if (notesSaveBtn && notesTeam && notesTextarea && notesSaved) {
-          notesSaveBtn.addEventListener("click", () => {
-            const name = notesTeam.value;
-            if (!name) {
-              notesTeam.focus();
-              return;
-            }
-            const team = state.teams.find((t) => t.name === name);
-            if (!team) return;
-            const oldNotes = team.notes || "";
-            team.notes = String(notesTextarea.value || "").trim();
-            if (oldNotes !== team.notes) {
-              logger?.dataChange?.("team-notes", oldNotes, team.notes);
-            }
-            notesSaved.textContent = translate("saved");
-            setTimeout(() => (notesSaved.textContent = ""), 1500);
-          });
-        }
-
-        // Friendlies validity + submit
-        function updateFriendlyValidity() {
-          if (!frHome || !frAway || !frSubmit) return;
-          const valid = Boolean(
-            frHome.value && frAway.value && frHome.value !== frAway.value
-          );
-          frSubmit.disabled = !valid;
-          if (!valid) frSubmit.setAttribute("disabled", "disabled");
-          else frSubmit.removeAttribute("disabled");
-        }
-        [frDate, frHome, frAway].forEach(
-          (el) => el && el.addEventListener("input", updateFriendlyValidity)
-        );
-        [frHome, frAway].forEach(
-          (el) => el && el.addEventListener("change", updateFriendlyValidity)
-        );
-
-        if (frSubmit) {
-          frSubmit.addEventListener("click", async () => {
-            if (!frDate || !frHome || !frAway) return;
-            const date = frDate.value;
-            const home = frHome.value;
-            const away = frAway.value;
-            const hs = frHomeGoals ? frHomeGoals.value : "";
-            const as = frAwayGoals ? frAwayGoals.value : "";
-            if (!date || !home || !away || home === away) return;
-            const friendly = {
-              date,
-              home_team: home,
-              away_team: away,
-              home_score: hs !== "" ? Number(hs) : null,
-              away_score: as !== "" ? Number(as) : null,
-              notes: frNotes?.value || "",
-            };
-            const cup =
-              state.cups.Friendlies || (state.cups.Friendlies = { rounds: [] });
-            if (!Array.isArray(cup.rounds)) cup.rounds = [];
-            let round = cup.rounds[0];
-            if (!round) {
-              round = { round_number: 1, deadlines: {}, games: [] };
-              cup.rounds.push(round);
-            }
-            round.games = Array.isArray(round.games) ? round.games : [];
-            round.games.push(friendly);
-            logger?.success?.("Friendly result added");
-            if (frDate) frDate.value = "";
-            if (frHome) frHome.selectedIndex = 0;
-            if (frAway) frAway.selectedIndex = 0;
-            if (frHomeGoals) frHomeGoals.value = "";
-            if (frAwayGoals) frAwayGoals.value = "";
-            if (frNotes) frNotes.value = "";
-            updateFriendlyValidity();
-
-            // Auto-commit to GitHub via Worker so data persists
-            try {
-              if (!commitURL) throw new Error("Commit URL not configured.");
-              // Build friendlies payload
-              const friendlies = state.cups.Friendlies || { rounds: [] };
-              const friendliesPayload = {
-                cup_name: "Friendlies",
-                season:
-                  state?.currentSeason || translate("currentSeason") || "",
-                rounds: friendlies.rounds || [],
-                team_statistics: {},
-              };
-              const lastUpdatedPayload = {
-                lastUpdated: new Date().toISOString(),
-              };
-
-              // Get cached password or request via modal
-              let pwd = sessionStorage.getItem("admin_password") || "";
-              if (!pwd) {
-                pwd = await requestAdminPassword();
-              }
-              if (!pwd) return; // user cancelled
-
-              const res = await fetch(commitURL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                mode: "cors",
-                body: JSON.stringify({
-                  password: pwd,
-                  message: "Auto-commit friendlies update from Admin UI",
-                  files: [
-                    {
-                      path: "friendlies.json",
-                      content: JSON.stringify(friendliesPayload, null, 2),
-                    },
-                    {
-                      path: "last_updated.json",
-                      content: JSON.stringify(lastUpdatedPayload, null, 2),
-                    },
-                  ],
-                }),
-              });
-              const data = await res.json().catch(() => ({}));
-              if (!res.ok || !data?.success)
-                throw new Error(data?.error || "Commit failed");
-              logger?.success?.("Committed friendlies.json to GitHub");
-              // Refresh local data so dashboard reflects latest
-              try {
-                await loadData();
-                renderAll();
-              } catch (_) {}
-            } catch (err) {
-              logger?.warn?.("Auto-commit failed", { error: err?.message });
-            }
-          });
-        }
-
-        // Export helpers
-        function download(filename, dataObj) {
-          const blob = new Blob([JSON.stringify(dataObj, null, 2)], {
-            type: "application/json",
-          });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = filename;
-          a.click();
-          URL.revokeObjectURL(url);
-        }
-        if (exportTeamsBtn) {
-          exportTeamsBtn.addEventListener("click", () => {
-            const payload = {
-              teams: state.teams.map((t) => ({
-                name: t.name,
-                notes: t.notes || "",
-                played: t.played || 0,
-                wins: t.wins || 0,
-                gf: t.gf || 0,
-                ga: t.ga || 0,
-                gd: t.gd || 0,
-              })),
-            };
-            download("teams.json", payload);
-          });
-        }
-        if (exportFriendliesBtn) {
-          exportFriendliesBtn.addEventListener("click", () => {
-            const friendlies = state.cups.Friendlies || { rounds: [] };
-            const payload = {
-              cup_name: "Friendlies",
-              season: state?.currentSeason || translate("currentSeason") || "",
-              rounds: friendlies.rounds || [],
-              team_statistics: {},
-            };
-            download("friendlies.json", payload);
-          });
-        }
-
-        // Commit to GitHub via Worker /commit
-        const commitURL =
-          typeof workerURL === "string"
-            ? workerURL.replace("/run", "/commit")
-            : "";
-        const commitBtn =
-          document.getElementById("commit-github") ||
-          (() => {
-            const b = document.createElement("button");
-            b.id = "commit-github";
-            b.type = "button";
-            b.textContent = "Commit to GitHub";
-            b.className = "btn btn-secondary";
-            const exportActions = document
-              .querySelector("#export-title")
-              ?.parentElement?.querySelector(".admin-actions");
-            if (exportActions) exportActions.appendChild(b);
-            return b;
-          })();
-        if (commitBtn) {
-          commitBtn.addEventListener("click", async () => {
-            try {
-              const teamsPayload = {
-                teams: state.teams.map((t) => ({
-                  name: t.name,
-                  notes: t.notes || "",
-                  played: t.played || 0,
-                  wins: t.wins || 0,
-                  gf: t.gf || 0,
-                  ga: t.ga || 0,
-                  gd: t.gd || 0,
-                })),
-              };
-              const friendlies = state.cups.Friendlies || { rounds: [] };
-              const friendliesPayload = {
-                cup_name: "Friendlies",
-                season:
-                  state?.currentSeason || translate("currentSeason") || "",
-                rounds: friendlies.rounds || [],
-                team_statistics: {},
-              };
-              const password =
-                sessionStorage.getItem("admin_password") ||
-                (await requestAdminPassword());
-              if (!password) return;
-              if (!commitURL) return alert("Commit URL not configured.");
-              commitBtn.disabled = true;
-              commitBtn.textContent = "Committing…";
-              const res = await fetch(commitURL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                mode: "cors",
-                body: JSON.stringify({
-                  password,
-                  message: "Update data via admin",
-                  files: [
-                    {
-                      path: "teams.json",
-                      content: JSON.stringify(teamsPayload, null, 2),
-                    },
-                    {
-                      path: "friendlies.json",
-                      content: JSON.stringify(friendliesPayload, null, 2),
-                    },
-                  ],
-                }),
-              });
-              const data = await res.json().catch(() => ({}));
-              if (!res.ok || !data?.success)
-                throw new Error(data?.error || "Commit failed");
-              alert("Committed to GitHub successfully");
-            } catch (err) {
-              alert(`Commit failed: ${err.message || err}`);
-            } finally {
-              commitBtn.disabled = false;
-              commitBtn.textContent = "Commit to GitHub";
-            }
-          });
-        }
-      }
-
-      // Auto-unlock via session flag
-      if (sessionStorage.getItem("admin_unlocked") === "true") {
-        if (adminLocked) adminLocked.hidden = true;
-        if (adminBody) adminBody.hidden = false;
-        await ensureDataLoaded();
-        initAdmin();
-      }
-
-      // Unlock button
-      if (unlockBtn && adminLocked && adminBody) {
-        unlockBtn.addEventListener("click", async () => {
-          const val = (passInput?.value || "").trim();
-          if (!val) {
-            passInput?.focus();
-            return;
-          }
-          adminLocked.hidden = true;
-          adminBody.hidden = false;
-          await ensureDataLoaded();
-          initAdmin();
-        });
-      }
-    }
   } catch (_) {}
 });
+
 
 // =======================
 // CLEANUP ON PAGE UNLOAD
@@ -3369,7 +1889,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 window.addEventListener("beforeunload", () => {
   logger.info("Football app shutting down");
   perfMonitor.cleanup();
-  memoryManager.cleanup();
+  cleanupPendingTimeouts();
 });
 
 // =======================

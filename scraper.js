@@ -18,6 +18,29 @@ const fs = require("fs");
 const os = require("os");
 const puppeteer = require("puppeteer");
 
+const CONFIG = {
+  welsh: {
+    url:
+      process.env.WELSH_SOURCE_URL ||
+      "https://www.welshschoolsfa.co.uk/cardiffandvale25-26",
+    targetId: process.env.WELSH_TARGET_ID || "1235921298",
+    cupName:
+      process.env.WELSH_CUP_NAME || "U12 Boys Welsh Cup - Cardiff & Vale",
+    season: process.env.WELSH_SEASON || "2025-26",
+  },
+  cardiff: {
+    url:
+      process.env.CARDIFF_SOURCE_URL ||
+      "https://www.cardiffandvalesfa.cymru/schools-cups",
+    sectionId: process.env.CARDIFF_SECTION_ID || "comp-j4emn0fl",
+    cupName:
+      process.env.CARDIFF_CUP_NAME || "Year 7 Boys Cardiff & Vale Cup",
+    season: process.env.CARDIFF_SEASON || "2025-26",
+  },
+};
+
+const HEADLESS = process.env.PUPPETEER_HEADLESS !== "false";
+
 // =======================
 // [LOGGING] Structured console logger (Node, no files)
 // =======================
@@ -84,6 +107,11 @@ const nodeTime = (label) => {
   return () => ({ ms: Date.now() - start, label });
 };
 nodeEmit("info", "scraper start", { level: nodeLevelName });
+nodeEmit("info", "scraper configuration", {
+  headless: HEADLESS,
+  welshSource: CONFIG.welsh.url,
+  cardiffSource: CONFIG.cardiff.url,
+});
 
 // ===============================
 // HELPERS
@@ -243,18 +271,16 @@ async function fetchParagraphs(page, selectorOrId, label) {
 async function scrapeU12Welsh(browser) {
   nodeEmit("info", "scrapeU12Welsh: start");
 
-  const SOURCE_URL = "https://www.welshschoolsfa.co.uk/cardiffandvale25-26";
-  const TARGET_DIV_ID = "1235921298";
-  const CUP_NAME = "U12 Boys Welsh Cup - Cardiff & Vale";
-  const SEASON = "2025-26";
+  const { url, targetId, cupName, season } = CONFIG.welsh;
 
-  nodeEmit("debug", "navigating", { url: SOURCE_URL });
+  nodeEmit("debug", "navigating", { url });
 
   const page = await browser.newPage();
   page.setDefaultNavigationTimeout(60000);
 
   try {
-    await page.goto(SOURCE_URL, { waitUntil: "networkidle2" });
+    await page.goto(url, { waitUntil: "networkidle2" });
+    await page.waitForSelector(`#${targetId}`, { timeout: 20000 });
     await delay(1500);
     // DEBUG: capture page title/URL
     // nodeEmit("debug", "page opened", { title: await page.title(), url: page.url() });
@@ -270,11 +296,17 @@ async function scrapeU12Welsh(browser) {
       return Array.from(div.querySelectorAll("p"))
         .map((p) => norm(p.innerText || ""))
         .filter(Boolean);
-    }, TARGET_DIV_ID);
+    }, targetId);
+
+    if (!paragraphs.length) {
+      nodeEmit("warn", "Welsh scrape found no paragraphs", {
+        selector: `#${targetId}`,
+      });
+    }
 
     const result = {
-      cup_name: CUP_NAME,
-      season: SEASON,
+      cup_name: cupName,
+      season,
       rounds: [],
       team_statistics: {},
     };
@@ -383,10 +415,7 @@ async function scrapeU12Welsh(browser) {
 // SCRAPER 2: Year 7 Cardiff & Vale
 // ===============================
 async function scrapeYear7Cardiff(browser) {
-  const SOURCE_URL = "https://www.cardiffandvalesfa.cymru/schools-cups";
-  const SECTION_ID = "comp-j4emn0fl";
-  const CUP_NAME = "Year 7 Boys Cardiff & Vale Cup";
-  const SEASON = "2025-26";
+  const { url, sectionId, cupName, season } = CONFIG.cardiff;
 
   log("\nStarting Cardiff & Vale scrape...");
 
@@ -394,19 +423,25 @@ async function scrapeYear7Cardiff(browser) {
   page.setDefaultNavigationTimeout(60000);
 
   try {
-    await page.goto(SOURCE_URL, { waitUntil: "networkidle2" });
+    await page.goto(url, { waitUntil: "networkidle2" });
+    await page.waitForSelector(`#${sectionId}`, { timeout: 20000 });
     await delay(2000);
     // DEBUG: check page
     // nodeEmit("debug", "page opened", { title: await page.title(), url: page.url() });
 
     const paragraphs = await fetchParagraphs(
       page,
-      `#${SECTION_ID}`,
+      `#${sectionId}`,
       "Cardiff Cup"
     );
+    if (!paragraphs.length) {
+      nodeEmit("warn", "Cardiff scrape found no paragraphs", {
+        selector: `#${sectionId}`,
+      });
+    }
     const result = {
-      cup_name: CUP_NAME,
-      season: SEASON,
+      cup_name: cupName,
+      season,
       rounds: [],
       team_statistics: {},
     };
@@ -569,8 +604,10 @@ function mergeTeamStats() {
   nodeEmit("info", "puppeteer launching");
 
   const browser = await puppeteer.launch({
-    headless: true,
+    headless: HEADLESS,
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    executablePath:
+      process.env.PUPPETEER_EXECUTABLE_PATH || process.env.CHROME_BIN,
   });
 
   try {
