@@ -1804,7 +1804,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     const adminLocked = document.getElementById("admin-locked");
     const adminBody = document.getElementById("admin-body");
 
-    const ensureAdminDataLoaded = async () => {
+    const ensureDataLoaded = async () => {
       try {
         if (!Array.isArray(state.teams) || state.teams.length === 0) {
           if (typeof window.loadData === "function") {
@@ -1813,13 +1813,10 @@ window.addEventListener("DOMContentLoaded", async () => {
           }
         }
       } catch (e) {
-        console.warn("[ADMIN] ensureAdminDataLoaded failed", e);
+        console.warn("[ADMIN] ensureDataLoaded failed", e);
       }
     };
-    // Backward compatibility: preserve previous global name if other modules still expect it
-    if (typeof window.ensureDataLoaded !== "function") {
-      window.ensureDataLoaded = ensureAdminDataLoaded;
-    }
+    window.ensureDataLoaded = ensureDataLoaded;
 
     if (adminLocked || adminBody) {
       const $ = (sel) => document.querySelector(sel);
@@ -2138,7 +2135,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (sessionStorage.getItem("admin_unlocked") === "true") {
           if (adminLocked) adminLocked.hidden = true;
           if (adminBody) adminBody.hidden = false;
-          await ensureAdminDataLoaded();
+          await ensureDataLoaded();
           initAdmin();
         }
 
@@ -2153,7 +2150,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             adminBody.hidden = false;
             sessionStorage.setItem("admin_unlocked", "true");
             sessionStorage.setItem("admin_password", val);
-            await ensureAdminDataLoaded();
+            await ensureDataLoaded();
             initAdmin();
           });
         }
