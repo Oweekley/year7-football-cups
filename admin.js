@@ -169,22 +169,10 @@
   }
 
   async function ensureDataLoaded() {
-    logger.debug?.("[ADMIN] ensureDataLoaded entry", {
-      teamsLoaded: Array.isArray(state.teams) ? state.teams.length : "unknown",
-      cupsLoaded: state.cups ? Object.keys(state.cups).length : 0,
-    });
     try {
       if (!Array.isArray(state.teams) || state.teams.length === 0) {
-        logger.info?.("[ADMIN] ensureDataLoaded invoking loadData");
         await loadData();
         renderAll();
-        logger.debug?.("[ADMIN] ensureDataLoaded post load", {
-          teamsLoaded: Array.isArray(state.teams) ? state.teams.length : 0,
-        });
-      } else {
-        logger.debug?.("[ADMIN] ensureDataLoaded skipped load", {
-          teamsLoaded: state.teams.length,
-        });
       }
     } catch (error) {
       logger.warn?.("[ADMIN] ensureDataLoaded failed", error);
@@ -208,14 +196,7 @@
     const adminBody = document.getElementById("admin-body");
     if (!adminLocked && !adminBody) return;
 
-    logger.debug?.("[ADMIN] initAdminPage start", {
-      adminLocked: !!adminLocked,
-      adminBody: !!adminBody,
-    });
     await ensureDataLoaded();
-    logger.debug?.("[ADMIN] initAdminPage data ready", {
-      teamsLoaded: Array.isArray(state.teams) ? state.teams.length : 0,
-    });
 
     const query = (sel) => document.querySelector(sel);
     const notesTeam = query("#notes-team");
@@ -236,7 +217,6 @@
 
     function initTeams() {
       if (!Array.isArray(state.teams) || state.teams.length === 0) {
-        logger.debug?.("[ADMIN] initTeams waiting for team data");
         setTimeout(initTeams, 200);
         return;
       }
@@ -266,9 +246,6 @@
         createOption(notesTeam);
         createOption(frHome);
         createOption(frAway);
-      });
-      logger.debug?.("[ADMIN] initTeams populated dropdowns", {
-        teams: sorted.length,
       });
       notesTeam?.removeAttribute("disabled");
       frHome?.removeAttribute("disabled");

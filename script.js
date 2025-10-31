@@ -594,19 +594,10 @@ async function fetchWithRetry(
   { retries = 2, timeout = 10000, fetchOptions = {} } = {}
 ) {
   let lastError;
-  logger.debug("fetchWithRetry:start", { url, retries, timeout });
   for (let attempt = 0; attempt <= retries; attempt++) {
     const controller = new AbortController();
     const timerId = trackTimeout(() => controller.abort(), timeout);
     try {
-      logger.debug("fetchWithRetry:attempt", {
-        url,
-        attempt,
-        options: {
-          cache: fetchOptions.cache ?? "no-store",
-          method: fetchOptions.method ?? "GET",
-        },
-      });
       const response = await fetch(url, {
         cache: "no-store",
         ...fetchOptions,
@@ -623,85 +614,39 @@ async function fetchWithRetry(
         error.status = response.status;
         throw error;
       }
-
-      logger.debug("fetchWithRetry:success", {
-        url,
-        status: response.status,
-        attempt,
-      });
       return response;
     } catch (error) {
       clearTrackedTimeout(timerId);
       lastError = error;
-      logger.warn("fetchWithRetry:error", {
-        url,
-        attempt,
-        message: error.message,
-        name: error.name,
-        status: error.status ?? null,
-        retryable:
-          error.name === "AbortError" ||
-          error.name === "TypeError" ||
-          error.status === 429 ||
-          (typeof error.status === "number" && error.status >= 500),
-      });
       const retryable =
         error.name === "AbortError" ||
         error.name === "TypeError" ||
         error.status === 429 ||
         (typeof error.status === "number" && error.status >= 500);
       if (attempt === retries || !retryable) {
-        logger.error("fetchWithRetry:failed", {
-          url,
-          attempt,
-          retries,
-          message: error.message,
-        });
         throw error;
       }
-      logger.debug("fetchWithRetry:retrying", {
-        url,
-        nextAttempt: attempt + 1,
-        delay: 500 * (attempt + 1),
-      });
       await delay(500 * (attempt + 1));
     }
   }
-  logger.error("fetchWithRetry:exhausted", { url, retries, lastError });
   throw lastError;
 }
 
 async function fetchJSON(url) {
   if (state.cache[url]) {
-    logger.debug("fetchJSON:cache-hit", {
-      url,
-      keys: Object.keys(state.cache[url] || {}),
-    });
+    logger.debug("Cache hit", { url });
     return state.cache[url];
   }
 
-  logger.debug("fetchJSON:request", { url });
+  logger.debug("Fetching JSON", { url });
   const response = await fetchWithRetry(url);
   const json = await response.json();
 
   if (!json || typeof json !== "object") {
-    logger.error("fetchJSON:invalid-response", {
-      url,
-      type: typeof json,
-      preview: json ? String(json).slice(0, 120) : null,
-    });
     throw new Error("Invalid JSON response");
   }
 
   state.cache[url] = json;
-  logger.debug("fetchJSON:resolved", {
-    url,
-    keys: Object.keys(json || {}),
-    sizeEstimate:
-      typeof json === "object"
-        ? JSON.stringify(json).length
-        : null,
-  });
   return json;
 }
 
@@ -776,11 +721,7 @@ async function loadData() {
   perfMonitor.startTiming("loadData");
 
   try {
-    logger.info("loadData:begin", {
-      timestamp: new Date().toISOString(),
-      cacheKeys: Object.keys(state.cache),
-      existingTeams: state.teams.length,
-    });
+    logger.info("Loading football data");
     perfMonitor.recordMemoryUsage();
 
     // Show loading states (with safety checks)
@@ -796,26 +737,15 @@ async function loadData() {
     }
 
     // Load the cups first so we can derive teams if needed
-    logger.debug("loadData:fetch-cups:start");
     const cupResults = await Promise.allSettled([
       fetchJSON("welsh.json"),
       fetchJSON("cardiff.json"),
       fetchJSON("friendlies.json"),
     ]);
     const [welsh, cardiff, friendlies] = cupResults.map((result, index) => {
-      const name = ["welsh.json", "cardiff.json", "friendlies.json"][index];
       if (result.status === "fulfilled") {
-        logger.debug("loadData:fetch-cups:success", {
-          file: name,
-          rounds: result.value?.rounds?.length || 0,
-        });
         return result.value;
       }
-      logger.warn("loadData:fetch-cups:failure", {
-        file: name,
-        message: result.reason?.message,
-        name: result.reason?.name,
-      });
       return null;
     });
 
@@ -825,7 +755,6 @@ async function loadData() {
     const friendliesCount = friendlies?.rounds?.length || 0;
 
     // Load teams + updated, but both are optional
-    logger.debug("loadData:fetch-meta:start");
     const [teamsResult, updatedResult] = await Promise.allSettled([
       fetchJSON("teams.json"),
       fetchJSON("last_updated.json"),
@@ -836,29 +765,6 @@ async function loadData() {
       updatedResult.status === "fulfilled"
         ? updatedResult.value
         : { lastUpdated: "Unknown" };
-    if (teamsResult.status === "rejected") {
-      logger.warn("loadData:teams-fetch:failure", {
-        message: teamsResult.reason?.message,
-      });
-    } else {
-      logger.debug("loadData:teams-fetch:success", {
-        teamsProperty: Array.isArray(teamsRaw?.teams)
-          ? "teams"
-          : typeof teamsRaw,
-        size: teamsRaw
-          ? JSON.stringify(teamsRaw).length
-          : 0,
-      });
-    }
-    if (updatedResult.status === "rejected") {
-      logger.warn("loadData:last-updated:failure", {
-        message: updatedResult.reason?.message,
-      });
-    } else {
-      logger.debug("loadData:last-updated:success", {
-        lastUpdated: updated?.lastUpdated,
-      });
-    }
 
     // Summarize all JSON fetches done during this run and emit one combined line
     try {
@@ -888,18 +794,7 @@ async function loadData() {
       Cardiff: cardiff || {},
       Friendlies: friendlies || {},
     };
-    const beforeNormalizeCount = Array.isArray(teamsRaw?.teams)
-      ? teamsRaw.teams.length
-      : Array.isArray(teamsRaw)
-      ? teamsRaw.length
-      : teamsRaw && typeof teamsRaw === "object"
-      ? Object.keys(teamsRaw).length
-      : 0;
     state.teams = normalizeTeams(teamsRaw, state.cups);
-    logger.debug("loadData:teams-normalized", {
-      sourceCount: beforeNormalizeCount,
-      normalizedCount: state.teams.length,
-    });
     state.lastUpdated = updated?.lastUpdated || "Unknown";
 
     logger.info("Team information processed", {
@@ -909,12 +804,10 @@ async function loadData() {
     });
 
     // Compute current season stats from cup rounds (overrides stale numbers)
-    logger.debug("Calculating team stats");
     perfMonitor.startTiming("calculateStats");
     calculateStats();
     perfMonitor.endTiming("calculateStats");
 
-    logger.debug("Displaying all content");
     // perfMonitor.startTiming("renderAll");
     renderAll();
     // perfMonitor.endTiming("renderAll");
@@ -928,10 +821,6 @@ async function loadData() {
       cupsLoaded: Object.keys(state.cups).length,
       performance: perfMonitor.getPerformanceReport(),
     });
-    logger.debug("loadData:end", {
-      timestamp: new Date().toISOString(),
-      cacheKeys: Object.keys(state.cache),
-    });
   } catch (err) {
     perfMonitor.endTiming("loadData");
     perfMonitor.recordError();
@@ -939,7 +828,6 @@ async function loadData() {
     // Don't show error messages - just log them silently
     logger.warn("Data loading had issues, but continuing", {
       error: err.message,
-      stack: err.stack,
     });
   }
 
@@ -1915,26 +1803,12 @@ window.addEventListener("DOMContentLoaded", async () => {
     const adminBody = document.getElementById("admin-body");
 
     const ensureDataLoaded = async () => {
-      logger.debug("ensureDataLoaded:entry", {
-        teamsLoaded: Array.isArray(state.teams) ? state.teams.length : "unknown",
-        cupsLoaded: state.cups ? Object.keys(state.cups).length : 0,
-      });
       try {
         if (!Array.isArray(state.teams) || state.teams.length === 0) {
-          logger.info("ensureDataLoaded:invoking-loadData");
           if (typeof window.loadData === "function") {
             await window.loadData();
             renderAll();
           }
-          logger.debug("ensureDataLoaded:post-load", {
-            teamsLoaded: Array.isArray(state.teams)
-              ? state.teams.length
-              : "unknown",
-          });
-        } else {
-          logger.debug("ensureDataLoaded:skip-load", {
-            teamsLoaded: state.teams.length,
-          });
         }
       } catch (e) {
         console.warn("[ADMIN] ensureDataLoaded failed", e);
