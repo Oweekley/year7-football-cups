@@ -1816,6 +1816,10 @@ window.addEventListener("DOMContentLoaded", async () => {
         console.warn("[ADMIN] ensureAdminDataLoaded failed", e);
       }
     };
+    // Backward compatibility: preserve previous global name if other modules still expect it
+    if (typeof window.ensureDataLoaded !== "function") {
+      window.ensureDataLoaded = ensureAdminDataLoaded;
+    }
 
     if (adminLocked || adminBody) {
       const $ = (sel) => document.querySelector(sel);
