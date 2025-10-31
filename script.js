@@ -1249,27 +1249,8 @@ function renderLastUpdated() {
 }
 
 // ============================================================
-// THEME TOGGLE
+// ADMIN ACCESS + UPDATE FIXTURES MODAL
 // ============================================================
-const themeToggle = document.getElementById("theme-toggle");
-const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-const savedTheme = localStorage.getItem("theme");
-
-if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
-  document.body.classList.add("dark");
-  themeToggle.textContent = "☾";
-} else {
-  themeToggle.textContent = "☀";
-}
-
-themeToggle?.addEventListener("click", () => {
-  document.body.classList.toggle("dark");
-  const isDark = document.body.classList.contains("dark");
-  themeToggle.textContent = isDark ? "☾" : "☀";
-  localStorage.setItem("theme", isDark ? "dark" : "light");
-});
-
-// ===== UPDATE FIXTURES MODAL + CALL TO CLOUDFLARE WORKER =====
 
 // If you change the Worker subdomain, update this:
 const workerURL = "https://year7-fixtures-dispatch.oweekley.workers.dev/run";
@@ -1282,6 +1263,13 @@ const startBtn = document.getElementById("update-start");
 const passInput = document.getElementById("update-pass");
 const stepsList = document.getElementById("update-steps");
 const errorEl = document.getElementById("update-error");
+const adminAccessModal = document.getElementById("admin-access-modal");
+const adminAccessClose = document.getElementById("admin-access-close");
+const adminAccessPass = document.getElementById("admin-access-pass");
+const adminAccessSubmit = document.getElementById("admin-access-submit");
+const adminAccessError = document.getElementById("admin-access-error");
+const adminAccessResolvers = [];
+let isAdminAccessOpen = false;
 
 function openModal() {
   modal?.setAttribute("aria-hidden", "false");
@@ -1630,14 +1618,6 @@ function throttle(func, limit) {
 // KEYBOARD NAVIGATION & ACCESSIBILITY
 // ============================================================
 function setupKeyboardNavigation() {
-  // Add keyboard support for theme toggle
-  document.getElementById("theme-toggle")?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      document.getElementById("theme-toggle")?.click();
-    }
-  });
-
   // Add keyboard support for language buttons
   document.querySelectorAll(".lang-switch button").forEach((btn) => {
     btn.addEventListener("keydown", (e) => {
@@ -1823,6 +1803,20 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     const adminLocked = document.getElementById("admin-locked");
     const adminBody = document.getElementById("admin-body");
+
+    const ensureAdminDataLoaded = async () => {
+      try {
+        if (!Array.isArray(state.teams) || state.teams.length === 0) {
+          if (typeof window.loadData === "function") {
+            await window.loadData();
+            renderAll();
+          }
+        }
+      } catch (e) {
+        console.warn("[ADMIN] ensureAdminDataLoaded failed", e);
+      }
+    };
+
     if (adminLocked || adminBody) {
       const $ = (sel) => document.querySelector(sel);
       const notesTeam = $("#notes-team");
@@ -1840,19 +1834,6 @@ window.addEventListener("DOMContentLoaded", async () => {
       const exportFriendliesBtn = $("#export-friendlies");
       const unlockBtn = $("#admin-unlock");
       const passInput = $("#admin-pass");
-
-      const ensureDataLoaded = async () => {
-        try {
-          if (!Array.isArray(state.teams) || state.teams.length === 0) {
-            if (typeof window.loadData === "function") {
-              await window.loadData();
-              renderAll();
-            }
-          }
-        } catch (e) {
-          console.warn("[ADMIN] ensureDataLoaded failed", e);
-        }
-      };
 
       const initAdmin = () => {
         const initTeams = () => {
@@ -2153,7 +2134,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (sessionStorage.getItem("admin_unlocked") === "true") {
           if (adminLocked) adminLocked.hidden = true;
           if (adminBody) adminBody.hidden = false;
-          await ensureDataLoaded();
+          await ensureAdminDataLoaded();
           initAdmin();
         }
 
@@ -2168,7 +2149,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             adminBody.hidden = false;
             sessionStorage.setItem("admin_unlocked", "true");
             sessionStorage.setItem("admin_password", val);
-            await ensureDataLoaded();
+            await ensureAdminDataLoaded();
             initAdmin();
           });
         }
