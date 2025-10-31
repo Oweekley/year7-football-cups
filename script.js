@@ -1314,6 +1314,115 @@ function setStep(name, state) {
   }
 }
 
+function openAdminAccessModal() {
+  if (!adminAccessModal) return;
+  adminAccessModal.setAttribute("aria-hidden", "false");
+  if (adminAccessError) adminAccessError.hidden = true;
+  isAdminAccessOpen = true;
+  if (adminAccessPass) {
+    const storedPwd = sessionStorage.getItem("admin_password") || "";
+    adminAccessPass.value = storedPwd;
+    setTimeout(() => {
+      try {
+        adminAccessPass.focus({ preventScroll: true });
+        if (storedPwd) adminAccessPass.select();
+      } catch (_) {}
+    }, 0);
+  }
+}
+
+function closeAdminAccessModal() {
+  if (!adminAccessModal) return;
+  adminAccessModal.setAttribute("aria-hidden", "true");
+  isAdminAccessOpen = false;
+  if (sessionStorage.getItem("admin_unlocked") !== "true") {
+    while (adminAccessResolvers.length) {
+      const resolver = adminAccessResolvers.shift();
+      resolver(null);
+    }
+  }
+}
+
+async function handleAdminAccessSubmit(event) {
+  event?.preventDefault?.();
+  if (!adminAccessSubmit || !adminAccessPass) return;
+
+  if (adminAccessError) adminAccessError.hidden = true;
+
+  const password = adminAccessPass.value.trim();
+  if (!password) {
+    if (adminAccessError) {
+      adminAccessError.textContent = translate("pleaseEnterPassword");
+      adminAccessError.hidden = false;
+    }
+    adminAccessPass.focus();
+    return;
+  }
+
+  const originalText = adminAccessSubmit.textContent;
+  adminAccessSubmit.disabled = true;
+  adminAccessSubmit.textContent = `${originalText}...`;
+
+  try {
+    const res = await fetch(workerURL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      mode: "cors",
+      body: JSON.stringify({ password, intent: "verify" }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data?.success) {
+      const msg =
+        res.status === 401
+          ? translate("invalidPassword")
+          : data?.error || `Request failed (${res.status})`;
+      throw new Error(msg);
+    }
+
+    sessionStorage.setItem("admin_unlocked", "true");
+    sessionStorage.setItem("admin_password", password);
+    closeAdminAccessModal();
+    while (adminAccessResolvers.length) {
+      const resolver = adminAccessResolvers.shift();
+      resolver(password);
+    }
+  } catch (err) {
+    if (adminAccessError) {
+      adminAccessError.textContent =
+        err?.message || translate("networkError");
+      adminAccessError.hidden = false;
+    }
+    adminAccessPass.focus();
+  } finally {
+    adminAccessSubmit.disabled = false;
+    adminAccessSubmit.textContent = originalText;
+  }
+}
+
+adminAccessClose?.addEventListener("click", () => closeAdminAccessModal());
+adminAccessModal?.addEventListener("click", (event) => {
+  if (event.target === adminAccessModal) closeAdminAccessModal();
+});
+adminAccessSubmit?.addEventListener("click", handleAdminAccessSubmit);
+adminAccessPass?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") handleAdminAccessSubmit(event);
+});
+adminAccessPass?.addEventListener("input", () => {
+  if (adminAccessError) adminAccessError.hidden = true;
+});
+
+function requestAdminPassword() {
+  const stored = sessionStorage.getItem("admin_password");
+  if (stored) {
+    sessionStorage.setItem("admin_unlocked", "true");
+    return Promise.resolve(stored);
+  }
+  openAdminAccessModal();
+  return new Promise((resolve) => {
+    adminAccessResolvers.push(resolve);
+  });
+}
+
 updateBtn?.addEventListener("click", openModal);
 closeBtn?.addEventListener("click", closeModal);
 modal?.addEventListener("click", (e) => {
@@ -1323,6 +1432,7 @@ modal?.addEventListener("click", (e) => {
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
   if (modal?.getAttribute("aria-hidden") === "false") closeModal();
+  if (isAdminAccessOpen) closeAdminAccessModal();
 });
 
 startBtn?.addEventListener("click", async () => {
@@ -1700,6 +1810,370 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   // Protect Admin link using the same password check as refresh (Cloudflare Worker)
   try {
+    const adminLink = document.getElementById("admin-link");
+    if (adminLink) {
+      adminLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        requestAdminPassword().then((pwd) => {
+          if (!pwd) return;
+          window.location.href = "admin.html";
+        });
+      });
+    }
+
+    const adminLocked = document.getElementById("admin-locked");
+    const adminBody = document.getElementById("admin-body");
+    if (adminLocked || adminBody) {
+      const $ = (sel) => document.querySelector(sel);
+      const notesTeam = $("#notes-team");
+      const notesTextarea = $("#notes-text");
+      const notesSaveBtn = $("#notes-save");
+      const notesSaved = $("#notes-saved");
+      const frDate = $("#fr-date");
+      const frHome = $("#fr-home");
+      const frAway = $("#fr-away");
+      const frHomeGoals = $("#fr-home-goals");
+      const frAwayGoals = $("#fr-away-goals");
+      const frNotes = $("#fr-notes");
+      const frSubmit = $("#fr-submit");
+      const exportTeamsBtn = $("#export-teams");
+      const exportFriendliesBtn = $("#export-friendlies");
+      const unlockBtn = $("#admin-unlock");
+      const passInput = $("#admin-pass");
+
+      async function ensureDataLoaded() {
+        try {
+          if (!Array.isArray(state.teams) || state.teams.length === 0) {
+            if (typeof window.loadData === "function") {
+              await window.loadData();
+              renderAll();
+            }
+          }
+        } catch (e) {
+          console.warn("[ADMIN] ensureDataLoaded failed", e);
+        }
+      }
+
+      function initAdmin() {
+        const initTeams = () => {
+          if (!Array.isArray(state.teams) || state.teams.length === 0) {
+            setTimeout(initTeams, 200);
+            return;
+          }
+          const sorted = [...state.teams].sort((a, b) =>
+            a.name.localeCompare(b.name)
+          );
+          if (notesTeam)
+            notesTeam.innerHTML = `<option value="">--${translate(
+              "chooseTeam"
+            )}--</option>`;
+          if (frHome)
+            frHome.innerHTML = `<option value="">--${translate(
+              "chooseTeam"
+            )}--</option>`;
+          if (frAway)
+            frAway.innerHTML = `<option value="">--${translate(
+              "chooseTeam"
+            )}--</option>`;
+          sorted.forEach((t) => {
+            if (notesTeam) {
+              const opt = document.createElement("option");
+              opt.value = t.name;
+              opt.textContent = t.name;
+              notesTeam.appendChild(opt);
+            }
+            if (frHome) {
+              const opt = document.createElement("option");
+              opt.value = t.name;
+              opt.textContent = t.name;
+              frHome.appendChild(opt);
+            }
+            if (frAway) {
+              const opt = document.createElement("option");
+              opt.value = t.name;
+              opt.textContent = t.name;
+              frAway.appendChild(opt);
+            }
+          });
+          if (notesTeam) notesTeam.removeAttribute("disabled");
+          if (frHome) frHome.removeAttribute("disabled");
+          if (frAway) frAway.removeAttribute("disabled");
+
+          if (notesTeam && notesTextarea && notesSaved) {
+            notesTeam.addEventListener("change", () => {
+              const team = state.teams.find((t) => t.name === notesTeam.value);
+              notesTextarea.value = team?.notes || "";
+              notesSaved.textContent = "";
+            });
+          }
+        };
+        initTeams();
+
+        if (notesSaveBtn && notesTeam && notesTextarea && notesSaved) {
+          notesSaveBtn.addEventListener("click", () => {
+            const name = notesTeam.value;
+            if (!name) {
+              notesTeam.focus();
+              return;
+            }
+            const team = state.teams.find((t) => t.name === name);
+            if (!team) return;
+            const oldNotes = team.notes || "";
+            team.notes = String(notesTextarea.value || "").trim();
+            if (oldNotes !== team.notes) {
+              logger?.dataChange?.("team-notes", oldNotes, team.notes);
+            }
+            notesSaved.textContent = translate("saved");
+            setTimeout(() => (notesSaved.textContent = ""), 1500);
+          });
+        }
+
+        function updateFriendlyValidity() {
+          if (!frHome || !frAway || !frSubmit) return;
+          const valid = Boolean(
+            frHome.value && frAway.value && frHome.value !== frAway.value
+          );
+          frSubmit.disabled = !valid;
+          if (!valid) frSubmit.setAttribute("disabled", "disabled");
+          else frSubmit.removeAttribute("disabled");
+        }
+        [frDate, frHome, frAway].forEach(
+          (el) => el && el.addEventListener("input", updateFriendlyValidity)
+        );
+        [frHome, frAway].forEach(
+          (el) => el && el.addEventListener("change", updateFriendlyValidity)
+        );
+
+        if (frSubmit) {
+          frSubmit.addEventListener("click", async () => {
+            if (!frDate || !frHome || !frAway) return;
+            const date = frDate.value;
+            const home = frHome.value;
+            const away = frAway.value;
+            const hs = frHomeGoals ? frHomeGoals.value : "";
+            const as = frAwayGoals ? frAwayGoals.value : "";
+            if (!date || !home || !away || home === away) return;
+            const friendly = {
+              date,
+              home_team: home,
+              away_team: away,
+              home_score: hs !== "" ? Number(hs) : null,
+              away_score: as !== "" ? Number(as) : null,
+              notes: frNotes?.value || "",
+            };
+            const cup =
+              state.cups.Friendlies ||
+              (state.cups.Friendlies = { rounds: [] });
+            if (!Array.isArray(cup.rounds)) cup.rounds = [];
+            let round = cup.rounds[0];
+            if (!round) {
+              round = { round_number: 1, deadlines: {}, games: [] };
+              cup.rounds.push(round);
+            }
+            round.games = Array.isArray(round.games) ? round.games : [];
+            round.games.push(friendly);
+            logger?.success?.("Friendly result added");
+            if (frDate) frDate.value = "";
+            if (frHome) frHome.selectedIndex = 0;
+            if (frAway) frAway.selectedIndex = 0;
+            if (frHomeGoals) frHomeGoals.value = "";
+            if (frAwayGoals) frAwayGoals.value = "";
+            if (frNotes) frNotes.value = "";
+            updateFriendlyValidity();
+
+            try {
+              const commitURL = workerURL.replace("/run", "/commit");
+              if (!commitURL) throw new Error("Commit URL not configured.");
+
+              let pwd = sessionStorage.getItem("admin_password") || "";
+              if (!pwd) {
+                pwd = await requestAdminPassword();
+              }
+              if (!pwd) return;
+
+              const friendlies = state.cups.Friendlies || { rounds: [] };
+              const friendliesPayload = {
+                cup_name: "Friendlies",
+                season:
+                  state?.currentSeason || translate("currentSeason") || "",
+                rounds: friendlies.rounds || [],
+                team_statistics: {},
+              };
+              const lastUpdatedPayload = {
+                lastUpdated: new Date().toISOString(),
+              };
+
+              const res = await fetch(commitURL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                mode: "cors",
+                body: JSON.stringify({
+                  password: pwd,
+                  message: "Auto-commit friendlies update from Admin UI",
+                  files: [
+                    {
+                      path: "friendlies.json",
+                      content: JSON.stringify(friendliesPayload, null, 2),
+                    },
+                    {
+                      path: "last_updated.json",
+                      content: JSON.stringify(lastUpdatedPayload, null, 2),
+                    },
+                  ],
+                }),
+              });
+              const data = await res.json().catch(() => ({}));
+              if (!res.ok || !data?.success)
+                throw new Error(data?.error || "Commit failed");
+              logger?.success?.("Committed friendlies.json to GitHub");
+              try {
+                await loadData();
+                renderAll();
+              } catch (_) {}
+            } catch (err) {
+              logger?.warn?.("Auto-commit failed", { error: err?.message });
+            }
+          });
+        }
+
+        function download(filename, dataObj) {
+          const blob = new Blob([JSON.stringify(dataObj, null, 2)], {
+            type: "application/json",
+          });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = filename;
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+        if (exportTeamsBtn) {
+          exportTeamsBtn.addEventListener("click", () => {
+            const payload = {
+              teams: state.teams.map((t) => ({
+                name: t.name,
+                notes: t.notes || "",
+                played: t.played || 0,
+                wins: t.wins || 0,
+                gf: t.gf || 0,
+                ga: t.ga || 0,
+                gd: t.gd || 0,
+              })),
+            };
+            download("teams.json", payload);
+          });
+        }
+        if (exportFriendliesBtn) {
+          exportFriendliesBtn.addEventListener("click", () => {
+            const friendlies = state.cups.Friendlies || { rounds: [] };
+            const payload = {
+              cup_name: "Friendlies",
+              season: state?.currentSeason || translate("currentSeason") || "",
+              rounds: friendlies.rounds || [],
+              team_statistics: {},
+            };
+            download("friendlies.json", payload);
+          });
+        }
+
+        const commitURL = workerURL.replace("/run", "/commit");
+        const commitBtn =
+          document.getElementById("commit-github") ||
+          (() => {
+            const b = document.createElement("button");
+            b.id = "commit-github";
+            b.type = "button";
+            b.textContent = "Commit to GitHub";
+            b.className = "btn btn-secondary";
+            const exportActions = document
+              .querySelector("#export-title")
+              ?.parentElement?.querySelector(".admin-actions");
+            if (exportActions) exportActions.appendChild(b);
+            return b;
+          })();
+        if (commitBtn) {
+          commitBtn.addEventListener("click", async () => {
+            try {
+              const teamsPayload = {
+                teams: state.teams.map((t) => ({
+                  name: t.name,
+                  notes: t.notes || "",
+                  played: t.played || 0,
+                  wins: t.wins || 0,
+                  gf: t.gf || 0,
+                  ga: t.ga || 0,
+                  gd: t.gd || 0,
+                })),
+              };
+              const friendlies = state.cups.Friendlies || { rounds: [] };
+              const friendliesPayload = {
+                cup_name: "Friendlies",
+                season:
+                  state?.currentSeason || translate("currentSeason") || "",
+                rounds: friendlies.rounds || [],
+                team_statistics: {},
+              };
+              const password = await requestAdminPassword();
+              if (!password) return;
+              if (!commitURL) return alert("Commit URL not configured.");
+              commitBtn.disabled = true;
+              commitBtn.textContent = "Committing…";
+              const res = await fetch(commitURL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                mode: "cors",
+                body: JSON.stringify({
+                  password,
+                  message: "Update data via admin",
+                  files: [
+                    {
+                      path: "teams.json",
+                      content: JSON.stringify(teamsPayload, null, 2),
+                    },
+                    {
+                      path: "friendlies.json",
+                      content: JSON.stringify(friendliesPayload, null, 2),
+                    },
+                  ],
+                }),
+              });
+              const data = await res.json().catch(() => ({}));
+              if (!res.ok || !data?.success)
+                throw new Error(data?.error || "Commit failed");
+              alert("Committed to GitHub successfully");
+            } catch (err) {
+              alert(`Commit failed: ${err.message || err}`);
+            } finally {
+              commitBtn.disabled = false;
+              commitBtn.textContent = "Commit to GitHub";
+            }
+          });
+        }
+
+        if (sessionStorage.getItem("admin_unlocked") === "true") {
+          if (adminLocked) adminLocked.hidden = true;
+          if (adminBody) adminBody.hidden = false;
+          await ensureDataLoaded();
+          initAdmin();
+        }
+
+        if (unlockBtn && adminLocked && adminBody) {
+          unlockBtn.addEventListener("click", async () => {
+            const val = (passInput?.value || "").trim();
+            if (!val) {
+              passInput?.focus();
+              return;
+            }
+            adminLocked.hidden = true;
+            adminBody.hidden = false;
+            sessionStorage.setItem("admin_unlocked", "true");
+            sessionStorage.setItem("admin_password", val);
+            await ensureDataLoaded();
+            initAdmin();
+          });
+        }
+      }
+    }
   } catch (_) {}
 
   // Apply initial translations to any existing elements with data-i18n
