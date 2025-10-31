@@ -2135,8 +2135,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         if (sessionStorage.getItem("admin_unlocked") === "true") {
           if (adminLocked) adminLocked.hidden = true;
           if (adminBody) adminBody.hidden = false;
-          await ensureDataLoaded();
-          initAdmin();
+          ensureDataLoaded().finally(() => initAdmin());
         }
 
         if (unlockBtn && adminLocked && adminBody) {
@@ -2150,8 +2149,7 @@ window.addEventListener("DOMContentLoaded", async () => {
             adminBody.hidden = false;
             sessionStorage.setItem("admin_unlocked", "true");
             sessionStorage.setItem("admin_password", val);
-            await ensureDataLoaded();
-            initAdmin();
+            ensureDataLoaded().finally(() => initAdmin());
           });
         }
       }
