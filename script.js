@@ -1841,7 +1841,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       const unlockBtn = $("#admin-unlock");
       const passInput = $("#admin-pass");
 
-      async function ensureDataLoaded() {
+      const ensureDataLoaded = async () => {
         try {
           if (!Array.isArray(state.teams) || state.teams.length === 0) {
             if (typeof window.loadData === "function") {
@@ -1852,9 +1852,9 @@ window.addEventListener("DOMContentLoaded", async () => {
         } catch (e) {
           console.warn("[ADMIN] ensureDataLoaded failed", e);
         }
-      }
+      };
 
-      function initAdmin() {
+      const initAdmin = () => {
         const initTeams = () => {
           if (!Array.isArray(state.teams) || state.teams.length === 0) {
             setTimeout(initTeams, 200);
@@ -1928,7 +1928,7 @@ window.addEventListener("DOMContentLoaded", async () => {
           });
         }
 
-        function updateFriendlyValidity() {
+        const updateFriendlyValidity = () => {
           if (!frHome || !frAway || !frSubmit) return;
           const valid = Boolean(
             frHome.value && frAway.value && frHome.value !== frAway.value
@@ -1936,7 +1936,7 @@ window.addEventListener("DOMContentLoaded", async () => {
           frSubmit.disabled = !valid;
           if (!valid) frSubmit.setAttribute("disabled", "disabled");
           else frSubmit.removeAttribute("disabled");
-        }
+        };
         [frDate, frHome, frAway].forEach(
           (el) => el && el.addEventListener("input", updateFriendlyValidity)
         );
