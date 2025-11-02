@@ -66,6 +66,11 @@ const logger = {
   userAction(action, details) {
     this.info(`action:${action}`, details);
   },
+  apiCall(method, url, status, duration) {
+    const payload = { method, url, status, duration };
+    const level = status >= 400 ? "warn" : "info";
+    this[level](`api:${method}`, payload);
+  },
   time(label) {
     if (debugEnabled) console.time(label);
   },
@@ -480,9 +485,13 @@ function switchLanguage(lang) {
   logger.debug("Updating language button");
   updateLanguageButton();
 
+  const savedSelectValues = captureSelectValues();
+
   // Re-render all dynamic content
   logger.debug("Refreshing page content");
   renderAll();
+
+  restoreSelectValues(savedSelectValues);
 
   // Re-translate any dynamically generated content
   logger.debug("Translating page text");
@@ -571,6 +580,29 @@ function translateDynamicContent(container, contentKey, data = {}) {
   });
 
   container.innerHTML = content;
+}
+
+function captureSelectValues() {
+  const values = {};
+  document
+    .querySelectorAll("select[id]")
+    .forEach((select) => (values[select.id] = select.value));
+  return values;
+}
+
+function restoreSelectValues(savedValues) {
+  if (!savedValues) return;
+  Object.entries(savedValues).forEach(([id, value]) => {
+    if (value === "" || value == null) return;
+    const select = document.getElementById(id);
+    if (!select) return;
+    const optionExists = Array.from(select.options).some(
+      (opt) => opt.value === value
+    );
+    if (!optionExists) return;
+    select.value = value;
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+  });
 }
 
 // Language toggle event listeners
@@ -794,6 +826,11 @@ async function loadData() {
       Cardiff: cardiff || {},
       Friendlies: friendlies || {},
     };
+    if (state.cups.Friendlies) {
+      state.cups.Friendlies.team_statistics = buildTeamStatistics(
+        state.cups.Friendlies.rounds || []
+      );
+    }
     state.teams = normalizeTeams(teamsRaw, state.cups);
     state.lastUpdated = updated?.lastUpdated || "Unknown";
 
@@ -922,6 +959,238 @@ function calculateStats() {
     cup.rounds?.forEach((r) => r.games?.forEach(updateStats))
   );
   state.teams.forEach((t) => (t.gd = t.gf - t.ga));
+}
+
+function parseScore(score) {
+  if (score == null || score === "") return null;
+  const parsed = Number(score);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function deriveWinner(game) {
+  if (!game) {
+    return { label: null, isDraw: false, winnerTeam: null };
+  }
+
+  const explicit =
+    typeof game.winner === "string" && game.winner.trim().length
+      ? game.winner.trim()
+      : null;
+
+  if (explicit) {
+    const normalized =
+      explicit === game.home_team || explicit === game.away_team
+        ? explicit
+        : null;
+    return {
+      label: explicit,
+      isDraw: false,
+      winnerTeam: normalized,
+    };
+  }
+
+  const homeScore = parseScore(game.home_score);
+  const awayScore = parseScore(game.away_score);
+  if (homeScore == null || awayScore == null) {
+    return { label: null, isDraw: false, winnerTeam: null };
+  }
+
+  if (homeScore > awayScore) {
+    return {
+      label: game.home_team ?? null,
+      isDraw: false,
+      winnerTeam: game.home_team ?? null,
+    };
+  }
+
+  if (awayScore > homeScore) {
+    return {
+      label: game.away_team ?? null,
+      isDraw: false,
+      winnerTeam: game.away_team ?? null,
+    };
+  }
+
+  return { label: null, isDraw: true, winnerTeam: null };
+}
+
+const MONTH_NAMES = {
+  en: [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ],
+  cy: [
+    "Ionawr",
+    "Chwefror",
+    "Mawrth",
+    "Ebrill",
+    "Mai",
+    "Mehefin",
+    "Gorffennaf",
+    "Awst",
+    "Medi",
+    "Hydref",
+    "Tachwedd",
+    "Rhagfyr",
+  ],
+};
+
+function getOrdinal(day, lang = currentLang) {
+  if (lang === "cy") {
+    if (day === 1) return `${day}af`;
+    if (day === 2) return `${day}il`;
+    if (day === 3 || day === 4) return `${day}ydd`;
+    return `${day}ain`;
+  }
+  const j = day % 10;
+  const k = day % 100;
+  if (j === 1 && k !== 11) return `${day}st`;
+  if (j === 2 && k !== 12) return `${day}nd`;
+  if (j === 3 && k !== 13) return `${day}rd`;
+  return `${day}th`;
+}
+
+function formatDisplayDate(dateValue, lang = currentLang) {
+  if (!dateValue) return translate("dash");
+
+  if (dateValue instanceof Date && !Number.isNaN(dateValue.getTime())) {
+    const day = dateValue.getUTCDate();
+    const month = dateValue.getUTCMonth();
+    const year = dateValue.getUTCFullYear();
+    const months = MONTH_NAMES[lang] || MONTH_NAMES.en;
+    return `${getOrdinal(day, lang)} ${months[month]} ${year}`;
+  }
+
+  const raw = String(dateValue).trim();
+  if (!raw) return translate("dash");
+
+  const isoMatch = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  let year;
+  let monthIndex;
+  let day;
+
+  if (isoMatch) {
+    year = Number(isoMatch[1]);
+    monthIndex = Number(isoMatch[2]) - 1;
+    day = Number(isoMatch[3]);
+  } else {
+    const parsed = new Date(raw);
+    if (Number.isNaN(parsed.getTime())) {
+      return raw;
+    }
+    year = parsed.getUTCFullYear();
+    monthIndex = parsed.getUTCMonth();
+    day = parsed.getUTCDate();
+  }
+
+  if (
+    typeof year !== "number" ||
+    typeof monthIndex !== "number" ||
+    typeof day !== "number"
+  ) {
+    return raw;
+  }
+
+  const months = MONTH_NAMES[lang] || MONTH_NAMES.en;
+  const monthName = months[monthIndex] || months[0];
+  return `${getOrdinal(day, lang)} ${monthName} ${year}`;
+}
+
+function formatMatchDate(cupName, dateValue) {
+  if (!dateValue) return translate("dash");
+  if (cupName === "Friendlies") {
+    return formatDisplayDate(dateValue);
+  }
+  const raw = String(dateValue).trim();
+  return raw || translate("dash");
+}
+
+function formatDeadline(deadlines) {
+  const label = translate("deadline");
+  if (!deadlines) return `${label}: ${translate("dash")}`;
+  const text = String(deadlines.english ?? "").trim();
+  if (!text) return `${label}: ${translate("dash")}`;
+  const normalized = text.toLowerCase();
+  if (
+    normalized.startsWith(label.toLowerCase()) ||
+    normalized.startsWith("deadline")
+  ) {
+    return text;
+  }
+  return `${label}: ${text}`;
+}
+
+function resolveRoundHeading(cupName, roundNumber, deadlines) {
+  if (cupName === "Friendlies") {
+    return translate("friendliesMatches");
+  }
+  const base =
+    roundNumber != null && String(roundNumber).trim() !== ""
+      ? `${translate("round")} ${roundNumber}`
+      : translate("round");
+  const deadlineText = formatDeadline(deadlines);
+  return deadlineText ? `${base} - ${deadlineText}` : base;
+}
+
+function buildTeamStatistics(rounds = []) {
+  const stats = new Map();
+
+  const ensureTeam = (name) => {
+    if (!stats.has(name)) {
+      stats.set(name, {
+        played: 0,
+        wins: 0,
+        gf: 0,
+        ga: 0,
+        gd: 0,
+      });
+    }
+    return stats.get(name);
+  };
+
+  rounds.forEach((round) => {
+    (round?.games || []).forEach((game) => {
+      const home = game?.home_team;
+      const away = game?.away_team;
+      if (!home || !away) return;
+      const homeStats = ensureTeam(home);
+      const awayStats = ensureTeam(away);
+      homeStats.played += 1;
+      awayStats.played += 1;
+
+      const homeScore = parseScore(game.home_score);
+      const awayScore = parseScore(game.away_score);
+
+      if (homeScore != null) {
+        homeStats.gf += homeScore;
+        awayStats.ga += homeScore;
+      }
+      if (awayScore != null) {
+        awayStats.gf += awayScore;
+        homeStats.ga += awayScore;
+      }
+
+      if (homeScore != null && awayScore != null) {
+        if (homeScore > awayScore) homeStats.wins += 1;
+        else if (awayScore > homeScore) awayStats.wins += 1;
+      }
+
+      homeStats.gd = homeStats.gf - homeStats.ga;
+      awayStats.gd = awayStats.gf - awayStats.ga;
+    });
+  });
+
+  return Object.fromEntries(stats.entries());
 }
 
 // ============================================================
@@ -1059,11 +1328,16 @@ function initTeamDashboard() {
       display.innerHTML = renderTeamStats(team);
     } else if (viewType === "history") {
       const matchSections = Object.entries(state.cups)
-        .map(([cupName, data]) => renderMatchHistory(teamName, cupName, data))
-        .filter((html) => html.includes("<tr>"))
-        .join(
-          "<hr style='margin:2rem 0;border:none;border-top:1px solid rgba(0,0,0,0.1)'>"
-        );
+        .map(([cupName, data]) => {
+          const sectionHtml = renderMatchHistory(teamName, cupName, data);
+          if (!sectionHtml.includes("<tr>")) return "";
+          const slug = cupName.toLowerCase();
+          return `<section class="team-cup team-cup--${slug}">
+            ${sectionHtml}
+          </section>`;
+        })
+        .filter(Boolean)
+        .join("");
 
       display.innerHTML =
         matchSections || `<p>No match data available for ${teamName}.</p>`;
@@ -1105,15 +1379,14 @@ function renderTeamStats(team) {
 function renderMatchHistory(teamName, cupName, data) {
   const rounds = data.rounds || [];
   if (!rounds.length) return `<p>${translate("noMatchData")}</p>`;
+  const includeDateColumn = cupName === "Friendlies";
 
   return `
     <h3>${translate(cupName.toLowerCase() + "Matches")}</h3>
     ${rounds
       .map(
         (r) => `
-        <h4>${translate("round")} ${r.round_number || ""} - ${translate(
-          "deadline"
-        )}: ${r.deadlines?.english || translate("dash")}</h4>
+        <h4>${resolveRoundHeading(cupName, r.round_number, r.deadlines)}</h4>
         <table>
           <tr>
             <th>${translate("home")}</th>
@@ -1121,23 +1394,27 @@ function renderMatchHistory(teamName, cupName, data) {
             <th>${translate("aScore")}</th>
             <th>${translate("away")}</th>
             <th>${translate("winner")}</th>
-            <th>${translate("date")}</th>
+            ${includeDateColumn ? `<th>${translate("date")}</th>` : ""}
           </tr>
           ${r.games
             ?.filter(
               (g) => g.home_team === teamName || g.away_team === teamName
             )
-            .map(
-              (g) => `
+            .map((g) => {
+              const winnerMeta = deriveWinner(g);
+              const winnerText =
+                winnerMeta.label ||
+                (winnerMeta.isDraw ? translate("draw") : translate("dash"));
+              return `
               <tr>
                 <td>${g.home_team}</td>
                 <td>${g.home_score ?? "-"}</td>
                 <td>${g.away_score ?? "-"}</td>
                 <td>${g.away_team}</td>
-                <td>${g.winner ?? "-"}</td>
-                <td>${g.date ?? "-"}</td>
-              </tr>`
-            )
+                <td>${winnerText}</td>
+                ${includeDateColumn ? `<td>${formatMatchDate(cupName, g.date)}</td>` : ""}
+              </tr>`;
+            })
             .join("")}
         </table>`
       )
@@ -1203,25 +1480,27 @@ function renderBracket(cupName, data, container) {
     .map(
       (r) => `
       <div class="round">
-        <h3>${translate("round")} ${r.round_number || ""} - ${translate(
-        "deadline"
-      )}: ${r.deadlines?.english || translate("dash")}</h3>
+        <h3>${resolveRoundHeading(cupName, r.round_number, r.deadlines)}</h3>
         <div class="games">
-          ${r.games
-            ?.map(
-              (g) => `
+          ${
+            r.games
+              ?.map((g) => {
+                const winnerMeta = deriveWinner(g);
+                const winnerTeam = winnerMeta.winnerTeam;
+                return `
             <div class="game" title="${g.notes || ""}">
-              <span class="team ${g.winner === g.home_team ? "winner" : ""}">${
-                g.home_team
-              }</span>
+              <span class="team ${
+                winnerTeam && winnerTeam === g.home_team ? "winner" : ""
+              }">${g.home_team}</span>
               <span class="score">${g.home_score ?? translate("dash")}</span> -
               <span class="score">${g.away_score ?? translate("dash")}</span>
-              <span class="team ${g.winner === g.away_team ? "winner" : ""}">${
-                g.away_team
-              }</span>
-            </div>`
-            )
-            .join("")}
+              <span class="team ${
+                winnerTeam && winnerTeam === g.away_team ? "winner" : ""
+              }">${g.away_team}</span>
+            </div>`;
+              })
+              .join("") || ""
+          }
         </div>
       </div>`
     )
@@ -1829,8 +2108,6 @@ window.addEventListener("DOMContentLoaded", async () => {
       const frAwayGoals = $("#fr-away-goals");
       const frNotes = $("#fr-notes");
       const frSubmit = $("#fr-submit");
-      const exportTeamsBtn = $("#export-teams");
-      const exportFriendliesBtn = $("#export-friendlies");
       const unlockBtn = $("#admin-unlock");
       const passInput = $("#admin-pass");
 
@@ -1972,12 +2249,13 @@ window.addEventListener("DOMContentLoaded", async () => {
               if (!pwd) return;
 
               const friendlies = state.cups.Friendlies || { rounds: [] };
+              const rounds = friendlies.rounds || [];
               const friendliesPayload = {
                 cup_name: "Friendlies",
                 season:
                   state?.currentSeason || translate("currentSeason") || "",
-                rounds: friendlies.rounds || [],
-                team_statistics: {},
+                rounds,
+                team_statistics: buildTeamStatistics(rounds),
               };
               const lastUpdatedPayload = {
                 lastUpdated: new Date().toISOString(),
@@ -2012,120 +2290,6 @@ window.addEventListener("DOMContentLoaded", async () => {
               } catch (_) {}
             } catch (err) {
               logger?.warn?.("Auto-commit failed", { error: err?.message });
-            }
-          });
-        }
-
-        function download(filename, dataObj) {
-          const blob = new Blob([JSON.stringify(dataObj, null, 2)], {
-            type: "application/json",
-          });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = filename;
-          a.click();
-          URL.revokeObjectURL(url);
-        }
-        if (exportTeamsBtn) {
-          exportTeamsBtn.addEventListener("click", () => {
-            const payload = {
-              teams: state.teams.map((t) => ({
-                name: t.name,
-                notes: t.notes || "",
-                played: t.played || 0,
-                wins: t.wins || 0,
-                gf: t.gf || 0,
-                ga: t.ga || 0,
-                gd: t.gd || 0,
-              })),
-            };
-            download("teams.json", payload);
-          });
-        }
-        if (exportFriendliesBtn) {
-          exportFriendliesBtn.addEventListener("click", () => {
-            const friendlies = state.cups.Friendlies || { rounds: [] };
-            const payload = {
-              cup_name: "Friendlies",
-              season: state?.currentSeason || translate("currentSeason") || "",
-              rounds: friendlies.rounds || [],
-              team_statistics: {},
-            };
-            download("friendlies.json", payload);
-          });
-        }
-
-        const commitURL = workerURL.replace("/run", "/commit");
-        const commitBtn =
-          document.getElementById("commit-github") ||
-          (() => {
-            const b = document.createElement("button");
-            b.id = "commit-github";
-            b.type = "button";
-            b.textContent = "Commit to GitHub";
-            b.className = "btn btn-secondary";
-            const exportActions = document
-              .querySelector("#export-title")
-              ?.parentElement?.querySelector(".admin-actions");
-            if (exportActions) exportActions.appendChild(b);
-            return b;
-          })();
-        if (commitBtn) {
-          commitBtn.addEventListener("click", async () => {
-            try {
-              const teamsPayload = {
-                teams: state.teams.map((t) => ({
-                  name: t.name,
-                  notes: t.notes || "",
-                  played: t.played || 0,
-                  wins: t.wins || 0,
-                  gf: t.gf || 0,
-                  ga: t.ga || 0,
-                  gd: t.gd || 0,
-                })),
-              };
-              const friendlies = state.cups.Friendlies || { rounds: [] };
-              const friendliesPayload = {
-                cup_name: "Friendlies",
-                season:
-                  state?.currentSeason || translate("currentSeason") || "",
-                rounds: friendlies.rounds || [],
-                team_statistics: {},
-              };
-              const password = await requestAdminPassword();
-              if (!password) return;
-              if (!commitURL) return alert("Commit URL not configured.");
-              commitBtn.disabled = true;
-              commitBtn.textContent = "Committing…";
-              const res = await fetch(commitURL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                mode: "cors",
-                body: JSON.stringify({
-                  password,
-                  message: "Update data via admin",
-                  files: [
-                    {
-                      path: "teams.json",
-                      content: JSON.stringify(teamsPayload, null, 2),
-                    },
-                    {
-                      path: "friendlies.json",
-                      content: JSON.stringify(friendliesPayload, null, 2),
-                    },
-                  ],
-                }),
-              });
-              const data = await res.json().catch(() => ({}));
-              if (!res.ok || !data?.success)
-                throw new Error(data?.error || "Commit failed");
-              alert("Committed to GitHub successfully");
-            } catch (err) {
-              alert(`Commit failed: ${err.message || err}`);
-            } finally {
-              commitBtn.disabled = false;
-              commitBtn.textContent = "Commit to GitHub";
             }
           });
         }

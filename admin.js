@@ -88,6 +88,61 @@
     return true;
   }
 
+  function buildTeamStats(rounds = []) {
+    const stats = new Map();
+    const ensure = (team) => {
+      if (!stats.has(team)) {
+        stats.set(team, {
+          played: 0,
+          wins: 0,
+          gf: 0,
+          ga: 0,
+          gd: 0,
+        });
+      }
+      return stats.get(team);
+    };
+
+    rounds.forEach((round) => {
+      (round?.games || []).forEach((game) => {
+        const home = game?.home_team;
+        const away = game?.away_team;
+        if (!home || !away) return;
+
+        const homeStats = ensure(home);
+        const awayStats = ensure(away);
+        homeStats.played += 1;
+        awayStats.played += 1;
+
+        const hs = Number.isFinite(game?.home_score)
+          ? Number(game.home_score)
+          : null;
+        const as = Number.isFinite(game?.away_score)
+          ? Number(game.away_score)
+          : null;
+
+        if (hs != null) {
+          homeStats.gf += hs;
+          awayStats.ga += hs;
+        }
+        if (as != null) {
+          awayStats.gf += as;
+          homeStats.ga += as;
+        }
+
+        if (hs != null && as != null) {
+          if (hs > as) homeStats.wins += 1;
+          else if (as > hs) awayStats.wins += 1;
+        }
+
+        homeStats.gd = homeStats.gf - homeStats.ga;
+        awayStats.gd = awayStats.gf - awayStats.ga;
+      });
+    });
+
+    return Object.fromEntries(stats.entries());
+  }
+
   async function handleModalSubmit(event) {
     event?.preventDefault?.();
     const { passwordInput, submitBtn, errorEl } = getModalElements();
@@ -179,18 +234,6 @@
     }
   }
 
-  function download(filename, dataObj) {
-    const blob = new Blob([JSON.stringify(dataObj, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
   async function initAdminPage() {
     const adminLocked = document.getElementById("admin-locked");
     const adminBody = document.getElementById("admin-body");
@@ -210,8 +253,6 @@
     const frAwayGoals = query("#fr-away-goals");
     const frNotes = query("#fr-notes");
     const frSubmit = query("#fr-submit");
-    const exportTeamsBtn = query("#export-teams");
-    const exportFriendliesBtn = query("#export-friendlies");
     const unlockBtn = query("#admin-unlock");
     const passInput = query("#admin-pass");
 
@@ -345,7 +386,7 @@
             cup_name: "Friendlies",
             season: state?.currentSeason || translate("currentSeason") || "",
             rounds: friendliesState.rounds || [],
-            team_statistics: {},
+            team_statistics: buildTeamStats(friendliesState.rounds || []),
           };
           const lastUpdatedPayload = {
             lastUpdated: new Date().toISOString(),
@@ -383,110 +424,6 @@
         }
       });
     }
-
-    if (exportTeamsBtn) {
-      exportTeamsBtn.addEventListener("click", () => {
-        const payload = {
-          teams: state.teams.map((t) => ({
-            name: t.name,
-            notes: t.notes || "",
-            played: t.played || 0,
-            wins: t.wins || 0,
-            gf: t.gf || 0,
-            ga: t.ga || 0,
-            gd: t.gd || 0,
-          })),
-        };
-        download("teams.json", payload);
-      });
-    }
-
-    if (exportFriendliesBtn) {
-      exportFriendliesBtn.addEventListener("click", () => {
-        const friendliesState = state.cups.Friendlies || { rounds: [] };
-        const payload = {
-          cup_name: "Friendlies",
-          season: state?.currentSeason || translate("currentSeason") || "",
-          rounds: friendliesState.rounds || [],
-          team_statistics: {},
-        };
-        download("friendlies.json", payload);
-      });
-    }
-
-    const commitURL = workerURL.replace("/run", "/commit");
-    const commitBtn =
-      document.getElementById("commit-github") ||
-      (() => {
-        const btn = document.createElement("button");
-        btn.id = "commit-github";
-        btn.type = "button";
-        btn.textContent = "Commit to GitHub";
-        btn.className = "btn btn-secondary";
-        const exportActions = document
-          .querySelector("#export-title")
-          ?.parentElement?.querySelector(".admin-actions");
-        if (exportActions) exportActions.appendChild(btn);
-        return btn;
-      })();
-
-    commitBtn?.addEventListener("click", async () => {
-      try {
-        const teamsPayload = {
-          teams: state.teams.map((t) => ({
-            name: t.name,
-            notes: t.notes || "",
-            played: t.played || 0,
-            wins: t.wins || 0,
-            gf: t.gf || 0,
-            ga: t.ga || 0,
-            gd: t.gd || 0,
-          })),
-        };
-        const friendliesState = state.cups.Friendlies || { rounds: [] };
-        const friendliesPayload = {
-          cup_name: "Friendlies",
-          season: state?.currentSeason || translate("currentSeason") || "",
-          rounds: friendliesState.rounds || [],
-          team_statistics: {},
-        };
-        const password =
-          sessionStorage.getItem(PASSWORD_KEY) ||
-          (await requestAdminPassword());
-        if (!password) return;
-        if (!commitURL) return alert("Commit URL not configured.");
-        commitBtn.disabled = true;
-        commitBtn.textContent = "Committing…";
-        const res = await fetch(commitURL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          mode: "cors",
-          body: JSON.stringify({
-            password,
-            message: "Update data via admin",
-            files: [
-              {
-                path: "teams.json",
-                content: JSON.stringify(teamsPayload, null, 2),
-              },
-              {
-                path: "friendlies.json",
-                content: JSON.stringify(friendliesPayload, null, 2),
-              },
-            ],
-          }),
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok || !data?.success)
-          throw new Error(data?.error || "Commit failed");
-        alert("Committed to GitHub successfully");
-      } catch (err) {
-        alert(`Commit failed: ${err.message || err}`);
-      } finally {
-        commitBtn.disabled = false;
-        commitBtn.textContent = "Commit to GitHub";
-      }
-    });
 
     if (sessionStorage.getItem(UNLOCK_KEY) === "true") {
       if (adminLocked) adminLocked.hidden = true;

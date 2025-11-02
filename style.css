@@ -37,6 +37,11 @@
   --cardiff-red: #e10600;
   --cardiff-light: #e6f0ff;
 
+  --friendlies-green: #1f8a5d;
+  --friendlies-green-dark: #14663f;
+  --friendlies-green-light: #d8f5e6;
+  --friendlies-ink: #103b27;
+
   --primary: var(--glantaf-sky);
   --primary-dark: var(--glantaf-navy);
   --primary-light: var(--glantaf-sky-light);
@@ -147,6 +152,8 @@ html {
 #root {
   min-height: 100vh;
   background: #f5f7fb;
+  display: flex;
+  flex-direction: column;
 }
 
 body {
@@ -156,11 +163,17 @@ body {
   color: var(--glantaf-ink);
   line-height: 1.65;
   min-height: 100vh;
-  padding-bottom: 3rem;
+  display: flex;
+  flex-direction: column;
   transition: background 0.4s ease, color 0.4s ease;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+}
+
+main {
+  flex: 1 0 auto;
+  width: 100%;
 }
 
 body,
@@ -554,23 +567,68 @@ nav a.active {
   background: rgba(0, 98, 204, 0.06);
 }
 
-/* Friendlies section retains Glantaf styling */
+/* Friendlies section green branding */
 #friendlies {
   background: linear-gradient(
       145deg,
-      rgba(91, 170, 233, 0.12),
-      rgba(91, 170, 233, 0.04)
+      rgba(31, 138, 93, 0.18),
+      rgba(182, 235, 213, 0.12)
     ),
     #ffffff;
-  border: 1px solid rgba(91, 170, 233, 0.18);
-  box-shadow: 0 26px 52px rgba(16, 51, 113, 0.16),
-    0 10px 24px rgba(16, 51, 113, 0.12);
-  color: var(--glantaf-ink);
+  border: 1px solid rgba(31, 138, 93, 0.3);
+  box-shadow: 0 26px 52px rgba(20, 102, 63, 0.18),
+    0 10px 24px rgba(20, 102, 63, 0.12);
+  color: var(--friendlies-ink);
 }
 
 #friendlies h2,
 #friendlies h3 {
-  color: var(--glantaf-navy);
+  color: var(--friendlies-green-dark);
+}
+
+#friendlies .selectors {
+  border-left: 4px solid var(--friendlies-green);
+  padding-left: 1rem;
+}
+
+#friendlies label {
+  color: var(--friendlies-ink);
+  font-weight: 600;
+}
+
+#friendlies select:focus {
+  outline: 2px solid var(--friendlies-green);
+  outline-offset: 2px;
+}
+
+#friendlies button,
+#friendlies .cta,
+#friendlies .pill,
+#friendlies select {
+  background: linear-gradient(
+    135deg,
+    var(--friendlies-green-dark),
+    var(--friendlies-green)
+  );
+  color: #fff;
+  border: none;
+}
+
+#friendlies button:hover,
+#friendlies .cta:hover,
+#friendlies .pill:hover {
+  background: linear-gradient(
+    135deg,
+    var(--friendlies-green),
+    var(--friendlies-green-dark)
+  );
+  transform: translateY(-2px);
+}
+
+#friendlies input,
+#friendlies textarea {
+  border-color: rgba(20, 102, 63, 0.25);
+  color: var(--friendlies-ink);
 }
 
 @supports ((-webkit-background-clip: text) or (background-clip: text)) {
@@ -613,6 +671,19 @@ nav a.active {
     color: transparent;
     -webkit-text-fill-color: transparent;
   }
+
+  #friendlies h2,
+  #friendlies h3 {
+    background: linear-gradient(
+      135deg,
+      var(--friendlies-green-dark),
+      var(--friendlies-green)
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
 }
 
 /* Bracket containers accent */
@@ -638,6 +709,17 @@ nav a.active {
   color: #052a54;
 }
 
+#friendlies-bracket-container {
+  border: 1px solid rgba(31, 138, 93, 0.2);
+  background: linear-gradient(
+      160deg,
+      rgba(31, 138, 93, 0.14),
+      rgba(216, 245, 230, 0.95)
+    ),
+    #ffffff;
+  color: var(--friendlies-ink);
+}
+
 /* Shared bracket styling */
 .bracket-container {
   border-radius: 20px;
@@ -658,6 +740,19 @@ nav a.active {
   padding: 0.85rem 1rem;
   background: rgba(255, 255, 255, 0.75);
   box-shadow: inset 0 1px 0 rgba(16, 51, 113, 0.08);
+}
+
+#friendlies-bracket-container .round h3::before {
+  content: none;
+}
+
+#friendlies-bracket-container .game {
+  border-left: 4px solid var(--friendlies-green);
+  box-shadow: inset 0 1px 0 rgba(20, 102, 63, 0.12);
+}
+
+#friendlies-bracket-container .game:hover {
+  border-left-color: var(--friendlies-green-dark);
 }
 
 /* ===============BUTTONS=============== */
@@ -831,6 +926,27 @@ tr:hover td {
   background: rgba(91, 170, 233, 0.18);
   transform: scale(1.01);
   box-shadow: 0 2px 8px rgba(91, 170, 233, 0.18);
+}
+
+#friendlies table th {
+  background: linear-gradient(
+    135deg,
+    var(--friendlies-green-dark),
+    var(--friendlies-green)
+  );
+}
+
+#friendlies table tr:nth-child(even) td {
+  background: rgba(31, 138, 93, 0.06);
+}
+
+#friendlies table tr:hover td {
+  background: rgba(31, 138, 93, 0.16);
+  box-shadow: 0 2px 8px rgba(20, 102, 63, 0.18);
+}
+
+#friendlies td.rank {
+  color: var(--friendlies-green);
 }
 
 tr:last-child td:first-child {
@@ -1031,6 +1147,12 @@ td.team-name {
   position: relative;
 }
 
+#friendlies .team.winner,
+#friendlies-bracket-container .team.winner,
+.team-cup--friendlies .team.winner {
+  color: var(--friendlies-green);
+}
+
 .team.winner::after {
   content: "★";
   margin-left: 0.5rem;
@@ -1047,6 +1169,11 @@ td.team-name {
 
 .game:hover .score {
   color: var(--glantaf-sky);
+}
+
+#friendlies .game:hover .score,
+#friendlies-bracket-container .game:hover .score {
+  color: var(--friendlies-green-dark);
 }
 
 /* Enhanced bracket layout for better flow */
@@ -1231,9 +1358,10 @@ footer {
   text-align: center;
   padding: 1.2rem;
   font-size: 0.95rem;
-  background: var(--glantaf-navy);
-  color: #f5f7ff;
-  box-shadow: 0 -8px 24px rgba(16, 51, 113, 0.16);
+  background: #202124;
+  color: #e8eaed;
+  box-shadow: 0 -8px 24px rgba(32, 33, 36, 0.16);
+  flex-shrink: 0;
 }
 
 footer strong {
@@ -1241,7 +1369,7 @@ footer strong {
 }
 
 footer a {
-  color: var(--glantaf-sky-light);
+  color: #bdc1c6;
 }
 
 /* ==============================

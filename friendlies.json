@@ -17,5 +17,20 @@
       ]
     }
   ],
-  "team_statistics": {}
+  "team_statistics": {
+    "Whitchurch": {
+      "played": 1,
+      "wins": 0,
+      "gf": 1,
+      "ga": 4,
+      "gd": -3
+    },
+    "Glantaf": {
+      "played": 1,
+      "wins": 1,
+      "gf": 4,
+      "ga": 1,
+      "gd": 3
+    }
+  }
 }
