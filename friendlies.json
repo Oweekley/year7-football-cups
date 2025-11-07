@@ -12,25 +12,236 @@
           "away_team": "Glantaf",
           "home_score": 1,
           "away_score": 4,
-          "notes": ""
+          "winner": "Glantaf",
+          "notes": "Friendly"
+        },
+        {
+          "date": null,
+          "home_team": "Glantaf",
+          "away_team": "Plasmawr",
+          "home_score": null,
+          "away_score": null,
+          "winner": "Glantaf",
+          "notes": "Glantaf win, score unknown"
+        },
+        {
+          "date": null,
+          "home_team": "Whitchurch",
+          "away_team": "Cardiff High",
+          "home_score": 5,
+          "away_score": 3,
+          "winner": "Whitchurch",
+          "notes": "Friendly"
+        },
+        {
+          "date": null,
+          "home_team": "Whitchurch",
+          "away_team": "Llanishen",
+          "home_score": 7,
+          "away_score": 6,
+          "winner": "Whitchurch",
+          "notes": "Friendly"
+        },
+        {
+          "date": null,
+          "home_team": "Whitchurch",
+          "away_team": "Radyr",
+          "home_score": 2,
+          "away_score": 4,
+          "winner": "Radyr",
+          "notes": "Welsh Cup Round 2"
+        },
+        {
+          "date": null,
+          "home_team": "Whitchurch",
+          "away_team": "Fitzalan",
+          "home_score": 3,
+          "away_score": 3,
+          "winner": null,
+          "notes": "Friendly draw"
+        },
+        {
+          "date": null,
+          "home_team": "Whitchurch",
+          "away_team": "Plasmawr",
+          "home_score": null,
+          "away_score": null,
+          "winner": "Plasmawr",
+          "notes": "Plasmawr win, score unknown"
+        },
+        {
+          "date": null,
+          "home_team": "Plasmawr",
+          "away_team": "St Teilo's",
+          "home_score": null,
+          "away_score": null,
+          "winner": "Plasmawr",
+          "notes": "Plasmawr win, score unknown"
+        },
+        {
+          "date": null,
+          "home_team": "Plasmawr",
+          "away_team": "Radyr",
+          "home_score": null,
+          "away_score": null,
+          "winner": "Radyr",
+          "notes": "Radyr win, score unknown"
+        },
+        {
+          "date": null,
+          "home_team": "Llanishen",
+          "away_team": "St Teilo's",
+          "home_score": null,
+          "away_score": null,
+          "winner": "Llanishen",
+          "notes": "Unconfirmed result (guess)"
+        },
+        {
+          "date": null,
+          "home_team": "Llanishen",
+          "away_team": "Cardiff High",
+          "home_score": null,
+          "away_score": null,
+          "winner": "Llanishen",
+          "notes": "Unconfirmed result (guess)"
+        },
+        {
+          "date": null,
+          "home_team": "Llanishen",
+          "away_team": "Plasmawr",
+          "home_score": null,
+          "away_score": null,
+          "winner": "Llanishen",
+          "notes": "Unconfirmed result (guess)"
+        },
+        {
+          "date": null,
+          "home_team": "Corpus Christi",
+          "away_team": "Willows",
+          "home_score": null,
+          "away_score": null,
+          "winner": "Corpus Christi",
+          "notes": "Friendly win, score unknown"
+        },
+        {
+          "date": null,
+          "home_team": "Cowbridge",
+          "away_team": "Llantwit Major",
+          "home_score": 16,
+          "away_score": 1,
+          "winner": "Cowbridge",
+          "notes": "Also Welsh Cup Round 1"
+        },
+        {
+          "date": null,
+          "home_team": "Bro Morgannwg",
+          "away_team": "St Richard Gwyn",
+          "home_score": 9,
+          "away_score": null,
+          "winner": "Bro Morgannwg",
+          "notes": "Score partially unknown"
         }
       ]
     }
   ],
   "team_statistics": {
     "Whitchurch": {
-      "played": 1,
-      "wins": 0,
-      "gf": 1,
-      "ga": 4,
-      "gd": -3
+      "played": 6,
+      "wins": 2,
+      "gf": 18,
+      "ga": 20,
+      "gd": -2
     },
     "Glantaf": {
-      "played": 1,
-      "wins": 1,
+      "played": 2,
+      "wins": 2,
       "gf": 4,
       "ga": 1,
       "gd": 3
+    },
+    "Plasmawr": {
+      "played": 5,
+      "wins": 2,
+      "gf": 0,
+      "ga": 0,
+      "gd": 0
+    },
+    "Cardiff High": {
+      "played": 2,
+      "wins": 0,
+      "gf": 3,
+      "ga": 5,
+      "gd": -2
+    },
+    "Llanishen": {
+      "played": 4,
+      "wins": 3,
+      "gf": 6,
+      "ga": 7,
+      "gd": -1
+    },
+    "Radyr": {
+      "played": 2,
+      "wins": 2,
+      "gf": 4,
+      "ga": 2,
+      "gd": 2
+    },
+    "Fitzalan": {
+      "played": 1,
+      "wins": 0,
+      "gf": 3,
+      "ga": 3,
+      "gd": 0
+    },
+    "St Teilo's": {
+      "played": 2,
+      "wins": 0,
+      "gf": 0,
+      "ga": 0,
+      "gd": 0
+    },
+    "Corpus Christi": {
+      "played": 1,
+      "wins": 1,
+      "gf": 0,
+      "ga": 0,
+      "gd": 0
+    },
+    "Willows": {
+      "played": 1,
+      "wins": 0,
+      "gf": 0,
+      "ga": 0,
+      "gd": 0
+    },
+    "Bro Morgannwg": {
+      "played": 1,
+      "wins": 1,
+      "gf": 9,
+      "ga": 0,
+      "gd": 9
+    },
+    "St Richard Gwyn": {
+      "played": 1,
+      "wins": 0,
+      "gf": 0,
+      "ga": 9,
+      "gd": -9
+    },
+    "Cowbridge": {
+      "played": 1,
+      "wins": 1,
+      "gf": 16,
+      "ga": 1,
+      "gd": 15
+    },
+    "Llantwit Major": {
+      "played": 1,
+      "wins": 0,
+      "gf": 1,
+      "ga": 16,
+      "gd": -15
     }
   }
 }

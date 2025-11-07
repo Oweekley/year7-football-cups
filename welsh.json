@@ -4,7 +4,11 @@
   "rounds": [
     {
       "round_number": 1,
-      "deadlines": {},
+      "deadlines": {
+        "english": "Deadline: 29th September",
+        "welsh": "Dyddiad cau: 29 Medi",
+        "english_expanded": "29 sep 2025"
+      },
       "games": [
         {
           "home_team": "Llanishen",
@@ -106,14 +110,118 @@
     },
     {
       "round_number": 2,
-      "deadlines": {},
+      "deadlines": {
+        "english": "Deadline: 28th October",
+        "welsh": "Dyddiad cau: 28 Hydref",
+        "english_expanded": "28 oct 2025"
+      },
       "games": [
+        {
+          "home_team": "Llanishen",
+          "home_score": null,
+          "away_team": "Corpus Christi",
+          "away_score": null,
+          "winner": null,
+          "date": null
+        },
+        {
+          "home_team": "Cardiff High",
+          "home_score": 0,
+          "away_team": "Plasmawr",
+          "away_score": 0,
+          "winner": "Cardiff High",
+          "date": "5 nov 2025"
+        },
         {
           "home_team": "Bro Edern",
           "home_score": 3,
           "away_team": "Cowbridge",
           "away_score": 7,
           "winner": "Cowbridge",
+          "date": null
+        },
+        {
+          "home_team": "Mary Immaculate",
+          "home_score": null,
+          "away_team": "Glantaf",
+          "away_score": null,
+          "winner": null,
+          "date": "4 nov 2025"
+        },
+        {
+          "home_team": "Radyr",
+          "home_score": 4,
+          "away_team": "Whitchurch",
+          "away_score": 2,
+          "winner": "Radyr",
+          "date": null
+        },
+        {
+          "home_team": "Bro Morgannwg",
+          "home_score": null,
+          "away_team": "Stanwell",
+          "away_score": null,
+          "winner": null,
+          "date": "11 nov 2025"
+        }
+      ]
+    },
+    {
+      "round_number": 3,
+      "deadlines": {
+        "english": "Deadline: 24th November",
+        "welsh": "Dyddiad cau: 24 Tachwedd",
+        "english_expanded": "24 nov 2025"
+      },
+      "games": [
+        {
+          "home_team": "Winner of (13)",
+          "home_score": null,
+          "away_team": "Cardiff High",
+          "away_score": null,
+          "winner": null,
+          "date": null
+        },
+        {
+          "home_team": "Cowbridge",
+          "home_score": null,
+          "away_team": "Winner of (16)",
+          "away_score": null,
+          "winner": null,
+          "date": null
+        },
+        {
+          "home_team": "Winner of (17)",
+          "home_score": null,
+          "away_team": "Winner of (18)",
+          "away_score": null,
+          "winner": null,
+          "date": null
+        }
+      ]
+    },
+    {
+      "round_number": 4,
+      "deadlines": {
+        "english": "Deadline: 15th December",
+        "welsh": "Dyddiad cau: 15 Rhagfyr",
+        "english_expanded": "15 dec 2025"
+      },
+      "games": [
+        {
+          "home_team": "Winner of (19)",
+          "home_score": null,
+          "away_team": "BYE",
+          "away_score": null,
+          "winner": null,
+          "date": null
+        },
+        {
+          "home_team": "Winner of (20)",
+          "home_score": null,
+          "away_team": "Winner of (21)",
+          "away_score": null,
+          "winner": null,
           "date": null
         }
       ]
@@ -156,8 +264,8 @@
       "goal_difference": -3
     },
     "Cardiff High": {
-      "games_played": 1,
-      "wins": 1,
+      "games_played": 2,
+      "wins": 2,
       "goals_for": 3,
       "goals_against": 0,
       "goal_difference": 3
@@ -170,7 +278,7 @@
       "goal_difference": -8
     },
     "Plasmawr": {
-      "games_played": 1,
+      "games_played": 2,
       "wins": 1,
       "goals_for": 9,
       "goals_against": 1,
@@ -240,11 +348,11 @@
       "goal_difference": -4
     },
     "Radyr": {
-      "games_played": 1,
-      "wins": 1,
-      "goals_for": 5,
-      "goals_against": 1,
-      "goal_difference": 4
+      "games_played": 2,
+      "wins": 2,
+      "goals_for": 9,
+      "goals_against": 3,
+      "goal_difference": 6
     },
     "St Richard Gwyn": {
       "games_played": 1,
@@ -254,11 +362,11 @@
       "goal_difference": -3
     },
     "Whitchurch": {
-      "games_played": 1,
+      "games_played": 2,
       "wins": 1,
-      "goals_for": 3,
-      "goals_against": 0,
-      "goal_difference": 3
+      "goals_for": 5,
+      "goals_against": 4,
+      "goal_difference": 1
     },
     "St Cyres": {
       "games_played": 1,

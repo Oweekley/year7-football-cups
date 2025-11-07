@@ -6,7 +6,7 @@
       "round_number": 1,
       "deadlines": {
         "english": "Deadline: 21st October",
-        "english_expanded": "21 oct 2025"
+        "welsh": "Dyddiad cau: 21 Hydref"
       },
       "games": [
         {
@@ -135,6 +135,80 @@
           "away_team": "BYE",
           "away_score": null,
           "winner": "Radyr",
+          "date": null
+        }
+      ]
+    },
+    {
+      "round_number": 2,
+      "deadlines": {
+        "english": "Deadline: 8th December",
+        "welsh": "Dyddiad cau: 8 Rhagfyr",
+        "english_expanded": "8 dec 2025"
+      },
+      "games": [
+        {
+          "home_team": "Whitchurch",
+          "home_score": null,
+          "away_team": "St Teilo's",
+          "away_score": null,
+          "winner": null,
+          "date": null
+        },
+        {
+          "home_team": "Radyr",
+          "home_score": null,
+          "away_team": "St Cyres",
+          "away_score": null,
+          "winner": null,
+          "date": null
+        },
+        {
+          "home_team": "Cardiff High",
+          "home_score": null,
+          "away_team": "Bro Edern",
+          "away_score": null,
+          "winner": null,
+          "date": null
+        },
+        {
+          "home_team": "Llantwit Major",
+          "home_score": null,
+          "away_team": "Pencoedtre",
+          "away_score": null,
+          "winner": null,
+          "date": null
+        },
+        {
+          "home_team": "Bro Morgannwg",
+          "home_score": null,
+          "away_team": "St Illtyds",
+          "away_score": null,
+          "winner": null,
+          "date": null
+        },
+        {
+          "home_team": "Glantaf",
+          "home_score": null,
+          "away_team": "Eastern",
+          "away_score": null,
+          "winner": null,
+          "date": null
+        },
+        {
+          "home_team": "Plasmawr",
+          "home_score": null,
+          "away_team": "Mary Immaculate",
+          "away_score": null,
+          "winner": null,
+          "date": null
+        },
+        {
+          "home_team": "Llanishen",
+          "home_score": null,
+          "away_team": "St Richard Gwyn",
+          "away_score": null,
+          "winner": null,
           "date": null
         }
       ]

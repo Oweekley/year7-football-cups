@@ -95,17 +95,25 @@
       </div>
     </div>
 
-    <!-- ===== NAVIGATION ===== -->
-    <nav aria-label="Main navigation" role="navigation">
-      <a href="index.html" class="active" data-i18n="dashboard" aria-current="page">Dashboard</a>
-      <a href="teamCard.html" data-i18n="teamDashboard">Team Dashboard</a>
-      <a href="brackets.html" data-i18n="brackets">Brackets</a>
-      <a href="#" id="admin-link" data-i18n="admin">Admin</a>
-    </nav>
   </header>
 
   <!-- ============== MAIN ============== -->
   <main id="main-content" role="main" aria-label="Year 7 Football Cups Dashboard">
+    <section class="resource-links" aria-labelledby="resource-links-title" role="region">
+      <h2 id="resource-links-title" data-i18n="resourceLinksTitle">Official Fixtures & Tables</h2>
+      <p class="resource-links__description" data-i18n="resourceLinksDescription">
+        Quick access to the sites our scraper monitors for updates.
+      </p>
+      <div class="resource-links__grid">
+        <a class="resource-link" href="https://www.welshschoolsfa.co.uk/cardiffandvale25-26#1913096202" target="_blank" rel="noopener noreferrer" data-i18n="resourceLinkWelsh">
+          Welsh Schools FA — Cardiff & Vale Fixtures
+        </a>
+        <a class="resource-link" href="https://www.cardiffandvalesfa.cymru/schools-cups#comp-lkr6a6em" target="_blank" rel="noopener noreferrer" data-i18n="resourceLinkCardiff">
+          Cardiff & Vale Schools FA — Cups Hub
+        </a>
+      </div>
+    </section>
+
     <!-- ====== DASHBOARD OVERVIEW ====== -->
     <section id="overview" class="dashboard-overview" aria-labelledby="overview-title">
       <div class="overview-header">
@@ -114,100 +122,26 @@
         <div class="data-meta" aria-live="polite">
           <span id="last-updated" data-i18n="lastUpdated">Last Updated:</span>
         </div>
+      </div>
 
-        <div class="data-controls" role="toolbar" aria-label="Data management controls">
-			<!-- Update Fixtures (glass) -->
-<button id="update-fixtures-btn" class="pill glass" type="button" title="Run scraper and refresh data" data-i18n="runScraper" aria-describedby="update-help">
-  ↻ <span data-i18n="updateFixtures">Update Fixtures</span>
-</button>
-<div id="update-help" class="sr-only" data-i18n="updateHelp">Click to manually refresh competition data from external sources</div>
-
-<!-- Glass Modal -->
-<div id="update-modal" class="glass-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="update-title">
-  <div class="glass-modal__card">
-    <button class="glass-modal__close" id="update-close" aria-label="Close" data-i18n="close">×</button>
-    <h3 id="update-title" data-i18n="updateFixtures">Update Fixtures</h3>
-
-    <p class="update-desc" data-i18n="enterSecret">Enter the secret to trigger the scraper and refresh the JSON files.</p>
-
-    <label for="update-pass" class="update-label" data-i18n="password">Password</label>
-    <input id="update-pass" type="password" autocomplete="off" inputmode="text" placeholder="••••••••" data-i18n="password" />
-    <button id="update-start" class="cta" data-i18n="runUpdate">Run Update</button>
-
-    <ol id="update-steps" class="update-steps" aria-live="polite">
-      <li data-step="auth" data-i18n="authenticating">Authenticating…</li>
-      <li data-step="dispatch" data-i18n="dispatching">Dispatching GitHub Action…</li>
-      <li data-step="run" data-i18n="running">Scraper running on GitHub…</li>
-      <li data-step="commit" data-i18n="committing">Committing JSON…</li>
-      <li data-step="done" data-i18n="done">All done — refresh to see changes.</li>
-    </ol>
-
-    <p id="update-error" class="update-error" role="alert" hidden data-i18n="pleaseEnterPassword">Please enter the admin password.</p>
-  </div>
-</div>
-		</div>
-
-      <!-- Admin Access Modal -->
-      <div
-        id="admin-access-modal"
-        class="glass-modal"
-        aria-hidden="true"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="admin-access-title"
-      >
-        <div class="glass-modal__card">
-          <button
-            class="glass-modal__close"
-            id="admin-access-close"
-            aria-label="Close"
-            data-i18n="close"
-          >
-            ×
+      <div class="leaderboard-heading">
+        <h2 data-i18n="leaderboard">Leaderboard</h2>
+        <div class="leaderboard-switch" role="group">
+          <button type="button" class="leaderboard-toggle active" data-mode="cups" id="leaderboard-mode-cups" aria-pressed="true">
+            <span data-i18n="competitiveCupsTitle">Competitive Cups (Welsh + Cardiff)</span>
           </button>
-          <h3 id="admin-access-title" data-i18n="adminAccessTitle">
-            Unlock Admin Dashboard
-          </h3>
-          <p class="update-desc" data-i18n="adminAccessDescription">
-            Enter the admin password to open the admin dashboard.
-          </p>
-          <label for="admin-access-pass" class="update-label" data-i18n="password">
-            Password
-          </label>
-          <input
-            id="admin-access-pass"
-            type="password"
-            autocomplete="off"
-            inputmode="text"
-            placeholder="••••••••"
-            data-i18n="password"
-          />
-          <button
-            id="admin-access-submit"
-            class="cta"
-            type="button"
-            data-i18n="unlockAdmin"
-          >
-            Unlock Admin
+          <button type="button" class="leaderboard-toggle" data-mode="all" id="leaderboard-mode-all" aria-pressed="false" disabled>
+            <span data-i18n="allFixturesTitle">All Fixtures (Welsh + Cardiff + Friendlies)</span>
           </button>
-          <p
-            id="admin-access-error"
-            class="update-error"
-            role="alert"
-            hidden
-            data-i18n="invalidPassword"
-          >
-            Incorrect password. Please try again.
-          </p>
         </div>
       </div>
 
       <!-- Leaderboard (polite live region so screen readers hear updates) -->
       <div id="leaderboard" class="leaderboard-section" role="region" aria-live="polite" aria-label="Leaderboard" aria-describedby="leaderboard-desc">
         <div id="leaderboard-desc" class="sr-only" data-i18n="currentStandings">Current standings table showing team rankings, games played, wins, goals for, goals against, and goal difference</div>
-        <!-- Leaderboard dynamically rendered here -->
+        <div class="leaderboard-active-table table-container" id="combined-standings-table"></div>
       </div>
-	</section>
+    </section>
 
     <!-- ====== WELSH CUP ====== -->
     <section class="cup-section" id="welsh-cup" aria-labelledby="welsh-title" role="region" aria-describedby="welsh-help">
@@ -265,6 +199,84 @@
         <!-- Friendlies stats / matches will be injected here -->
       </div>
     </section>
+
+    <!-- ====== TEAM COMPARISON ====== -->
+    <section class="cup-section compare-section" id="comparison" aria-labelledby="comparison-title">
+      <h2 id="comparison-title" data-i18n="comparisonTitle">Matchup Predictor</h2>
+      <p class="compare-description" data-i18n="comparisonDescription">
+        Choose two teams to compare recent form, season stats, and get a projected scoreline.
+      </p>
+
+      <div class="compare-grid">
+        <article class="compare-card compare-card--home">
+          <h3 data-i18n="comparisonHome">Home Team</h3>
+          <div class="compare-selectors">
+            <label>
+              <span data-i18n="comparisonCompetition">Competition</span>
+              <select id="compare-home-cup" autocomplete="off">
+                <option value="Welsh" data-i18n="welshCup">Welsh Cup</option>
+                <option value="Cardiff" data-i18n="cardiffCup">Cardiff Cup</option>
+                <option value="Friendlies" data-i18n="friendlies">Friendlies</option>
+              </select>
+            </label>
+            <label>
+              <span data-i18n="comparisonTeam">Team</span>
+              <select id="compare-home-team" autocomplete="off">
+                <option value="" data-i18n="chooseTeam">--Choose a Team--</option>
+              </select>
+            </label>
+          </div>
+          <div class="compare-summary" id="compare-home-summary"></div>
+        </article>
+
+        <article class="compare-card compare-card--away">
+          <h3 data-i18n="comparisonAway">Away Team</h3>
+          <div class="compare-selectors">
+            <label>
+              <span data-i18n="comparisonCompetition">Competition</span>
+              <select id="compare-away-cup" autocomplete="off">
+                <option value="Welsh" data-i18n="welshCup">Welsh Cup</option>
+                <option value="Cardiff" data-i18n="cardiffCup">Cardiff Cup</option>
+                <option value="Friendlies" data-i18n="friendlies">Friendlies</option>
+              </select>
+            </label>
+            <label>
+              <span data-i18n="comparisonTeam">Team</span>
+              <select id="compare-away-team" autocomplete="off">
+                <option value="" data-i18n="chooseTeam">--Choose a Team--</option>
+              </select>
+            </label>
+          </div>
+          <div class="compare-summary" id="compare-away-summary"></div>
+        </article>
+
+        <article class="compare-card compare-card--prediction">
+          <h3 data-i18n="comparisonPrediction">Prediction</h3>
+          <div class="compare-metrics" id="compare-advanced"></div>
+          <button type="button" id="compare-run" class="compare-run-button" data-i18n="comparisonRun">
+            Run Prediction
+          </button>
+          <div class="compare-result" id="compare-result"></div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ====== BRACKETS ====== -->
+    <section class="cup-section brackets-section" id="brackets" aria-labelledby="brackets-title">
+      <h2 id="brackets-title" data-i18n="brackets">Brackets</h2>
+      <div class="selectors" role="group">
+        <label for="bracket-select" data-i18n="selectCompetition">Select Competition:</label>
+        <select id="bracket-select" autocomplete="off">
+          <option value="Welsh" data-i18n="welshCup">Welsh Cup</option>
+          <option value="Cardiff" data-i18n="cardiffCup">Cardiff Cup</option>
+          <option value="Friendlies" data-i18n="friendlies">Friendlies</option>
+        </select>
+      </div>
+      <div class="bracket-card" data-cup="welsh">
+        <h3 id="bracket-title">Welsh Cup</h3>
+        <div class="bracket-board" id="bracket-display"></div>
+      </div>
+    </section>
   </main>
 
   <!-- ============== FOOTER ============== -->
@@ -277,8 +289,8 @@
   </footer>
 
   <!-- ============== SCRIPTS ============== -->
-  <script src="translations.js" defer></script>
-  <script src="script.js" defer></script>
+  <script src="translations.js?v=20250211" defer></script>
+  <script src="script.js?v=20250211" defer></script>
   
   <!-- Page inline scripts moved to script.js -->
 
