@@ -98,6 +98,42 @@
         section: document.getElementById("friendlies"),
       },
     },
+    heroStats: {
+      teams: document.getElementById("stat-teams"),
+      games: document.getElementById("stat-games"),
+      goals: document.getElementById("stat-goals"),
+    },
+    snapshots: {
+      Welsh: {
+        percent: document.getElementById("welsh-progress-percent"),
+        count: document.getElementById("welsh-progress-count"),
+        bar: document.getElementById("welsh-progress-bar"),
+        deadline: document.getElementById("welsh-next-deadline"),
+      },
+      Cardiff: {
+        percent: document.getElementById("cardiff-progress-percent"),
+        count: document.getElementById("cardiff-progress-count"),
+        bar: document.getElementById("cardiff-progress-bar"),
+        deadline: document.getElementById("cardiff-next-deadline"),
+      },
+    },
+    leaders: [
+      {
+        name: document.getElementById("leader-1-name"),
+        record: document.getElementById("leader-1-record"),
+        goalDiff: document.getElementById("leader-1-gd"),
+      },
+      {
+        name: document.getElementById("leader-2-name"),
+        record: document.getElementById("leader-2-record"),
+        goalDiff: document.getElementById("leader-2-gd"),
+      },
+      {
+        name: document.getElementById("leader-3-name"),
+        record: document.getElementById("leader-3-record"),
+        goalDiff: document.getElementById("leader-3-gd"),
+      },
+    ],
   };
 
   const DATA_FILES = {
@@ -638,6 +674,182 @@ function showLoadingState() {
     if (!display) return;
     display.innerHTML = `<p class="selection-placeholder">${translate("selectTeamsToView") || "Select a team to view fixtures."}</p>`;
     display.classList.add("loaded");
+  }
+
+  function calculateHeadlineStats() {
+    const summary = {
+      teams: 0,
+      games: 0,
+      goals: 0,
+    };
+    if (!state?.cups) return summary;
+
+    const teamSet = new Set();
+    Object.values(state.cups).forEach((cupData) => {
+      (cupData?.rounds || []).forEach((round) => {
+        (round?.games || []).forEach((game) => {
+          const home = sanitizeTeamName(game.home_team);
+          const away = sanitizeTeamName(game.away_team);
+          if (home && home !== "BYE") teamSet.add(home);
+          if (away && away !== "BYE") teamSet.add(away);
+
+          const homeScore = parseScore(game.home_score);
+          const awayScore = parseScore(game.away_score);
+          if (homeScore !== null && awayScore !== null) {
+            summary.games += 1;
+            summary.goals += homeScore + awayScore;
+          }
+        });
+      });
+    });
+
+    summary.teams = teamSet.size;
+    return summary;
+  }
+
+  function computeCupProgress(cupKey) {
+    const cupData = state.cups?.[cupKey];
+    if (!cupData?.rounds) return { played: 0, total: 0 };
+
+    let total = 0;
+    let played = 0;
+    cupData.rounds.forEach((round) => {
+      (round?.games || []).forEach((game) => {
+        const home = sanitizeTeamName(game.home_team);
+        const away = sanitizeTeamName(game.away_team);
+        if (!home || !away || home === "BYE" || away === "BYE") return;
+        total += 1;
+        const hs = parseScore(game.home_score);
+        const as = parseScore(game.away_score);
+        if (hs !== null && as !== null) {
+          played += 1;
+        }
+      });
+    });
+    return { played, total };
+  }
+
+  function findNextDeadline(cupKey) {
+    const cupData = state.cups?.[cupKey];
+    if (!cupData?.rounds) return null;
+    for (const round of cupData.rounds) {
+      const openGame = (round?.games || []).some((game) => {
+        const home = sanitizeTeamName(game.home_team);
+        const away = sanitizeTeamName(game.away_team);
+        if (!home || !away || home === "BYE" || away === "BYE") return false;
+        const hs = parseScore(game.home_score);
+        const as = parseScore(game.away_score);
+        return hs === null || as === null;
+      });
+      if (openGame) {
+        return round?.deadlines?.welsh || round?.deadlines?.english;
+      }
+    }
+    return translate("snapshotComplete") || "Wedi'i gwblhau";
+  }
+
+  function updateHeroStats() {
+    if (!elements.heroStats) return;
+    const stats = calculateHeadlineStats();
+    if (elements.heroStats.teams) {
+      elements.heroStats.teams.textContent = stats.teams || "—";
+    }
+    if (elements.heroStats.games) {
+      elements.heroStats.games.textContent = stats.games || "—";
+    }
+    if (elements.heroStats.goals) {
+      elements.heroStats.goals.textContent = stats.goals || "—";
+    }
+  }
+
+  function updateCupSnapshots() {
+    if (!elements.snapshots || !state.cups) return;
+    ["Welsh", "Cardiff"].forEach((cupKey) => {
+      const ui = elements.snapshots[cupKey];
+      if (!ui) return;
+      const { played, total } = computeCupProgress(cupKey);
+      const percent = total ? Math.round((played / total) * 100) : 0;
+      if (ui.percent) {
+        ui.percent.textContent = `${percent}%`;
+      }
+      if (ui.count) {
+        ui.count.textContent = `${played} / ${total} ${translate("games") || "Games"}`;
+      }
+      if (ui.bar) {
+        ui.bar.style.width = `${percent}%`;
+      }
+      if (ui.deadline) {
+        ui.deadline.textContent = findNextDeadline(cupKey) || "—";
+      }
+    });
+  }
+
+  function updateLeaderHighlights() {
+    if (!elements.leaders || !state.rankings?.base?.length) return;
+    const leaders = state.rankings.base.slice(0, elements.leaders.length);
+    elements.leaders.forEach((slot, index) => {
+      const info = leaders[index];
+      if (!slot || !info) {
+        if (slot?.name) slot.name.textContent = "—";
+        if (slot?.record) slot.record.textContent = "0-0-0";
+        if (slot?.goalDiff) slot.goalDiff.textContent = "GD +0";
+        return;
+      }
+      if (slot.name) slot.name.textContent = info.name;
+      if (slot.record) {
+        slot.record.textContent = `${info.wins}-${info.draws}-${info.losses}`;
+      }
+      if (slot.goalDiff) {
+        slot.goalDiff.textContent = `${translate("goalDifference") || "Goal Difference"} ${
+          info.gd >= 0 ? `+${info.gd}` : info.gd
+        }`;
+      }
+    });
+  }
+
+  function calculateHeadlineStats() {
+    const summary = {
+      teams: 0,
+      games: 0,
+      goals: 0,
+    };
+    if (!state?.cups) return summary;
+
+    const uniqueTeams = new Set();
+    Object.values(state.cups).forEach((cupData) => {
+      (cupData?.rounds || []).forEach((round) => {
+        (round?.games || []).forEach((game) => {
+          const home = sanitizeTeamName(game.home_team);
+          const away = sanitizeTeamName(game.away_team);
+          if (home && home !== "BYE") uniqueTeams.add(home);
+          if (away && away !== "BYE") uniqueTeams.add(away);
+
+          const homeScore = parseScore(game.home_score);
+          const awayScore = parseScore(game.away_score);
+          if (homeScore !== null && awayScore !== null) {
+            summary.games += 1;
+            summary.goals += homeScore + awayScore;
+          }
+        });
+      });
+    });
+
+    summary.teams = uniqueTeams.size;
+    return summary;
+  }
+
+  function updateHeroStats() {
+    if (!elements.heroStats) return;
+    const stats = calculateHeadlineStats();
+    if (elements.heroStats.teams) {
+      elements.heroStats.teams.textContent = stats.teams || "—";
+    }
+    if (elements.heroStats.games) {
+      elements.heroStats.games.textContent = stats.games || "—";
+    }
+    if (elements.heroStats.goals) {
+      elements.heroStats.goals.textContent = stats.goals || "—";
+    }
   }
 
   function handleTeamSelection(cupKey, teamName) {
@@ -1386,6 +1598,9 @@ function showLoadingState() {
     renderBrackets();
     refreshComparisonSection();
     renderLastUpdated(state.meta);
+    updateHeroStats();
+    updateCupSnapshots();
+    updateLeaderHighlights();
     Object.entries(elements.dropdowns).forEach(([cupKey, config]) => {
       if (!config?.display) return;
       const placeholder = config.select?.querySelector("option[value='']");

@@ -1,301 +1,350 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="cy">
 <head>
   <!-- ========= META ========= -->
   <meta charset="UTF-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes"
-  />
-  <title data-i18n="dashboardTitle">Year 7 Cups Dashboard 2025</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes" />
+  <title data-i18n="dashboardTitle">Dangosfwrdd Cwpanau Blwyddyn 7 2025</title>
   <meta
     name="description"
     data-i18n="metaDescription"
-    content="Interactive bilingual dashboard for the Year 7 Football Cups — Welsh Cup, Cardiff Cup, and Friendlies. Auto-updating stats, live tables, and knockout brackets."
+    content="Dangosfwrdd deublyg ar gyfer Cwpanau Pêl-droed Blwyddyn 7 — Cwpan Cymru, Cwpan Caerdydd, a Gemau Cyfeillgar."
   />
-  <meta name="theme-color" content="#0077ff" />
+  <meta name="theme-color" content="#0f2f64" />
   <meta name="color-scheme" content="light" />
   <meta name="robots" content="index,follow" />
   <meta name="author" content="Ollie Weekley" />
-  <meta name="keywords" content="football, soccer, year 7, welsh cup, cardiff cup, school sports, statistics, brackets" />
-  
-  <!-- Enhanced SEO and Social Media -->
-  <meta property="og:title" data-i18n="dashboardTitle" content="Year 7 Cups Dashboard 2025" />
-  <meta property="og:description" data-i18n="metaDescription" content="Interactive bilingual dashboard for the Year 7 Football Cups — Welsh Cup, Cardiff Cup, and Friendlies. Auto-updating stats, live tables, and knockout brackets." />
+  <meta name="keywords" content="pêl-droed, blwyddyn 7, cwpan cymru, cwpan caerdydd, ysgolion" />
+
+  <!-- Open Graph / Twitter -->
+  <meta property="og:title" data-i18n="dashboardTitle" content="Dangosfwrdd Cwpanau Blwyddyn 7 2025" />
+  <meta property="og:description" data-i18n="metaDescription" content="Dangosfwrdd deublyg ar gyfer Cwpanau Pêl-droed Blwyddyn 7 — Cwpan Cymru, Cwpan Caerdydd, a Gemau Cyfeillgar." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://year7-football-cups.vercel.app" />
-  <meta property="og:site_name" content="Year 7 Football Cups" />
-  
+  <meta property="og:site_name" content="Cwpanau Blwyddyn 7" />
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" data-i18n="dashboardTitle" content="Year 7 Cups Dashboard 2025" />
-  <meta name="twitter:description" data-i18n="metaDescription" content="Interactive bilingual dashboard for the Year 7 Football Cups — Welsh Cup, Cardiff Cup, and Friendlies. Auto-updating stats, live tables, and knockout brackets." />
-  
-  <!-- Performance and Security -->
+
+  <!-- Performance & Mobile -->
   <meta http-equiv="X-Content-Type-Options" content="nosniff" />
   <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
   <meta name="format-detection" content="telephone=no" />
-  
-  <!-- PWA and Mobile -->
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" data-i18n="dashboardTitle" content="Year 7 Cups Dashboard" />
-  <meta name="msapplication-TileColor" content="#0077ff" />
-
-  <!-- Optional PWA bits (harmless if files don’t exist yet) -->
+  <meta name="apple-mobile-web-app-title" data-i18n="dashboardTitle" content="Dangosfwrdd Cwpanau Blwyddyn 7" />
+  <meta name="msapplication-TileColor" content="#0f2f64" />
   <link rel="manifest" href="manifest.webmanifest" />
 
   <!-- ========= FONTS ========= -->
-  
-  <!-- Preconnect improves Google Fonts startup -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <!-- Preload then load font stylesheet (hint: better CLS) -->
-  <link
-    rel="preload"
-    as="style"
-    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
-  />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
-    rel="stylesheet"
-    media="print"
-    onload="this.media='all'"
-  />
-  
-  <!-- Critical CSS moved to style.css -->
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
   <noscript>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
   </noscript>
 
-  <!-- ========= CSS ========= -->
+  <!-- ========= CSS & JS ========= -->
   <link rel="stylesheet" href="style.css" />
-
-  <!-- Preload script for a snappier first interaction -->
   <link rel="preload" as="script" href="script.js" />
-
-  <!-- Utilities moved to style.css -->
 </head>
 
 <body>
-  <!-- ============== HEADER ============== -->
-  <header role="banner">
-    <div class="header-top">
-      <h1 data-i18n="dashboardTitle" tabindex="0">Year 7 Cups Dashboard 2025</h1>
+  <header class="site-header" role="banner">
+    <div class="site-header__inner">
+      <a class="brand" href="index.html">
+        CVSFA
+        <small>Blwyddyn 7</small>
+      </a>
+      <nav class="site-nav" aria-label="Prif lywio">
+        <a href="#leaderboard" class="active" data-i18n="leaderboard" aria-current="page">Tabl Cynghrair</a>
+        <a href="#welsh-cup" data-i18n="welshCupOverview">Trosolwg Cwpan Cymru</a>
+        <a href="#cardiff-cup" data-i18n="cardiffCupOverview">Trosolwg Cwpan Caerdydd</a>
+        <a href="#brackets" data-i18n="brackets">Bracetiau</a>
+      </nav>
+      <div class="lang-switch" role="group" aria-label="Newid iaith">
+        <button id="lang-cy" type="button" aria-label="Newid i'r Gymraeg">CY</button>
+        <button id="lang-en" type="button" aria-label="Switch to English">EN</button>
+      </div>
+    </div>
+  </header>
 
-      <div class="lang-theme-controls">
-        <div class="lang-switch" role="group" aria-label="Language switch">
-          <button id="lang-en" type="button" aria-label="Switch to English">EN</button>
-          <button id="lang-cy" type="button" aria-label="Switch to Welsh">CY</button>
+  <section class="hero hero--home">
+    <div class="hero__content">
+      <div class="hero__top">
+        <div>
+          <p class="hero__eyebrow" data-i18n="heroEyebrow">Cwpanau Pêl-droed Blwyddyn 7</p>
+          <h1 data-i18n="dashboardTitle">Dangosfwrdd Cwpanau Blwyddyn 7 2025</h1>
+        </div>
+      </div>
+
+      <div class="hero__body">
+        <div class="hero__copy">
+          <p class="hero__lead" data-i18n="heroLead">
+            Pob canlyniad, tabl a braced mewn un lle Cymraeg. Dewiswch dîm a chael yr wybodaeth sy'n bwysig ar unwaith.
+          </p>
+          <div class="hero__meta" aria-live="polite">
+            <span id="last-updated" data-i18n="lastUpdated">Diweddarwyd diwethaf:</span>
+            <small data-i18n="heroMeta">Mae'r data'n cael ei adnewyddu pan fydd canlyniadau'n cyrraedd o'r ysgolion.</small>
+          </div>
+          <ul class="hero__stats" aria-label="Ystadegau cyflym">
+            <li class="hero__stat">
+              <span data-i18n="heroStatTeams">Timau gweithredol</span>
+              <strong id="stat-teams">—</strong>
+            </li>
+            <li class="hero__stat">
+              <span data-i18n="heroStatGames">Gemau a adroddwyd</span>
+              <strong id="stat-games">—</strong>
+            </li>
+            <li class="hero__stat">
+              <span data-i18n="heroStatGoals">Goliau cyfanswm</span>
+              <strong id="stat-goals">—</strong>
+            </li>
+          </ul>
+          <div class="hero__cta-row" role="group" aria-label="Dolenni swyddogol">
+            <a class="chip chip--welsh" href="https://www.welshschoolsfa.co.uk/cardiffandvale25-26#1913096202" target="_blank" rel="noopener noreferrer" data-i18n="heroLinkWelsh">
+              Ffixture swyddogol Cwpan Cymru
+            </a>
+            <a class="chip chip--cardiff" href="https://www.cardiffandvalesfa.cymru/schools-cups#comp-lkr6a6em" target="_blank" rel="noopener noreferrer" data-i18n="heroLinkCardiff">
+              Canolfan Cwpanau Caerdydd a'r Fro
+            </a>
+            <a class="chip chip--primary" href="admin.html" data-i18n="admin">Admin</a>
+          </div>
         </div>
       </div>
     </div>
+  </section>
 
-  </header>
-
-  <!-- ============== MAIN ============== -->
-  <main id="main-content" role="main" aria-label="Year 7 Football Cups Dashboard">
-    <section class="resource-links" aria-labelledby="resource-links-title" role="region">
-      <h2 id="resource-links-title" data-i18n="resourceLinksTitle">Official Fixtures & Tables</h2>
-      <p class="resource-links__description" data-i18n="resourceLinksDescription">
-        Quick access to the sites our scraper monitors for updates.
-      </p>
-      <div class="resource-links__grid">
-        <a class="resource-link" href="https://www.welshschoolsfa.co.uk/cardiffandvale25-26#1913096202" target="_blank" rel="noopener noreferrer" data-i18n="resourceLinkWelsh">
-          Welsh Schools FA — Cardiff & Vale Fixtures
-        </a>
-        <a class="resource-link" href="https://www.cardiffandvalesfa.cymru/schools-cups#comp-lkr6a6em" target="_blank" rel="noopener noreferrer" data-i18n="resourceLinkCardiff">
-          Cardiff & Vale Schools FA — Cups Hub
-        </a>
-      </div>
-    </section>
-
-    <!-- ====== DASHBOARD OVERVIEW ====== -->
-    <section id="overview" class="dashboard-overview" aria-labelledby="overview-title">
-      <div class="overview-header">
-        <h2 id="overview-title" data-i18n="dashboardTitle">Year 7 Cups Dashboard 2025</h2>
-
-        <div class="data-meta" aria-live="polite">
-          <span id="last-updated" data-i18n="lastUpdated">Last Updated:</span>
+  <section class="panel panel--season" aria-label="Golwg ar y tymor">
+    <div class="season-grid">
+      <article class="leaders-card">
+        <header>
+          <p class="panel__eyebrow" data-i18n="leadersHeading">Ffurf Uchel</p>
+          <h3 data-i18n="leadersTitle">Timau Uchaf y Tabl</h3>
+          <p class="panel__summary" data-i18n="leadersDescription">Top 3 ar draws pob cwpan.</p>
+        </header>
+        <div class="leaders-list">
+          <div class="leader-entry">
+            <span class="leader-rank">1</span>
+            <div>
+              <strong id="leader-1-name">—</strong>
+              <p id="leader-1-record">0-0-0</p>
+              <small id="leader-1-gd">GD +0</small>
+            </div>
+          </div>
+          <div class="leader-entry">
+            <span class="leader-rank">2</span>
+            <div>
+              <strong id="leader-2-name">—</strong>
+              <p id="leader-2-record">0-0-0</p>
+              <small id="leader-2-gd">GD +0</small>
+            </div>
+          </div>
+          <div class="leader-entry">
+            <span class="leader-rank">3</span>
+            <div>
+              <strong id="leader-3-name">—</strong>
+              <p id="leader-3-record">0-0-0</p>
+              <small id="leader-3-gd">GD +0</small>
+            </div>
+          </div>
         </div>
-      </div>
+      </article>
+      <article class="timeline-card">
+        <header>
+          <p class="panel__eyebrow" data-i18n="timelineHeading">Llinell Amser</p>
+          <h3 data-i18n="timelineTitle">Camau Allweddol Tymor 2025-26</h3>
+        </header>
+        <ol class="timeline">
+          <li>
+            <span class="timeline__date" data-i18n="timelineDate1">Hydref 28</span>
+            <div>
+              <strong data-i18n="timelineTitle1">Rownd 2 Cwpan Cymru</strong>
+              <p data-i18n="timelineDesc1">Pob canlyniad i mewn cyn diwedd y penwythnos.</p>
+            </div>
+          </li>
+          <li>
+            <span class="timeline__date" data-i18n="timelineDate2">Tachwedd 24</span>
+            <div>
+              <strong data-i18n="timelineTitle2">Rownd 3 Cwpan Cymru</strong>
+              <p data-i18n="timelineDesc2">Derfynol lleol yn dechrau siapio gyda'r wyth olaf.</p>
+            </div>
+          </li>
+          <li>
+            <span class="timeline__date" data-i18n="timelineDate3">Rhagfyr 8</span>
+            <div>
+              <strong data-i18n="timelineTitle3">Rownd 2 Cwpan Caerdydd</strong>
+              <p data-i18n="timelineDesc3">Rowndiau dinas yn cau cyn y toriad Nadolig.</p>
+            </div>
+          </li>
+          <li>
+            <span class="timeline__date" data-i18n="timelineDate4">Chwefror 10</span>
+            <div>
+              <strong data-i18n="timelineTitle4">Chwarteri Terfynol</strong>
+              <p data-i18n="timelineDesc4">Dim tîm yn cael ei adael i ddisgyn oddi ar y radar.</p>
+            </div>
+          </li>
+        </ol>
+      </article>
+    </div>
+  </section>
 
-      <div class="leaderboard-heading">
-        <h2 data-i18n="leaderboard">Leaderboard</h2>
-        <div class="leaderboard-switch" role="group">
+  <main id="main-content" role="main">
+    <section class="panel panel--leaderboard" aria-labelledby="leaderboard-title">
+      <div class="panel__header">
+        <div>
+          <p class="panel__eyebrow" data-i18n="liveTablesLabel">Tablau Byw</p>
+          <h2 id="leaderboard-title" data-i18n="leaderboard">Tabl y Cystadleuwyr</h2>
+        </div>
+        <div class="leaderboard-switch" role="group" aria-label="Modd y tabl">
           <button type="button" class="leaderboard-toggle active" data-mode="cups" id="leaderboard-mode-cups" aria-pressed="true">
-            <span data-i18n="competitiveCupsTitle">Competitive Cups (Welsh + Cardiff)</span>
+            <span data-i18n="competitiveCupsTitle">Cwpanau Cystadleuol (Cwpan Cymru + Caerdydd)</span>
           </button>
           <button type="button" class="leaderboard-toggle" data-mode="all" id="leaderboard-mode-all" aria-pressed="false" disabled>
-            <span data-i18n="allFixturesTitle">All Fixtures (Welsh + Cardiff + Friendlies)</span>
+            <span data-i18n="allFixturesTitle">Pob Gem (Cwpan Cymru + Caerdydd + Cyfeillgar)</span>
           </button>
         </div>
       </div>
-
-      <!-- Leaderboard (polite live region so screen readers hear updates) -->
-      <div id="leaderboard" class="leaderboard-section" role="region" aria-live="polite" aria-label="Leaderboard" aria-describedby="leaderboard-desc">
-        <div id="leaderboard-desc" class="sr-only" data-i18n="currentStandings">Current standings table showing team rankings, games played, wins, goals for, goals against, and goal difference</div>
-        <div class="leaderboard-active-table table-container" id="combined-standings-table"></div>
-      </div>
-    </section>
-
-    <!-- ====== WELSH CUP ====== -->
-    <section class="cup-section" id="welsh-cup" aria-labelledby="welsh-title" role="region" aria-describedby="welsh-help">
-      <h2 id="welsh-title" data-i18n="welshCupOverview">Welsh Cup Overview</h2>
-      <p id="welsh-help" class="sr-only" data-i18n="selectTeamAndData">Select a team and data type to view stats or match history for the Welsh Cup.</p>
-
-      <div class="selectors" role="group" aria-label="Welsh Cup selectors">
-        <div>
-          <label for="welsh-team" data-i18n="selectTeam">Select Team:</label>
-          <select id="welsh-team" aria-label="Select Welsh Cup team" autocomplete="off">
-            <option value="" data-i18n="chooseTeam">--Choose a Team--</option>
-          </select>
+      <div id="leaderboard" class="leaderboard-section" role="region" aria-live="polite" aria-label="Tabl safleoedd" aria-describedby="leaderboard-desc">
+        <div id="leaderboard-desc" class="sr-only" data-i18n="currentStandings">
+          Tabl safleoedd cyfredol yn dangos gemau a chwaraeodd, buddugoliaethau a gwahaniaeth goliau pob tîm.
         </div>
-      </div>
-
-      <div class="dynamic-display" id="welsh-display" aria-live="polite">
-        <!-- Welsh Cup stats / matches will be injected here -->
+        <div class="table-container" id="combined-standings-table"></div>
       </div>
     </section>
 
-    <!-- ====== CARDIFF CUP ====== -->
-    <section class="cup-section" id="cardiff-cup" aria-labelledby="cardiff-title" role="region" aria-describedby="cardiff-help">
-      <h2 id="cardiff-title" data-i18n="cardiffCupOverview">Cardiff Cup Overview</h2>
-      <p id="cardiff-help" class="sr-only" data-i18n="selectTeamAndDataCardiff">Select a team and data type to view stats or match history for the Cardiff Cup.</p>
-
-      <div class="selectors" role="group" aria-label="Cardiff Cup selectors">
+    <section class="panel panel--cup" id="welsh-cup" aria-labelledby="welsh-title" aria-describedby="welsh-help">
+      <div class="panel__header">
         <div>
-          <label for="cardiff-team" data-i18n="selectTeam">Select Team:</label>
-          <select id="cardiff-team" aria-label="Select Cardiff Cup team" autocomplete="off">
-            <option value="" data-i18n="chooseTeam">--Choose a Team--</option>
-          </select>
+          <p class="panel__eyebrow">Cwpan Cymru</p>
+          <h2 id="welsh-title" data-i18n="welshCupOverview">Trosolwg Cwpan Cymru</h2>
         </div>
+        <p class="panel__summary" data-i18n="welshPanelSummary">
+          Dewiswch tim i weld eu llwybr, ystadegau a chanlyniadau diweddar.
+        </p>
       </div>
-
-      <div class="dynamic-display" id="cardiff-display" aria-live="polite">
-        <!-- Cardiff Cup stats / matches will be injected here -->
-      </div>
-    </section>
-
-    <!-- ====== FRIENDLIES ====== -->
-    <section class="cup-section" id="friendlies" aria-labelledby="friendlies-title" role="region" aria-describedby="friendlies-help">
-      <h2 id="friendlies-title" data-i18n="friendliesOverview">Friendlies Overview</h2>
-      <p id="friendlies-help" class="sr-only" data-i18n="selectTeamAndDataFriendlies">Select a team and data type to view friendlies stats or match history.</p>
-
-      <div class="selectors" role="group" aria-label="Friendlies selectors">
-        <div>
-          <label for="friendlies-team" data-i18n="selectTeam">Select Team:</label>
-          <select id="friendlies-team" aria-label="Select Friendlies team" autocomplete="off">
-            <option value="" data-i18n="chooseTeam">--Choose a Team--</option>
-          </select>
+      <div class="cup-progress">
+        <div class="progress">
+          <div class="progress__bar"><span id="welsh-progress-bar" style="width: 0%"></span></div>
+          <div class="progress__meta">
+            <strong id="welsh-progress-percent">0%</strong>
+            <small id="welsh-progress-count">0 / 0 gem</small>
+          </div>
         </div>
+        <p class="snapshot-meta">
+          <span id="welsh-next-deadline">—</span>
+        </p>
       </div>
-
-      <div class="dynamic-display" id="friendlies-display" aria-live="polite">
-        <!-- Friendlies stats / matches will be injected here -->
-      </div>
-    </section>
-
-    <!-- ====== TEAM COMPARISON ====== -->
-    <section class="cup-section compare-section" id="comparison" aria-labelledby="comparison-title">
-      <h2 id="comparison-title" data-i18n="comparisonTitle">Matchup Predictor</h2>
-      <p class="compare-description" data-i18n="comparisonDescription">
-        Choose two teams to compare recent form, season stats, and get a projected scoreline.
+      <p id="welsh-help" class="sr-only" data-i18n="selectTeamAndData">
+        Dewiswch dîm o'r gwymplen i weld cofnodion Cwpan Cymru.
       </p>
-
-      <div class="compare-grid">
-        <article class="compare-card compare-card--home">
-          <h3 data-i18n="comparisonHome">Home Team</h3>
-          <div class="compare-selectors">
-            <label>
-              <span data-i18n="comparisonCompetition">Competition</span>
-              <select id="compare-home-cup" autocomplete="off">
-                <option value="Welsh" data-i18n="welshCup">Welsh Cup</option>
-                <option value="Cardiff" data-i18n="cardiffCup">Cardiff Cup</option>
-                <option value="Friendlies" data-i18n="friendlies">Friendlies</option>
-              </select>
-            </label>
-            <label>
-              <span data-i18n="comparisonTeam">Team</span>
-              <select id="compare-home-team" autocomplete="off">
-                <option value="" data-i18n="chooseTeam">--Choose a Team--</option>
-              </select>
-            </label>
-          </div>
-          <div class="compare-summary" id="compare-home-summary"></div>
-        </article>
-
-        <article class="compare-card compare-card--away">
-          <h3 data-i18n="comparisonAway">Away Team</h3>
-          <div class="compare-selectors">
-            <label>
-              <span data-i18n="comparisonCompetition">Competition</span>
-              <select id="compare-away-cup" autocomplete="off">
-                <option value="Welsh" data-i18n="welshCup">Welsh Cup</option>
-                <option value="Cardiff" data-i18n="cardiffCup">Cardiff Cup</option>
-                <option value="Friendlies" data-i18n="friendlies">Friendlies</option>
-              </select>
-            </label>
-            <label>
-              <span data-i18n="comparisonTeam">Team</span>
-              <select id="compare-away-team" autocomplete="off">
-                <option value="" data-i18n="chooseTeam">--Choose a Team--</option>
-              </select>
-            </label>
-          </div>
-          <div class="compare-summary" id="compare-away-summary"></div>
-        </article>
-
-        <article class="compare-card compare-card--prediction">
-          <h3 data-i18n="comparisonPrediction">Prediction</h3>
-          <div class="compare-metrics" id="compare-advanced"></div>
-          <button type="button" id="compare-run" class="compare-run-button" data-i18n="comparisonRun">
-            Run Prediction
-          </button>
-          <div class="compare-result" id="compare-result"></div>
-        </article>
+      <div class="selectors" role="group" aria-label="Dewis tîm Cwpan Cymru">
+        <label for="welsh-team" data-i18n="selectTeam">Dewiswch Dim:</label>
+        <select id="welsh-team" autocomplete="off">
+          <option value="" data-i18n="chooseTeam">--Dewiswch Dim--</option>
+        </select>
       </div>
+      <div class="dynamic-display" id="welsh-display" aria-live="polite"></div>
     </section>
 
-    <!-- ====== BRACKETS ====== -->
-    <section class="cup-section brackets-section" id="brackets" aria-labelledby="brackets-title">
-      <h2 id="brackets-title" data-i18n="brackets">Brackets</h2>
-      <div class="selectors" role="group">
-        <label for="bracket-select" data-i18n="selectCompetition">Select Competition:</label>
+    <section class="panel panel--cup" id="cardiff-cup" aria-labelledby="cardiff-title" aria-describedby="cardiff-help">
+      <div class="panel__header">
+        <div>
+          <p class="panel__eyebrow">Cwpan Caerdydd</p>
+          <h2 id="cardiff-title" data-i18n="cardiffCupOverview">Trosolwg Cwpan Caerdydd</h2>
+        </div>
+        <p class="panel__summary" data-i18n="cardiffPanelSummary">
+          Gweld sut mae eich tîm yn perfformio yn erbyn ysgolion y ddinas.
+        </p>
+      </div>
+      <div class="cup-progress">
+        <div class="progress">
+          <div class="progress__bar"><span id="cardiff-progress-bar" style="width: 0%"></span></div>
+          <div class="progress__meta">
+            <strong id="cardiff-progress-percent">0%</strong>
+            <small id="cardiff-progress-count">0 / 0 gem</small>
+          </div>
+        </div>
+        <p class="snapshot-meta">
+          <span id="cardiff-next-deadline">—</span>
+        </p>
+      </div>
+      <p id="cardiff-help" class="sr-only" data-i18n="selectTeamAndDataCardiff">
+        Dewiswch dîm o'r gwymplen i weld cofnodion Cwpan Caerdydd.
+      </p>
+      <div class="selectors" role="group" aria-label="Dewis tîm Cwpan Caerdydd">
+        <label for="cardiff-team" data-i18n="selectTeam">Dewiswch Dim:</label>
+        <select id="cardiff-team" autocomplete="off">
+          <option value="" data-i18n="chooseTeam">--Dewiswch Dim--</option>
+        </select>
+      </div>
+      <div class="dynamic-display" id="cardiff-display" aria-live="polite"></div>
+    </section>
+
+    <section class="panel panel--cup" id="friendlies" aria-labelledby="friendlies-title" aria-describedby="friendlies-help">
+      <div class="panel__header">
+        <div>
+          <p class="panel__eyebrow">Gemau Cyfeillgar</p>
+          <h2 id="friendlies-title" data-i18n="friendliesOverview">Trosolwg Gemau Cyfeillgar</h2>
+        </div>
+        <p class="panel__summary" data-i18n="friendliesPanelSummary">
+          Cadwch olwg ar gemau ymarfer a sut maent yn siapio hyder.
+        </p>
+      </div>
+      <p id="friendlies-help" class="sr-only" data-i18n="selectTeamAndDataFriendlies">
+        Dewiswch dîm o'r gwymplen i weld gemau cyfeillgar a ystadegau.
+      </p>
+      <div class="selectors" role="group" aria-label="Dewis tîm ar gyfer gemau cyfeillgar">
+        <label for="friendlies-team" data-i18n="selectTeam">Dewiswch Dim:</label>
+        <select id="friendlies-team" autocomplete="off">
+          <option value="" data-i18n="chooseTeam">--Dewiswch Dim--</option>
+        </select>
+      </div>
+      <div class="dynamic-display" id="friendlies-display" aria-live="polite"></div>
+    </section>
+
+    <section class="panel panel--bracket" id="brackets" aria-labelledby="brackets-title">
+      <div class="panel__header">
+        <div>
+          <p class="panel__eyebrow" data-i18n="bracketsLabel">Traciwr Knockout</p>
+          <h2 id="brackets-title" data-i18n="brackets">Braced Byw</h2>
+        </div>
+        <p class="panel__summary" data-i18n="bracketPanelSummary">
+          Dilynwch y llwybr i'r rownd derfynol ar gyfer pob cwpan.
+        </p>
+      </div>
+      <div class="selectors selectors--inline" role="group" aria-label="Dewis braced">
+        <label for="bracket-select" data-i18n="selectCompetition">Dewiswch Gystadleuaeth:</label>
         <select id="bracket-select" autocomplete="off">
-          <option value="Welsh" data-i18n="welshCup">Welsh Cup</option>
-          <option value="Cardiff" data-i18n="cardiffCup">Cardiff Cup</option>
-          <option value="Friendlies" data-i18n="friendlies">Friendlies</option>
+          <option value="Welsh" data-i18n="welshCup">Cwpan Cymru</option>
+          <option value="Cardiff" data-i18n="cardiffCup">Cwpan Caerdydd</option>
+          <option value="Friendlies" data-i18n="friendlies">Gemau Cyfeillgar</option>
         </select>
       </div>
       <div class="bracket-card" data-cup="welsh">
-        <h3 id="bracket-title">Welsh Cup</h3>
+        <h3 id="bracket-title">Cwpan Cymru</h3>
         <div class="bracket-board" id="bracket-display"></div>
       </div>
     </section>
   </main>
 
-  <!-- ============== FOOTER ============== -->
-  <footer role="contentinfo">
+  <footer>
     <p>
-      <span data-i18n="copyright">© 2025</span> <span data-i18n="dashboardTitle">Year 7 Cups Dashboard</span> |
-      <span data-i18n="builtWith">Built with</span> <span aria-hidden="true">♥</span><span class="sr-only" data-i18n="love">love</span> <span data-i18n="by">by</span>
+      <span data-i18n="copyright">© 2025</span>
+      <span data-i18n="dashboardTitle">Dangosfwrdd Cwpanau Blwyddyn 7</span>
+      &middot; <span data-i18n="builtWith">Adeiladwyd gyda</span>
+      <span aria-hidden="true">♥</span>
+      <span class="sr-only" data-i18n="love">cariad</span>
+      <span data-i18n="by">gan</span>
       <strong data-i18n="author">Ollie</strong>
     </p>
   </footer>
 
-  <!-- ============== SCRIPTS ============== -->
   <script src="translations.js?v=20250211" defer></script>
   <script src="script.js?v=20250211" defer></script>
-  
-  <!-- Page inline scripts moved to script.js -->
-
   <noscript>
-    <p class="sr-only">JavaScript is required to load live data and interactive features.</p>
+    <p class="sr-only">Mae angen JavaScript i lwytho'r data byw a'r nodweddion rhyngweithiol.</p>
   </noscript>
 </body>
 </html>

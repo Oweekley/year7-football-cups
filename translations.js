@@ -19,7 +19,8 @@ window.translations = {
     competitiveCupsTitle: "Competitive Cups (Welsh + Cardiff)",
     allFixturesTitle: "All Fixtures (Welsh + Cardiff + Friendlies)",
     resourceLinksTitle: "Official Fixtures & Tables",
-    resourceLinksDescription: "Quick access to the sites our scraper monitors for updates.",
+    resourceLinksDescription:
+      "Quick access to the sites our scraper monitors for updates.",
     resourceLinkWelsh: "Welsh Schools FA — Cardiff & Vale Fixtures",
     resourceLinkCardiff: "Cardiff & Vale Schools FA — Cups Hub",
     leaderboard: "Leaderboard",
@@ -267,6 +268,58 @@ window.translations = {
       "View detailed stats, match history, and performance for every team in the Year 7 Football Cups.",
     bracketsDescription:
       "View knockout rounds, results, and progression for each cup competition.",
+    heroEyebrow: "Year 7 Football Cups",
+    heroLead:
+      "Every score, table, and bracket in one bilingual space. Pick a team and see the information that matters in seconds.",
+    heroMeta:
+      "Data refreshes automatically whenever schools send in new results.",
+    heroLinkWelsh: "Official Welsh Cup fixtures",
+    heroLinkCardiff: "Cardiff & Vale Cups hub",
+    heroStatTeams: "Active teams",
+    heroStatGames: "Reported matches",
+    heroStatGoals: "Total goals",
+    liveTablesLabel: "Live Tables",
+    welshPanelSummary:
+      "Choose a school to follow their Welsh Cup path, stats, and latest scorelines.",
+    cardiffPanelSummary:
+      "See how each team stacks up across the Cardiff Cup rounds.",
+    friendliesPanelSummary:
+      "Friendly fixtures that sharpen match fitness and confidence.",
+    bracketPanelSummary:
+      "Follow every knockout round on the road to the final.",
+    backToDashboard: "Back to main dashboard",
+    teamDashboardLabel: "Team Insights",
+    teamDashboardLead:
+      "Pull season-long stats, match logs, and notes for every school.",
+    bracketsLabel: "Knockout Tracker",
+    bracketsLead:
+      "Welsh Cup and Cardiff Cup rounds, deadlines, and results in one view.",
+    adminHeroLabel: "Control Room",
+    adminHeroLead:
+      "Secure space to unlock the scraper, update notes, and log friendlies.",
+    snapshotHeading: "At a Glance",
+    snapshotTitle: "Current Cup Pulse",
+    snapshotDescription: "Live progress for each competition and the next deadline.",
+    snapshotComplete: "Completed",
+    timelineHeading: "Timeline",
+    timelineTitle: "Key 2025-26 Milestones",
+    timelineDescription:
+      "Important submission points so nothing gets missed.",
+    timelineDate1: "28 October",
+    timelineTitle1: "Welsh Cup Round 2",
+    timelineDesc1: "Submit every result before the weekend.",
+    timelineDate2: "24 November",
+    timelineTitle2: "Welsh Cup Round 3",
+    timelineDesc2: "Quarter-finals begin to take shape.",
+    timelineDate3: "8 December",
+    timelineTitle3: "Cardiff Cup Round 2",
+    timelineDesc3: "City fixtures wrapped up before the break.",
+    timelineDate4: "10 February",
+    timelineTitle4: "Quarter Finals",
+    timelineDesc4: "No team slips through the cracks.",
+    leadersHeading: "Hot Form",
+    leadersTitle: "Table Leaders",
+    leadersDescription: "Top three performers across both cups.",
 
     // Additional UI Elements
     notes: "Notes",
@@ -308,9 +361,12 @@ window.translations = {
     competitiveCupsTitle: "Cwpanau Cystadleuol (Cwpan Cymru + Caerdydd)",
     allFixturesTitle: "Pob Gem (Cwpan Cymru + Caerdydd + Cyfeillgar)",
     resourceLinksTitle: "Ffixture a Thablau Swyddogol",
-    resourceLinksDescription: "Mynediad cyflym at y safleoedd mae ein sgrapiwr yn eu monitro am ddiweddariadau.",
-    resourceLinkWelsh: "Cymdeithas Bêl-droed Ysgolion Cymru — Ffixture Caerdydd a'r Fro",
-    resourceLinkCardiff: "Cymdeithas Bêl-droed Ysgolion Caerdydd a'r Fro — Canolfan Cwpanau",
+    resourceLinksDescription:
+      "Mynediad cyflym at y safleoedd mae ein sgrapiwr yn eu monitro am ddiweddariadau.",
+    resourceLinkWelsh:
+      "Cymdeithas Bêl-droed Ysgolion Cymru — Ffixture Caerdydd a'r Fro",
+    resourceLinkCardiff:
+      "Cymdeithas Bêl-droed Ysgolion Caerdydd a'r Fro — Canolfan Cwpanau",
     leaderboard: "Tabl Cynghrair",
     teamStats: "Ystadegau Tim",
     matchHistory: "Hanes Gemau",
@@ -387,7 +443,8 @@ window.translations = {
     comparisonResultWin: "Buddugoliaeth",
     comparisonResultDraw: "Cyfartal",
     comparisonResultLoss: "Coll",
-    comparisonSameTeamWarning: "Dewiswch ddau dim gwahanol i redeg rhagfynegiad.",
+    comparisonSameTeamWarning:
+      "Dewiswch ddau dim gwahanol i redeg rhagfynegiad.",
 
     // Status & Messages
     loading: "Yn Llwytho...",
@@ -557,6 +614,59 @@ window.translations = {
       "Gweld ystadegau manwl, hanes gemau, a pherfformiad ar gyfer pob tîm yn Cwpanau Pêl-droed Blwyddyn 7.",
     bracketsDescription:
       "Gweld rowndiau knockout, canlyniadau, a chynnydd ar gyfer pob cwpan.",
+    heroEyebrow: "Cwpanau Pêl-droed Blwyddyn 7",
+    heroLead:
+      "Pob canlyniad, tabl a braced mewn un lle deublyg. Dewiswch dîm a chael yr wybodaeth sy'n cyfrif ar unwaith.",
+    heroMeta:
+      "Mae'r data'n diweddaru'n awtomatig pan fydd ysgolion yn anfon canlyniadau.",
+    heroLinkWelsh: "Ffixture swyddogol Cwpan Cymru",
+    heroLinkCardiff: "Canolfan Cwpanau Caerdydd a'r Fro",
+    heroStatTeams: "Timau gweithredol",
+    heroStatGames: "Gemau a adroddwyd",
+    heroStatGoals: "Goliau cyfanswm",
+    liveTablesLabel: "Tablau Byw",
+    welshPanelSummary:
+      "Dewiswch ysgol i ddilyn eu llwybr, ystadegau a sgoriau diweddar yn y Cwpan Cymru.",
+    cardiffPanelSummary:
+      "Gweld sut mae pob tîm yn perfformio yn rowndiau Cwpan Caerdydd.",
+    friendliesPanelSummary:
+      "Cadwch lygad ar gemau ymarfer sy'n adeiladu hyder a siâp.",
+    bracketPanelSummary:
+      "Dilynwch bob rownd knockout ar y daith i'r rownd derfynol.",
+    backToDashboard: "Nôl i'r prif ddangosfwrdd",
+    teamDashboardLabel: "Dadansoddiadau Tîm",
+    teamDashboardLead:
+      "Tynnwch ystadegau'r tymor, hanesion gemau a nodiadau ar gyfer pob ysgol.",
+    bracketsLabel: "Traciwr Knockout",
+    bracketsLead:
+      "Pob rownd, dyddiad cau a chanlyniad Cwpan Cymru a Chaerdydd mewn un golwg.",
+    adminHeroLabel: "Panel Rheoli",
+    adminHeroLead:
+      "Lle diogel i ddatgloi'r sgrapiwr, diweddaru nodiadau ac ychwanegu gemau cyfeillgar ar frys.",
+    snapshotHeading: "Golwg Sydyn",
+    snapshotTitle: "Cwpanau ar hyn o bryd",
+    snapshotDescription:
+      "Cynnydd byw ar gyfer pob cystadleuaeth a'r dyddiad cau nesaf.",
+    snapshotComplete: "Wedi'i gwblhau",
+    timelineHeading: "Llinell Amser",
+    timelineTitle: "Camau Allweddol Tymor 2025-26",
+    timelineDescription:
+      "Cadwch lygad ar y dyddiadau cau nesaf i sicrhau bod popeth yn rhedeg yn esmwyth.",
+    timelineDate1: "Hydref 28",
+    timelineTitle1: "Rownd 2 Cwpan Cymru",
+    timelineDesc1: "Pob canlyniad i mewn cyn diwedd y penwythnos.",
+    timelineDate2: "Tachwedd 24",
+    timelineTitle2: "Rownd 3 Cwpan Cymru",
+    timelineDesc2: "Derfynol lleol yn dechrau siapio gyda'r wyth olaf.",
+    timelineDate3: "Rhagfyr 8",
+    timelineTitle3: "Rownd 2 Cwpan Caerdydd",
+    timelineDesc3: "Rowndiau dinas yn cau cyn y toriad Nadolig.",
+    timelineDate4: "Chwefror 10",
+    timelineTitle4: "Chwarteri Terfynol",
+    timelineDesc4: "Dim tîm yn cael ei adael i ddisgyn oddi ar y radar.",
+    leadersHeading: "Ffurf Uchel",
+    leadersTitle: "Timau Uchaf y Tabl",
+    leadersDescription: "Y tri phrif berfformiwr ar draws y ddau gwpan.",
 
     // Additional UI Elements
     notes: "Nodiadau",

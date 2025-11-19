@@ -118,10 +118,10 @@
       "games": [
         {
           "home_team": "Llanishen",
-          "home_score": null,
+          "home_score": 4,
           "away_team": "Corpus Christi",
-          "away_score": null,
-          "winner": null,
+          "away_score": 0,
+          "winner": "Llanishen",
           "date": null
         },
         {
@@ -142,10 +142,10 @@
         },
         {
           "home_team": "Mary Immaculate",
-          "home_score": null,
+          "home_score": 1,
           "away_team": "Glantaf",
-          "away_score": null,
-          "winner": null,
+          "away_score": 8,
+          "winner": "Glantaf",
           "date": "4 nov 2025"
         },
         {
@@ -158,10 +158,10 @@
         },
         {
           "home_team": "Bro Morgannwg",
-          "home_score": null,
+          "home_score": 3,
           "away_team": "Stanwell",
-          "away_score": null,
-          "winner": null,
+          "away_score": 2,
+          "winner": "Bro Morgannwg",
           "date": "11 nov 2025"
         }
       ]
@@ -175,7 +175,7 @@
       },
       "games": [
         {
-          "home_team": "Winner of (13)",
+          "home_team": "Llanishen",
           "home_score": null,
           "away_team": "Cardiff High",
           "away_score": null,
@@ -185,15 +185,15 @@
         {
           "home_team": "Cowbridge",
           "home_score": null,
-          "away_team": "Winner of (16)",
+          "away_team": "Glantaf",
           "away_score": null,
           "winner": null,
           "date": null
         },
         {
-          "home_team": "Winner of (17)",
+          "home_team": "Radyr",
           "home_score": null,
-          "away_team": "Winner of (18)",
+          "away_team": "Bro Morgannwg",
           "away_score": null,
           "winner": null,
           "date": null
@@ -229,11 +229,11 @@
   ],
   "team_statistics": {
     "Llanishen": {
-      "games_played": 1,
-      "wins": 1,
-      "goals_for": 10,
+      "games_played": 2,
+      "wins": 2,
+      "goals_for": 14,
       "goals_against": 0,
-      "goal_difference": 10
+      "goal_difference": 14
     },
     "Fitzalan": {
       "games_played": 1,
@@ -250,11 +250,11 @@
       "goal_difference": -6
     },
     "Corpus Christi": {
-      "games_played": 1,
+      "games_played": 2,
       "wins": 1,
       "goals_for": 8,
-      "goals_against": 2,
-      "goal_difference": 6
+      "goals_against": 6,
+      "goal_difference": 2
     },
     "St Teilo's": {
       "games_played": 1,
@@ -313,11 +313,11 @@
       "goal_difference": -9
     },
     "Mary Immaculate": {
-      "games_played": 1,
+      "games_played": 2,
       "wins": 1,
-      "goals_for": 3,
-      "goals_against": 2,
-      "goal_difference": 1
+      "goals_for": 4,
+      "goals_against": 10,
+      "goal_difference": -6
     },
     "Bishop of Llandaff": {
       "games_played": 1,
@@ -334,11 +334,11 @@
       "goal_difference": -9
     },
     "Glantaf": {
-      "games_played": 1,
-      "wins": 1,
-      "goals_for": 10,
-      "goals_against": 1,
-      "goal_difference": 9
+      "games_played": 2,
+      "wins": 2,
+      "goals_for": 18,
+      "goals_against": 2,
+      "goal_difference": 16
     },
     "Eastern": {
       "games_played": 1,
@@ -376,18 +376,18 @@
       "goal_difference": -5
     },
     "Bro Morgannwg": {
-      "games_played": 1,
-      "wins": 1,
-      "goals_for": 6,
-      "goals_against": 1,
-      "goal_difference": 5
+      "games_played": 2,
+      "wins": 2,
+      "goals_for": 9,
+      "goals_against": 3,
+      "goal_difference": 6
     },
     "Stanwell": {
-      "games_played": 1,
+      "games_played": 2,
       "wins": 1,
-      "goals_for": 0,
-      "goals_against": 0,
-      "goal_difference": 0
+      "goals_for": 2,
+      "goals_against": 3,
+      "goal_difference": -1
     }
   }
 }

@@ -212,6 +212,32 @@
           "date": null
         }
       ]
+    },
+    {
+      "round_number": 3,
+      "deadlines": {
+        "english": "Deadline: 10th February",
+        "welsh": "Dyddiad cau: 10 Chwefror",
+        "english_expanded": "10 feb 2026"
+      },
+      "games": []
+    },
+    {
+      "round_number": 4,
+      "deadlines": {
+        "english": "Deadline: 31st March",
+        "welsh": "Dyddiad cau: 31 Mawrth",
+        "english_expanded": "31 mar 2026"
+      },
+      "games": []
+    },
+    {
+      "round_number": 5,
+      "deadlines": {
+        "english": "Final - TBC",
+        "welsh": "Rownd Derfynol - I'w gadarnhau"
+      },
+      "games": []
     }
   ],
   "team_statistics": {

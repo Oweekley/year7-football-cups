@@ -1,226 +1,154 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="cy">
   <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title data-i18n="admin">Admin</title>
-    <meta
-      name="description"
-      content="Admin page to edit team notes and add friendly results"
-    />
+    <meta name="description" content="Tudalen gweinyddol i olygu nodiadau tim a chofnodi gemau cyfeillgar" />
     <link rel="stylesheet" href="style.css" />
     <link rel="preload" as="script" href="translations.js" />
     <link rel="preload" as="script" href="script.js" />
-    <!-- Admin page styles moved to style.css -->
     <link rel="manifest" href="manifest.webmanifest" />
-    <meta name="theme-color" content="#0077ff" />
+    <meta name="theme-color" content="#0f2f64" />
     <meta name="color-scheme" content="light" />
     <script defer src="translations.js"></script>
     <script defer src="script.js"></script>
     <script defer src="admin.js"></script>
-    <!-- Page-specific script moved to script.js -->
   </head>
   <body>
-    <header role="banner">
-      <div class="header-top">
-        <h1 data-i18n="adminPageTitle">Admin - Manage Notes and Friendlies</h1>
-
-        <div class="lang-theme-controls">
-          <div class="lang-switch" role="group" aria-label="Language switch">
-            <button id="lang-en" type="button" aria-label="Switch to English">
-              EN
-            </button>
-            <button id="lang-cy" type="button" aria-label="Newid i'r Gymraeg">
-              CY
-            </button>
-          </div>
+    <header class="site-header" role="banner">
+      <div class="site-header__inner">
+        <a class="brand" href="index.html">
+          CVSFA
+          <small>Blwyddyn 7</small>
+        </a>
+        <nav class="site-nav" aria-label="Prif lywio">
+          <a href="index.html#leaderboard" data-i18n="leaderboard">Tabl Cynghrair</a>
+          <a href="index.html#welsh-cup" data-i18n="welshCupOverview">Trosolwg Cwpan Cymru</a>
+          <a href="index.html#cardiff-cup" data-i18n="cardiffCupOverview">Trosolwg Cwpan Caerdydd</a>
+          <a href="index.html#brackets" data-i18n="brackets">Bracetiau</a>
+        </nav>
+        <div class="lang-switch" role="group" aria-label="Newid iaith">
+          <button id="lang-cy" type="button" aria-label="Newid i'r Gymraeg">CY</button>
+          <button id="lang-en" type="button" aria-label="Switch to English">EN</button>
         </div>
       </div>
-
-      <nav aria-label="Main navigation" role="navigation">
-        <a href="index.html" data-i18n="dashboard">Dashboard</a>
-        <a href="teamCard.html" data-i18n="teamDashboard">Team Dashboard</a>
-        <a href="brackets.html" data-i18n="brackets">Brackets</a>
-        <a href="#" class="active" aria-current="page" data-i18n="admin"
-          >Admin</a
-        >
-      </nav>
     </header>
 
-    <main class="container" role="main">
-      <p class="subtitle" data-i18n="adminDescription">
-        Edit team notes or add friendly results.
-      </p>
-
-      <section
-        id="admin-locked"
-        class="admin-card"
-        aria-labelledby="unlock-title"
-      >
-        <h2 id="unlock-title" data-i18n="unlockAdmin">Unlock Admin</h2>
-        <p class="subtitle" data-i18n="enterSecret">
-          Enter the secret to trigger the scraper and refresh the JSON files.
+    <section class="hero hero--sub" role="region">
+      <div class="hero__content">
+        <a class="hero__back" href="index.html" data-i18n="backToDashboard">Nôl i'r prif ddangosfwrdd</a>
+        <p class="hero__eyebrow" data-i18n="adminHeroLabel">Panel Rheoli</p>
+        <h1 data-i18n="adminPageTitle">Gweinyddwr - Rheoli Nodiadau a Gemau Cyfeillgar</h1>
+        <p class="hero__lead" data-i18n="adminHeroLead">
+          Lle diogel i ddatgloi'r sgrapiwr, diweddaru nodiadau ac ychwanegu gemau cyfeillgar ar frys.
         </p>
-        <div class="admin-row">
-          <label>
-            <span data-i18n="adminPassword">Password</span>
-            <input
-              id="admin-pass"
-              type="password"
-              placeholder="••••••"
-              autocomplete="off"
-            />
-          </label>
-          <div class="admin-actions">
-            <button
-              id="admin-unlock"
-              class="cta"
-              type="button"
-              data-i18n="unlockAdmin"
-            >
-              Unlock Admin
-            </button>
-          </div>
-        </div>
-      </section>
+      </div>
+    </section>
 
-      <section id="admin-body" class="admin-grid" hidden>
-        <div class="admin-card" aria-labelledby="notes-title">
-          <h2 id="notes-title" data-i18n="editNotes">Edit Notes</h2>
-          <div
-            class="admin-row selectors"
-            role="group"
-            aria-label="Team selection"
-          >
-            <label>
-              <span data-i18n="selectTeam">Select Team:</span>
-              <select
-                id="notes-team"
-                aria-label="Select Team"
-                autocomplete="off"
-              >
-                <option value="" data-i18n="chooseTeam">
-                  --Choose a Team--
-                </option>
-              </select>
-            </label>
-            <div class="admin-actions">
-              <button
-                id="notes-save"
-                class="cta"
-                type="button"
-                data-i18n="saveNotes"
-              >
-                Save Notes
-              </button>
-              <span id="notes-saved" class="success" aria-live="polite"></span>
-            </div>
-          </div>
-          <label>
-            <span data-i18n="notes">Notes</span>
-            <textarea
-              id="notes-text"
-              rows="5"
-              placeholder="Type notes here..."
-            ></textarea>
-          </label>
-        </div>
+    <main class="page-shell" role="main" id="main-content">
+      <section class="panel panel--wide">
+        <p class="panel__summary" data-i18n="adminDescription">
+          Golygu nodiadau tim neu ychwanegu canlyniadau cyfeillgar.
+        </p>
 
-        <div class="admin-card" aria-labelledby="friendly-title">
-          <h2 id="friendly-title" data-i18n="addFriendly">
-            Add Friendly Result
-          </h2>
-          <div
-            class="admin-row selectors"
-            role="group"
-            aria-label="Friendly details"
-          >
-            <label>
-              <span data-i18n="date">Date</span>
-              <input id="fr-date" type="date" />
-            </label>
-            <label>
-              <span data-i18n="homeTeam">Home Team</span>
-              <select
-                id="fr-home"
-                aria-label="Select Home Team"
-                autocomplete="off"
-              >
-                <option value="" data-i18n="chooseTeam">
-                  --Choose a Team--
-                </option>
-              </select>
-            </label>
-          </div>
-          <div
-            class="admin-row selectors"
-            role="group"
-            aria-label="Friendly details 2"
-          >
-            <label>
-              <span data-i18n="awayTeam">Away Team</span>
-              <select
-                id="fr-away"
-                aria-label="Select Away Team"
-                autocomplete="off"
-              >
-                <option value="" data-i18n="chooseTeam">
-                  --Choose a Team--
-                </option>
-              </select>
-            </label>
-            <label>
-              <span data-i18n="homeGoals">Home Goals</span>
-              <input
-                id="fr-home-goals"
-                type="number"
-                min="0"
-                inputmode="numeric"
-              />
-            </label>
-          </div>
+        <section id="admin-locked" class="admin-card" aria-labelledby="unlock-title">
+          <h2 id="unlock-title" data-i18n="unlockAdmin">Datgloi Gweinyddwr</h2>
+          <p class="subtitle" data-i18n="enterSecret">
+            Nodwch y gyfrinach i sbarduno'r sgrapiwr ac adnewyddu'r ffeiliau JSON.
+          </p>
           <div class="admin-row">
             <label>
-              <span data-i18n="awayGoals">Away Goals</span>
-              <input
-                id="fr-away-goals"
-                type="number"
-                min="0"
-                inputmode="numeric"
-              />
+              <span data-i18n="adminPassword">Cyfrinair</span>
+              <input id="admin-pass" type="password" placeholder="••••••" autocomplete="off" />
             </label>
-            <div style="display: flex; align-items: end">
-              <button
-                id="fr-submit"
-                class="cta"
-                type="button"
-                data-i18n="submit"
-                disabled
-              >
-                Submit
+            <div class="admin-actions">
+              <button id="admin-unlock" class="cta" type="button" data-i18n="unlockAdmin">
+                Datgloi Gweinyddwr
               </button>
             </div>
           </div>
-          <label>
-            <span data-i18n="notes">Notes</span>
-            <textarea
-              id="fr-notes"
-              rows="3"
-              placeholder="Optional notes..."
-            ></textarea>
-          </label>
-        </div>
+        </section>
 
+        <section id="admin-body" class="admin-grid" hidden>
+          <div class="admin-card" aria-labelledby="notes-title">
+            <h2 id="notes-title" data-i18n="editNotes">Golygu Nodiadau</h2>
+            <div class="admin-row selectors" role="group" aria-label="Dewis tîm">
+              <label>
+                <span data-i18n="selectTeam">Dewiswch Dim:</span>
+                <select id="notes-team" aria-label="Select Team" autocomplete="off">
+                  <option value="" data-i18n="chooseTeam">--Dewiswch Dim--</option>
+                </select>
+              </label>
+              <div class="admin-actions">
+                <button id="notes-save" class="cta" type="button" data-i18n="saveNotes">
+                  Cadw Nodiadau
+                </button>
+                <span id="notes-saved" class="success" aria-live="polite"></span>
+              </div>
+            </div>
+            <label>
+              <span data-i18n="notes">Nodiadau</span>
+              <textarea id="notes-text" rows="5" placeholder="Ysgrifennwch nodiadau yma..."></textarea>
+            </label>
+          </div>
+
+          <div class="admin-card" aria-labelledby="friendly-title">
+            <h2 id="friendly-title" data-i18n="addFriendly">Ychwanegu Canlyniad Cyfeillgar</h2>
+            <div class="admin-row selectors" role="group" aria-label="Manylion gem">
+              <label>
+                <span data-i18n="date">Dyddiad</span>
+                <input id="fr-date" type="date" />
+              </label>
+              <label>
+                <span data-i18n="homeTeam">Tim Cartref</span>
+                <select id="fr-home" aria-label="Select Home Team" autocomplete="off">
+                  <option value="" data-i18n="chooseTeam">--Dewiswch Dim--</option>
+                </select>
+              </label>
+            </div>
+            <div class="admin-row selectors" role="group" aria-label="Manylion pellach">
+              <label>
+                <span data-i18n="awayTeam">Tim I Ffwrdd</span>
+                <select id="fr-away" aria-label="Select Away Team" autocomplete="off">
+                  <option value="" data-i18n="chooseTeam">--Dewiswch Dim--</option>
+                </select>
+              </label>
+              <label>
+                <span data-i18n="homeGoals">Goliau Cartref</span>
+                <input id="fr-home-goals" type="number" min="0" inputmode="numeric" />
+              </label>
+            </div>
+            <div class="admin-row">
+              <label>
+                <span data-i18n="awayGoals">Goliau I Ffwrdd</span>
+                <input id="fr-away-goals" type="number" min="0" inputmode="numeric" />
+              </label>
+              <div class="admin-actions" style="align-items: end">
+                <button id="fr-submit" class="cta" type="button" data-i18n="submit" disabled>
+                  Cyflwyno
+                </button>
+              </div>
+            </div>
+            <label>
+              <span data-i18n="notes">Nodiadau</span>
+              <textarea id="fr-notes" rows="3" placeholder="Nodiadau dewisol..."></textarea>
+            </label>
+          </div>
+        </section>
       </section>
     </main>
 
-    <footer role="contentinfo">
+    <footer>
       <p>
-        © 2025 <span data-i18n="dashboardTitle">Year 7 Cups Dashboard</span>
+        <span data-i18n="copyright">© 2025</span>
+        <span data-i18n="dashboardTitle">Dangosfwrdd Cwpanau Blwyddyn 7</span>
+        &middot; <span data-i18n="builtWith">Adeiladwyd gyda</span>
+        <span aria-hidden="true">♥</span>
+        <span class="sr-only" data-i18n="love">cariad</span>
+        <span data-i18n="by">gan</span>
+        <strong data-i18n="author">Ollie</strong>
       </p>
     </footer>
   </body>
